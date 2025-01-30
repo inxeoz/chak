@@ -10,22 +10,32 @@ pub fn create_fold(dir: &Path) {
 }
 
 /// Function to create a file and write a message to it.
-pub fn create_file(parent_fold: &Path, blob_pointer: &HashPointer, content: Option<String>) {
+pub fn create_file(parent_fold: &Path, blob_pointer: &HashPointer, contents: Option<Vec<u8>>) {
     // Create the full file path
     let file_path = parent_fold.join(blob_pointer.get_path());
-    if !file_path.exists() || file_path.is_dir() {
-        create_fold(&file_path.parent().expect("cant get parent "))
+
+    // Ensure the parent directory exists, create it if not
+    if let Some(parent) = file_path.parent() {
+        if !parent.exists() {
+            if let Err(e) = fs::create_dir_all(parent) {
+                panic!("Failed to create parent directory {:?}: {}", parent, e);
+            }
+        }
+    } else {
+        panic!("Cannot get parent directory for file path: {:?}", file_path);
     }
+
     // Create and write to the file
     match File::create(&file_path) {
         Ok(mut file) => {
-            if let Some(content) = content {
-                if let Err(e) = file.write_all(content.as_bytes()) {
+            if let Some(content) = contents {
+                // Write content to the file
+                if let Err(e) = file.write_all(&content) {
                     panic!("Failed to write to file {:?}: {}", file_path, e);
                 }
             }
 
-            println!("{} created", file_path.display());
+            println!("File {} created", file_path.display());
         }
         Err(e) => panic!("Failed to create file {:?}: {}", file_path, e),
     }

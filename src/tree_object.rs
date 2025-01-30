@@ -27,7 +27,7 @@ impl Object {
         }
     }
 
-    pub fn from( children: Vec<Object>) -> Object {
+    pub fn from(hash_pointer: HashPointer,  children: Vec<Object>) -> Object {
 
         Object {
             object_type: ObjectType::TreeObject,

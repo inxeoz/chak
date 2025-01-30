@@ -83,16 +83,15 @@ impl HashPointer {
 
     pub fn save_blob(file_path: &Path, save_dir: &Path) -> Self {
         let hash_pointer = Self::from_file(file_path);
-        let content = fs::read_to_string(file_path).expect("Failed to read file content");
+        let content = fs::read(file_path).expect("Failed to read file");
         create_file(save_dir, &hash_pointer, Some(content));
         hash_pointer
     }
-
     pub fn save_blob_from_content(save_dir: &Path, content: String) -> Self {
         let hash_pointer = Self::from_content(content.clone());
 
         if !save_dir.join(hash_pointer.get_path()).exists() {
-            create_file(save_dir, &hash_pointer, Some(content));
+            create_file(save_dir, &hash_pointer, Some(content.into_bytes()));
         } else {
             println!(
                 "Blob already exists: {}",

@@ -37,7 +37,7 @@ pub fn start_versioning(file_path: &Path) {
         create_file(
             &version_fold(),
             &version_blob_pointer,
-            Some(serialized_version),
+            Some(serialized_version.into_bytes()),
         );
     } else {
         let deserialized_version: Vec<Version> = deserialize_file_content(&version);

@@ -5,12 +5,15 @@ use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use std::collections::HashSet;
 use std::fs;
+use std::ops::Sub;
 use std::path::{Path, PathBuf};
 use crate::hashing::HashPointer;
 
 pub fn start_snapshot() {
     let mut ignore_build_vec = Vec::<Gitignore>::new();
     let start_path = get_current_dir();
+
+    dir_snapshot(start_path, &mut ignore_build_vec);
 }
 pub fn dir_snapshot(
     path: &Path,
@@ -64,35 +67,28 @@ pub fn dir_snapshot(
 }
 
 pub fn parse_ignore_local_level(
-    detected_entries: Vec<PathBuf>,
+    detected_entries: HashSet<PathBuf>,
     ignore_build_vec: &mut Vec<Gitignore>,
 ) -> HashSet<PathBuf> {
-    let mut allowed_entries = HashSet::new();
     let mut not_allowed_entries = HashSet::new();
 
     // Check entries against ignore rules
-    for entry in detected_entries {
+    for entry in detected_entries.clone() {
         let is_dir = entry.is_dir();
 
         for ignore_rules in ignore_build_vec.iter() {
             match ignore_rules.matched(entry.to_str().unwrap_or(""), is_dir) {
                 Match::None => {
-                    if !not_allowed_entries.contains(&entry) {
-                        allowed_entries.insert(entry.clone());
-                    }
                 }
                 Match::Ignore(_) => {
                     println!("Ignored: {}", entry.display());
-                    if !allowed_entries.contains(&entry) {
                         not_allowed_entries.insert(entry.clone());
-                    }
                 }
                 Match::Whitelist(_) => {
-                    allowed_entries.insert(entry.clone());
                 }
             }
         }
     }
 
-    allowed_entries
+    detected_entries.sub(&not_allowed_entries)
 }

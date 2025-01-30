@@ -41,14 +41,14 @@ pub fn check_vcs_presence() -> bool {
     }
 }
 
-pub fn read_directory_entries(path: &Path) -> Vec<PathBuf> {
+pub fn read_directory_entries(path: &Path) -> HashSet<PathBuf> {
 
     let entries = fs::read_dir(path).expect("Could not read directory");
-    let mut detected_entries = Vec::new();
+    let mut detected_entries = HashSet::new();
 
     for entry in entries {
         let entry = entry.expect("Could not read directory entry").path();
-        detected_entries.push(entry.clone());
+        detected_entries.insert(entry.clone());
     }
 
     detected_entries

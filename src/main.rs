@@ -18,15 +18,16 @@ use std::env::current_dir;
 use std::path::{Path, PathBuf};
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
+use crate::add::{dir_snapshot, start_snapshot};
 use crate::commandline::parse_commandline;
 use crate::config::get_current_dir;
 use crate::diff_algo::{compare_hashed_content, create_content_block, to_interconnected_line};
+use crate::init::init;
 
 fn main() {
-
-    test()
-
-   // parse_commandline()
+  //  test();
+    init();
+    start_snapshot()
 }
 
 
