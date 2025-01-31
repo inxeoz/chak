@@ -1,10 +1,7 @@
-use crate::config::{get_current_dir, VCS_IGNORE_FILE};
+use crate::config::{get_current_dir};
 use std::collections::HashSet;
-use std::fs;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use ignore::Match;
 
 pub fn check_vcs_presence_in_subdir(vcs_name: &str) -> Vec<PathBuf> {
     let mut presence_vec = Vec::new();
@@ -43,7 +40,7 @@ pub fn check_vcs_presence() -> bool {
 
 pub fn read_directory_entries(path: &Path) -> HashSet<PathBuf> {
 
-    let entries = fs::read_dir(path).expect("Could not read directory");
+    let entries = read_dir(path).expect("Could not read directory");
     let mut detected_entries = HashSet::new();
 
     for entry in entries {

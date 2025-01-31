@@ -1,7 +1,6 @@
-use crate::diff_algo::HashedContent;
+
 use crate::hashing::HashPointer;
 use std::hash::Hash;
-use std::ptr::hash;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]

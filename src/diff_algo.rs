@@ -1,16 +1,12 @@
 use crate::hashing::HashPointer;
 use itertools::{EitherOrBoth, Itertools};
 use serde::Serialize;
-use std::cell::RefCell;
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fs::File;
 use std::hash::Hash;
-use std::io;
 use std::io::{BufRead, BufReader};
-use std::option::Option;
 use std::path::Path;
-use std::rc::Rc;
 use indexmap::IndexMap;
 
 #[derive(Serialize, PartialEq, Debug, Clone, Copy)]
@@ -194,7 +190,6 @@ pub fn compare_hashed_content(
             EitherOrBoth::Right((n_index, n_hash)) => {
                 diff_line_to_hash.insert(*n_index, n_hash.clone());
             }
-            _ => {}
         }
     }
 

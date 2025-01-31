@@ -1,10 +1,8 @@
-use crate::config::{get_current_dir, blob_fold, VCS_FOLDER, VCS_IGNORE_FILE};
-use crate::macros::{create_file, save_to_file};
+use crate::config::{get_current_dir, blob_fold,  VCS_IGNORE_FILE};
 use crate::util::read_directory_entries;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use std::collections::HashSet;
-use std::fs;
 use std::ops::Sub;
 use std::path::{Path, PathBuf};
 use crate::hashing::HashPointer;

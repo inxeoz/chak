@@ -1,8 +1,6 @@
 
 use clap::{Parser, Subcommand};
-use crate::add;
 use crate::init::init;
-use std::env;
 use crate::config::{get_current_dir};
 use crate::status::get_status;
 use crate::util::check_vcs_presence;

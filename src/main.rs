@@ -12,16 +12,9 @@ mod diff_algo;
 mod tree_object;
 
 use clap::{Parser, Subcommand};
-use std::{env, fs};
-use std::collections::HashMap;
-use std::env::current_dir;
-use std::path::{Path, PathBuf};
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use ignore::Match;
-use crate::add::{dir_snapshot, start_snapshot};
-use crate::commandline::parse_commandline;
+use crate::add::{ start_snapshot};
 use crate::config::get_current_dir;
-use crate::diff_algo::{compare_hashed_content, create_content_block, to_interconnected_line};
+use crate::diff_algo::{compare_hashed_content, to_interconnected_line};
 use crate::init::init;
 
 fn main() {

@@ -1,11 +1,10 @@
-use crate::config::{blob_fold, get_current_dir, version_fold};
+use crate::config::{blob_fold,  version_fold};
 use crate::macros::create_file;
 use std::fs;
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
-use similar::TextDiff;
 use crate::diff_algo::{compare_hashed_content, to_interconnected_line};
 use crate::hashing::HashPointer;
 

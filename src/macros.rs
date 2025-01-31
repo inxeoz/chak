@@ -2,7 +2,7 @@ use crate::hashing::HashPointer;
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{self, Write};
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 /// Function to create a directory and all its parent directories if they don't exist.
 pub fn create_fold(dir: &Path) {

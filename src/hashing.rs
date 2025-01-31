@@ -1,12 +1,10 @@
 use crate::config::MIN_HASH_LENGTH;
 use crate::macros::create_file;
-use clap::builder::Str;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::fs;
 use std::fs::File;
 use std::io::{BufReader, Read};
-use std::ops::Add;
 use std::path::{Path, PathBuf};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -41,7 +39,7 @@ impl HashPointer {
 
     pub fn combine(first: &Self, second: &Self) -> Self {
         Self::from_content(
-            (first.get_one_hash() + &second.get_one_hash()),
+            first.get_one_hash() + &second.get_one_hash(),
         )
     }
 
@@ -82,6 +80,7 @@ impl HashPointer {
     }
 
     pub fn save_blob(file_path: &Path, save_dir: &Path) -> Self {
+        println!("file ---> name {}", file_path.display());
         let hash_pointer = Self::from_file(file_path);
         let content = fs::read(file_path).expect("Failed to read file");
         create_file(save_dir, &hash_pointer, Some(content));

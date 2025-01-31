@@ -1,6 +1,6 @@
 use std::env;
 use once_cell::sync::OnceCell;
-use std::path::{Path, PathBuf};
+use std::path::{ PathBuf};
 
 pub static  MIN_HASH_LENGTH: usize = 3;
 pub static VCS_FOLDER: &str = ".chak";

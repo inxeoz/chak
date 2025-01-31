@@ -1,8 +1,7 @@
-use std::collections::HashSet;
+
 use std::path::{Path, PathBuf};
-use crate::config::{blob_fold, get_current_dir, VCS_FOLDER, VCS_IGNORE_FILE};
+use crate::config::{blob_fold, get_current_dir};
 use crate::hashing::{ HashPointer};
-use crate::util::read_directory_entries;
 
 pub fn get_status(path: &Path) -> Vec<PathBuf> {
     let mut status = Vec::new();
