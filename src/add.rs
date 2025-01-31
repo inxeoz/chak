@@ -63,7 +63,7 @@ pub fn dir_snapshot(path: &Path, ignore_build_vec: &mut Vec<Gitignore>) -> HashP
         }
     }
 
-    hash_from_save_tree(&tree_fold(), &tree_object)
+    hash_from_save_tree(&tree_fold(), tree_object)
 
     //   children_tree_object
 }

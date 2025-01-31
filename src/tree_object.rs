@@ -15,3 +15,9 @@ pub struct TreeObject {
     pub tree_object_type: TreeObjectType,
     pub children:Vec<HashPointer>,
 }
+
+impl TreeObject {
+    pub fn sort_children( self: &mut Self) {
+        self.children.sort();
+    }
+}

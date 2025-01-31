@@ -9,14 +9,29 @@ use std::path::{Path, PathBuf};
 use crate::tree_object::TreeObject;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Eq)]
 pub struct HashPointer {
     fold_name: String,
     file_name: String,
 }
 
-impl PartialEq for HashPointer {
+impl PartialEq<Self> for HashPointer {
     fn eq(&self, other: &Self) -> bool {
         self.get_one_hash() == other.get_one_hash()
+    }
+}
+
+impl PartialOrd<Self> for HashPointer {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other)) // Delegate to Ord
+    }
+}
+
+impl Ord for HashPointer {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.fold_name
+            .cmp(&other.fold_name)
+            .then_with(|| self.file_name.cmp(&other.file_name)) // Sort by file_name if fold_name is the same
     }
 }
 
@@ -133,7 +148,8 @@ pub fn hash_from_file(path: &Path) -> HashPointer {
         from_hash_string(format!("{:x}", hasher.finalize()))
     }
 
-pub fn hash_from_save_tree(save_dir: &Path, tree_object: &TreeObject) -> HashPointer {
+pub fn hash_from_save_tree(save_dir: &Path, mut tree_object: TreeObject) -> HashPointer {
+    tree_object.sort_children();
     let content = serde_json::to_string(&tree_object).expect("Failed to serialize tree_object");
     hash_from_save_content(save_dir, content)
 }
