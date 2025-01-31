@@ -1,10 +1,10 @@
 use crate::config::MIN_HASH_LENGTH;
-use crate::macros::create_file;
+use crate::macros::{create_file, create_file_with_blob_pointer};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::fs;
+use std::{fs, io};
 use std::fs::File;
-use std::io::{BufReader, Read};
+use std::io::{BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
 use crate::tree_object::TreeObject;
 
@@ -104,14 +104,14 @@ pub fn hash_from_file(path: &Path) -> HashPointer {
         }
         println!("file ---> name {}", file_path.display());
         let content = fs::read(file_path).expect("Failed to read file");
-        create_file(save_dir, &hash_pointer, Some(content));
+        create_file_with_blob_pointer(save_dir, &hash_pointer, Some(content));
         hash_pointer
     }
     pub fn hash_from_save_content(save_dir: &Path, content: String) -> HashPointer {
         let hash_pointer = hash_from_content(content.clone());
 
         if !save_dir.join(hash_pointer.get_path()).exists() {
-            create_file(save_dir, &hash_pointer, Some(content.into_bytes()));
+            create_file_with_blob_pointer(save_dir, &hash_pointer, Some(content.into_bytes()));
         } else {
             println!(
                 "Blob already exists: {}",
@@ -155,3 +155,26 @@ pub fn hash_from_save_tree(save_dir: &Path,  tree_object: &mut TreeObject) -> Ha
     hash_from_save_content(save_dir, content)
 }
 
+
+pub fn get_latest_pointer_from_file(file_path: &Path, from_bottom: bool) -> Result<HashPointer, String> {
+    let file = File::open(file_path).expect("Failed to open stage");
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader
+        .lines()
+        .collect::<io::Result<_>>()
+        .expect("Failed to read stage file");
+    let opt_hps = if from_bottom {
+        lines.last()
+    } else {
+        lines.first()
+    };
+
+  if let Some(hps) = opt_hps {
+      println!("root pointer: {:?}", hps);
+      Ok(hash_pointer_from_hash_string(hps.clone()))
+  }else {
+      Err("File does not exist".to_string())
+  }
+
+
+}

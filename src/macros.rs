@@ -2,7 +2,7 @@ use crate::hashing::HashPointer;
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{self, Write};
-use std::path::{Path};
+use std::path::{Path, PathBuf};
 
 /// Function to create a directory and all its parent directories if they don't exist.
 pub fn create_fold(dir: &Path) {
@@ -10,7 +10,7 @@ pub fn create_fold(dir: &Path) {
 }
 
 /// Function to create a file and write a message to it.
-pub fn create_file(parent_fold: &Path, blob_pointer: &HashPointer, contents: Option<Vec<u8>>) {
+pub fn create_file_with_blob_pointer(parent_fold: &Path, blob_pointer: &HashPointer, contents: Option<Vec<u8>>) {
     // Create the full file path
     let file_path = parent_fold.join(blob_pointer.get_path());
 
@@ -35,6 +35,26 @@ pub fn create_file(parent_fold: &Path, blob_pointer: &HashPointer, contents: Opt
                 }
             }
 
+            println!("File {} created", file_path.display());
+        }
+        Err(e) => panic!("Failed to create file {:?}: {}", file_path, e),
+    }
+}
+
+pub fn create_file(file_path: &PathBuf) {
+    // Ensure the parent directory exists, create it if not
+    if let Some(parent) = file_path.parent() {
+        if !parent.exists() {
+            if let Err(e) = fs::create_dir_all(parent) {
+                panic!("Failed to create parent directory {:?}: {}", parent, e);
+            }
+        }
+    } else {
+        panic!("Cannot get parent directory for file path: {:?}", file_path);
+    }
+    // Create and write to the file
+    match File::create(&file_path) {
+        Ok(mut file) => {
             println!("File {} created", file_path.display());
         }
         Err(e) => panic!("Failed to create file {:?}: {}", file_path, e),

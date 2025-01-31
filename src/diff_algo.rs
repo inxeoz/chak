@@ -28,11 +28,7 @@ impl Line {
     }
 }
 
-#[derive(Serialize, PartialEq, Debug, Clone)]
-pub struct HashedContent {
-    pub line_to_hash: IndexMap<i64, String>,
-    pub hash_to_content: HashMap<String, String>,
-}
+
 
 #[derive(Serialize, Clone, Debug)]
 pub struct DiffLine {
@@ -124,6 +120,13 @@ impl ContentBlock {
         }
     }
 }
+
+#[derive(Serialize, PartialEq, Debug, Clone)]
+pub struct HashedContent {
+    pub pointer_to_previous_version: Option<HashPointer>,
+    pub line_to_hash: IndexMap<i64, String>,
+    pub hash_to_content: HashMap<String, String>,
+}
 pub fn to_interconnected_line(file_path: &Path) -> HashedContent {
     let file = File::open(file_path).expect("cannot open file");
 
@@ -143,6 +146,7 @@ pub fn to_interconnected_line(file_path: &Path) -> HashedContent {
     }
 
     HashedContent {
+        pointer_to_previous_version: None,
         line_to_hash,
         hash_to_content,
     }
@@ -195,6 +199,7 @@ pub fn compare_hashed_content(
 
 
     HashedContent {
+        pointer_to_previous_version: None,
         line_to_hash: diff_line_to_hash,
         hash_to_content: diff_hash_to_content,
     }

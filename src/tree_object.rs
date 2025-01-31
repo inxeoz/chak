@@ -1,9 +1,12 @@
-
 use crate::hashing::HashPointer;
-use std::hash::Hash;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::collections::HashMap;
+use std::ffi::OsString;
+use indexmap::IndexMap;
+use itertools::Itertools;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum TreeObjectType {
     Diff,
     BlobFile,
@@ -12,12 +15,37 @@ pub enum TreeObjectType {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TreeObject {
-    pub tree_object_type: TreeObjectType,
-    pub children:Vec<HashPointer>,
+    pub children: IndexMap<String, TreeNode>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq)]
+pub struct TreeNode {
+    pub is_file: bool,
+    pub blob_type: TreeObjectType,
+    pub pointer_to_blob: HashPointer,
+    pub pointer_to_previous_node: HashPointer,
+}
+
+impl PartialEq for TreeNode {
+    fn eq(&self, other: &Self) -> bool {
+        self.pointer_to_blob.get_one_hash() == other.pointer_to_blob.get_one_hash()
+    }
+}
+
+impl Ord for TreeNode {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.pointer_to_blob.get_one_hash().cmp(&other.pointer_to_blob.get_one_hash())
+    }
+}
+
+impl PartialOrd for TreeNode {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl TreeObject {
-    pub fn sort_children( self: &mut Self) {
-        self.children.sort();
+    pub fn sort_children(&mut self) {
+        self.children.sort_keys()
     }
 }

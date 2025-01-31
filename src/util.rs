@@ -38,14 +38,14 @@ pub fn check_vcs_presence() -> bool {
     }
 }
 
-pub fn read_directory_entries(path: &Path) -> HashSet<PathBuf> {
+pub fn read_directory_entries(path: &Path) -> Vec<PathBuf> {
 
     let entries = read_dir(path).expect("Could not read directory");
-    let mut detected_entries = HashSet::new();
+    let mut detected_entries = Vec::new();
 
     for entry in entries {
         let entry = entry.expect("Could not read directory entry").path();
-        detected_entries.insert(entry.clone());
+        detected_entries.push(entry.clone());
     }
 
     detected_entries

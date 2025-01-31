@@ -1,8 +1,7 @@
 use std::{fs};
 
 use crate::config::{blob_fold, commit_history_fold, commits_fold, get_current_dir, get_vcs_fold , staging_area_fold};
-use crate::config::VCS_FOLDER;
-use crate::macros::{create_fold, input_from_commandline};
+use crate::macros::{create_file, create_fold, input_from_commandline};
 
 pub fn init() {
 
@@ -31,6 +30,11 @@ pub fn init() {
     create_fold(&blob_fold());
     create_fold(&commits_fold());
     create_fold(&commit_history_fold());
+
+    create_file(&staging_area_fold().join("stage"));
+    create_file(&commit_history_fold().join("commit_log"))
+
+
     // create_fold(&store_path.join("packs"));
 
 }

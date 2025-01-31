@@ -1,9 +1,10 @@
 
 use clap::{Parser, Subcommand};
 use crate::add::start_snapshot;
-use crate::commit::create_commit_from_stage;
+use crate::commit::{append_commit_pointer_to_history, create_commit, save_commit};
 use crate::init::init;
-use crate::config::{get_current_dir};
+use crate::config::{get_current_dir, staging_area_fold};
+use crate::hashing::get_latest_pointer_from_file;
 use crate::status::get_status;
 use crate::util::check_vcs_presence;
 
@@ -72,7 +73,12 @@ pub fn parse_commandline() {
 
 
         Some(Commands::Commit { m }) => {
-            create_commit_from_stage( m, Some("inxeoz".to_string()));
+
+            if let Ok(latest_tree_pointer) = get_latest_pointer_from_file(&staging_area_fold().join("stage"), false) {
+               append_commit_pointer_to_history( save_commit(create_commit(m, Some("inxeoz".to_string()), latest_tree_pointer)) );
+            }else {
+                println!("No commit configured");
+            }
         }
         Some(Commands::Status) => {
             if check_vcs_presence() {
