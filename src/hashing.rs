@@ -6,6 +6,7 @@ use std::fs;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
+use crate::tree_object::TreeObject;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HashPointer {
@@ -90,7 +91,7 @@ pub fn hash_from_file(path: &Path) -> HashPointer {
         create_file(save_dir, &hash_pointer, Some(content));
         hash_pointer
     }
-    pub fn save_blob_from_content(save_dir: &Path, content: String) -> HashPointer {
+    pub fn hash_from_save_content(save_dir: &Path, content: String) -> HashPointer {
         let hash_pointer = hash_from_content(content.clone());
 
         if !save_dir.join(hash_pointer.get_path()).exists() {
@@ -131,4 +132,9 @@ pub fn hash_from_file(path: &Path) -> HashPointer {
         }
         from_hash_string(format!("{:x}", hasher.finalize()))
     }
+
+pub fn hash_from_save_tree(save_dir: &Path, tree_object: &TreeObject) -> HashPointer {
+    let content = serde_json::to_string(&tree_object).expect("Failed to serialize tree_object");
+    hash_from_save_content(save_dir, content)
+}
 

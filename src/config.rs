@@ -26,3 +26,7 @@ pub fn blob_fold() -> PathBuf {
 pub fn version_fold() -> PathBuf {
     get_current_dir().join(VCS_FOLDER).join("store").join("blobs").join("versions")
 }
+
+pub fn tree_fold() -> PathBuf {
+    get_current_dir().join(VCS_FOLDER).join("store").join("trees")
+}

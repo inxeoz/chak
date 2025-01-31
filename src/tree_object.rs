@@ -4,45 +4,14 @@ use std::hash::Hash;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum ObjectType {
+pub enum TreeObjectType {
     Diff,
     BlobFile,
     TreeObject,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Object {
-    pub object_type: ObjectType,
-    pub hash_pointer: HashPointer,
-    pub children: Option<Vec<Object>>,
-}
-
-impl Object {
-    pub fn new(object_type: ObjectType, hash_pointer: HashPointer) -> Object {
-        Object {
-            object_type,
-            hash_pointer,
-            children: None,
-        }
-    }
-
-    pub fn from(hash_pointer: HashPointer,  children: Vec<Object>) -> Object {
-
-        Object {
-            object_type: ObjectType::TreeObject,
-            hash_pointer,
-            children: Some(children),
-        }
-    }
-
-    pub fn add_child(&mut self, child: Object) {
-        self.hash_pointer
-            .update_hash(child.hash_pointer.get_one_hash());
-        if let Some(ref mut children) = self.children {
-            children.push(child);
-        } else {
-            self.children = Some(vec![child]);
-            self.object_type = ObjectType::TreeObject;
-        }
-    }
+pub struct TreeObject {
+    pub tree_object_type: TreeObjectType,
+    pub children:Vec<HashPointer>,
 }
