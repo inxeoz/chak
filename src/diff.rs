@@ -6,7 +6,7 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 use crate::diff_algo::{compare_hashed_content, to_interconnected_line};
-use crate::hashing::HashPointer;
+use crate::hashing::{hash_from_content, hash_from_file, hash_from_save_blob, HashPointer};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Version {
@@ -21,10 +21,10 @@ enum VersionType {
     FILE,
 }
 pub fn start_versioning(file_path: &Path) {
-    let version_blob_pointer = HashPointer::from_path(file_path);
-    let version = version_fold().join(version_blob_pointer.get_one_hash());
+    let version_blob_pointer = hash_from_file(file_path);
+    let version = version_fold().join(version_blob_pointer.get_path());
     if !&version.exists() && file_path.is_file() {
-        let file_blob_pointer = HashPointer::save_blob(file_path, &blob_fold());
+        let file_blob_pointer = hash_from_save_blob(file_path, &blob_fold());
         let new_version = Version {
             version_number: 0,
             version_type: VersionType::FILE,
@@ -42,7 +42,7 @@ pub fn start_versioning(file_path: &Path) {
         let deserialized_version: Vec<Version> = deserialize_file_content(&version);
         let latest_version = deserialized_version.last().expect("No version found");
         if latest_version.version_number > 0 {
-            if HashPointer::from_file(file_path).get_one_hash() != latest_version.hash_pointer.get_one_hash()
+            if hash_from_file(file_path).get_one_hash() != latest_version.hash_pointer.get_one_hash()
             {
             }
         }

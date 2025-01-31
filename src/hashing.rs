@@ -20,31 +20,13 @@ impl PartialEq for HashPointer {
 }
 
 impl HashPointer {
-
     pub fn replace(&mut self, hash_pointer: &HashPointer) {
         self.fold_name = hash_pointer.get_fold_name();
         self.file_name = hash_pointer.get_file_name();
-
-    }
-
-    fn from_hash_string(hash: String) -> Self {
-        if hash.len() < MIN_HASH_LENGTH {
-            panic!("Invalid hash length");
-        }
-        Self {
-            fold_name: hash[..2].to_string(),
-            file_name: hash[2..].to_string(),
-        }
-    }
-
-    pub fn combine(first: &Self, second: &Self) -> Self {
-        Self::from_content(
-            first.get_one_hash() + &second.get_one_hash(),
-        )
     }
 
     pub fn update_hash(&mut self, content: String) {
-        let has_p = Self::combine(&self, &Self::from_content(content));
+        let has_p =hash_combine(&self, &hash_from_content(content));
         self.replace(&has_p);
     }
 
@@ -63,8 +45,25 @@ impl HashPointer {
     pub fn get_path(&self) -> PathBuf {
         PathBuf::from(&self.fold_name).join(&self.file_name)
     }
+}
 
-    pub fn from_file(path: &Path) -> Self {
+pub fn from_hash_string(hash: String) -> HashPointer {
+    if hash.len() < MIN_HASH_LENGTH {
+        panic!("Invalid hash length");
+    }
+    HashPointer {
+        fold_name: hash[..2].to_string(),
+        file_name: hash[2..].to_string(),
+    }
+}
+
+pub fn hash_combine(first: &HashPointer, second: &HashPointer) -> HashPointer {
+    hash_from_content(
+        first.get_one_hash() + &second.get_one_hash(),
+    )
+}
+
+pub fn hash_from_file(path: &Path) -> HashPointer {
         let mut file = BufReader::new(File::open(path).expect("Failed to open file"));
         let mut hasher = Sha256::new();
         let mut buffer = [0u8; 1024];
@@ -76,18 +75,23 @@ impl HashPointer {
             hasher.update(&buffer[..bytes_read]);
         }
 
-        Self::from_hash_string(format!("{:x}", hasher.finalize()))
+        from_hash_string(format!("{:x}", hasher.finalize()))
     }
 
-    pub fn save_blob(file_path: &Path, save_dir: &Path) -> Self {
+    pub fn hash_from_save_blob(file_path: &Path, save_dir: &Path) -> HashPointer {
+        let hash_pointer = hash_from_file(file_path);
+        let blob_file = save_dir.join(hash_pointer.get_path());
+        if blob_file.exists() {
+            println!("file already exists");
+            return hash_pointer;
+        }
         println!("file ---> name {}", file_path.display());
-        let hash_pointer = Self::from_file(file_path);
         let content = fs::read(file_path).expect("Failed to read file");
         create_file(save_dir, &hash_pointer, Some(content));
         hash_pointer
     }
-    pub fn save_blob_from_content(save_dir: &Path, content: String) -> Self {
-        let hash_pointer = Self::from_content(content.clone());
+    pub fn save_blob_from_content(save_dir: &Path, content: String) -> HashPointer {
+        let hash_pointer = hash_from_content(content.clone());
 
         if !save_dir.join(hash_pointer.get_path()).exists() {
             create_file(save_dir, &hash_pointer, Some(content.into_bytes()));
@@ -101,7 +105,7 @@ impl HashPointer {
         hash_pointer
     }
 
-    pub fn hash_from_pointers(pointers: Vec<Self>) -> Self {
+    pub fn hash_from_pointers(pointers: Vec<HashPointer>) -> HashPointer {
         if pointers.is_empty() {
             panic!("Empty hash pointer vector");
         }
@@ -111,30 +115,20 @@ impl HashPointer {
             hasher.update(pointer.get_one_hash().as_bytes());
         }
 
-        Self::from_hash_string(format!("{:x}", hasher.finalize()))
+        from_hash_string(format!("{:x}", hasher.finalize()))
     }
 
-    pub fn from_path(path: &Path) -> Self {
-        let mut hasher = Sha256::new();
-        hasher.update(
-            path.to_str()
-                .expect("Failed to convert path to string")
-                .as_bytes(),
-        );
-        Self::from_hash_string(format!("{:x}", hasher.finalize()))
-    }
-
-    pub fn from_content(content: String) -> Self {
+    pub fn hash_from_content(content: String) -> HashPointer {
         let mut hasher = Sha256::new();
         hasher.update(content.as_bytes());
-        Self::from_hash_string(format!("{:x}", hasher.finalize()))
+        from_hash_string(format!("{:x}", hasher.finalize()))
     }
 
-    pub fn from_hash_string_vec(strings: &[String]) -> Self {
+    pub fn hash_from_string_vec(strings: &[String]) -> HashPointer {
         let mut hasher = Sha256::new();
         for string in strings {
             hasher.update(string.as_bytes());
         }
-        Self::from_hash_string(format!("{:x}", hasher.finalize()))
+        from_hash_string(format!("{:x}", hasher.finalize()))
     }
-}
+

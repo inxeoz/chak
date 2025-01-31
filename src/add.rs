@@ -1,27 +1,23 @@
-use crate::config::{get_current_dir, blob_fold,  VCS_IGNORE_FILE};
+use crate::config::{blob_fold, get_current_dir, VCS_IGNORE_FILE};
+use crate::hashing::{hash_from_pointers, hash_from_save_blob, HashPointer};
 use crate::util::read_directory_entries;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use std::collections::HashSet;
 use std::ops::Sub;
 use std::path::{Path, PathBuf};
-use crate::hashing::HashPointer;
 
 pub fn start_snapshot() {
     let mut ignore_build_vec = Vec::<Gitignore>::new();
     let start_path = get_current_dir();
-
     dir_snapshot(start_path, &mut ignore_build_vec);
 }
-pub fn dir_snapshot(
-    path: &Path,
-    ignore_build_vec: &mut Vec<Gitignore>,
-) -> Vec<HashPointer> {
-    if !path.is_dir() {
-        panic!("Path is not a directory");
-    }
+pub fn dir_snapshot(path: &Path, ignore_build_vec: &mut Vec<Gitignore>) -> Vec<HashPointer> {
+    // Ensure the path is a directory
+    assert!(path.is_dir(), "Path is not a directory");
 
-    let mut children_tree_object = Vec::<HashPointer>::new();
+    let mut children_tree_object = Vec::new();
+
     // Add .ignore file to the ignore builder if it exists
     let ignore_file = path.join(VCS_IGNORE_FILE);
     if ignore_file.exists() {
@@ -30,38 +26,35 @@ pub fn dir_snapshot(
         if let Ok(ignore) = local_builder.build() {
             ignore_build_vec.push(ignore);
         } else {
-            eprintln!(
-                "Could not create Gitignore from path: {}",
-                ignore_file.display()
-            );
+            eprintln!("Could not create Gitignore from path: {}", ignore_file.display());
         }
     }
 
-    // Read directory entries
-    let detected_entries = read_directory_entries(path);
-    let entries_set = parse_ignore_local_level(detected_entries, ignore_build_vec);
+    // Read and filter directory entries based on ignore rules
+    let entries_set = parse_ignore_local_level(read_directory_entries(path), ignore_build_vec);
 
     // Process each entry
     for entry in entries_set {
         if entry.is_dir() {
-            if let nested_tree  = dir_snapshot(&entry, ignore_build_vec) {
-                    if ! nested_tree.is_empty() {
-                        let hash_pointer = HashPointer::hash_from_pointers(nested_tree);
-                        children_tree_object.push(hash_pointer);
-                    }
+            // Skip `.chak` directories at the current level
+            if !(get_current_dir() == path && entry.ends_with(".chak")) {
+                let nested_tree = dir_snapshot(&entry, ignore_build_vec);
+                if !nested_tree.is_empty() {
+                    let hash_pointer = hash_from_pointers(nested_tree);
+                    children_tree_object.push(hash_pointer);
+                }
             }
         } else {
-            let entry_name = entry
-                .file_name()
-                .expect("Failed to get entry name")
-                .to_os_string();
+            // Skip the `.ignore` file and process other files
+            let entry_name = entry.file_name().expect("Failed to get entry name").to_os_string();
             if entry_name != VCS_IGNORE_FILE {
-                let hash_pointer = HashPointer::save_blob(&entry, &blob_fold());
+                let hash_pointer = hash_from_save_blob(&entry, &blob_fold());
                 children_tree_object.push(hash_pointer);
             }
         }
     }
-   children_tree_object
+
+    children_tree_object
 }
 
 pub fn parse_ignore_local_level(
@@ -76,14 +69,12 @@ pub fn parse_ignore_local_level(
 
         for ignore_rules in ignore_build_vec.iter() {
             match ignore_rules.matched(entry.to_str().unwrap_or(""), is_dir) {
-                Match::None => {
-                }
+                Match::None => {}
                 Match::Ignore(_) => {
                     println!("Ignored: {}", entry.display());
-                        not_allowed_entries.insert(entry.clone());
+                    not_allowed_entries.insert(entry.clone());
                 }
-                Match::Whitelist(_) => {
-                }
+                Match::Whitelist(_) => {}
             }
         }
     }

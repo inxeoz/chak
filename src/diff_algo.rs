@@ -1,4 +1,4 @@
-use crate::hashing::HashPointer;
+use crate::hashing::{hash_from_content, HashPointer};
 use itertools::{EitherOrBoth, Itertools};
 use serde::Serialize;
 use std::cmp::PartialEq;
@@ -23,7 +23,7 @@ impl Line {
     pub fn new(line: String) -> Line {
         Line {
             line_value: line.clone(),
-            line_hash: HashPointer::from_content(line),
+            line_hash: hash_from_content(line),
         }
     }
 }
@@ -99,7 +99,7 @@ pub struct ContentBlock {
 impl ContentBlock {
     pub fn new() -> Self {
         Self {
-            content_hash: HashPointer::from_content(String::new()),
+            content_hash: hash_from_content(String::new()),
             content: vec![],
         }
     }
@@ -132,7 +132,7 @@ pub fn to_interconnected_line(file_path: &Path) -> HashedContent {
 
     for (index, res_line) in BufReader::new(file).lines().enumerate() {
         if let Ok(line) = res_line {
-            let hash_string = HashPointer::from_content(line.clone()).get_one_hash();
+            let hash_string = hash_from_content(line.clone()).get_one_hash();
 
             // Map line number to hash string
             line_to_hash.insert(index as i64, hash_string.clone());

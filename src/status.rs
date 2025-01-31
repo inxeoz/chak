@@ -1,7 +1,7 @@
 
 use std::path::{Path, PathBuf};
 use crate::config::{blob_fold, get_current_dir};
-use crate::hashing::{ HashPointer};
+use crate::hashing::{hash_from_file, HashPointer};
 
 pub fn get_status(path: &Path) -> Vec<PathBuf> {
     let mut status = Vec::new();
@@ -11,7 +11,7 @@ pub fn get_status(path: &Path) -> Vec<PathBuf> {
                 status.extend(get_status(&entry.path()));
             }
         }
-    } else if let file_blob_pointer = HashPointer::from_file(path) {
+    } else if let file_blob_pointer = hash_from_file(path) {
         let blob_path = blob_fold().join(file_blob_pointer.get_path());
         if !blob_path.exists() {
             if let Ok(relative_path) = path.strip_prefix(get_current_dir()) {

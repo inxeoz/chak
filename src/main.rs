@@ -19,7 +19,7 @@ use crate::init::init;
 
 fn main() {
   //  test();
-    init();
+   // init();
     start_snapshot()
 }
 
