@@ -1,6 +1,6 @@
-use crate::config::{blob_fold,  version_fold};
+use crate::config::{blob_fold};
 use crate::macros::create_file;
-use std::fs;
+use std::{fs, io};
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -20,39 +20,40 @@ enum VersionType {
     DIFF,
     FILE,
 }
-pub fn start_versioning(file_path: &Path) {
-    let version_blob_pointer = hash_from_file(file_path);
-    let version = version_fold().join(version_blob_pointer.get_path());
-    if !&version.exists() && file_path.is_file() {
-        let file_blob_pointer = hash_from_save_blob(file_path, &blob_fold());
-        let new_version = Version {
-            version_number: 0,
-            version_type: VersionType::FILE,
-            diff_from: 0,
-            hash_pointer: file_blob_pointer,
-        };
-        let new_version_vec = Vec::from([new_version]);
-        let serialized_version = serialize_struct(&new_version_vec);
-        create_file(
-            &version_fold(),
-            &version_blob_pointer,
-            Some(serialized_version.into_bytes()),
-        );
-    } else {
-        let deserialized_version: Vec<Version> = deserialize_file_content(&version);
-        let latest_version = deserialized_version.last().expect("No version found");
-        if latest_version.version_number > 0 {
-            if hash_from_file(file_path).get_one_hash() != latest_version.hash_pointer.get_one_hash()
-            {
-            }
-        }
-    }
-}
+// pub fn start_versioning(file_path: &Path) {
+//     let version_blob_pointer = hash_from_file(file_path);
+//     let version = version_fold().join(version_blob_pointer.get_path());
+//     if !&version.exists() && file_path.is_file() {
+//         let file_blob_pointer = hash_from_save_blob(file_path, &blob_fold());
+//         let new_version = Version {
+//             version_number: 0,
+//             version_type: VersionType::FILE,
+//             diff_from: 0,
+//             hash_pointer: file_blob_pointer,
+//         };
+//         let new_version_vec = Vec::from([new_version]);
+//         let serialized_version = serialize_struct(&new_version_vec);
+//         create_file(
+//             &version_fold(),
+//             &version_blob_pointer,
+//             Some(serialized_version.into_bytes()),
+//         );
+//     } else {
+//         let deserialized_version: Vec<Version> = deserialize_file_content(&version).expect("TODO");
+//         let latest_version = deserialized_version.last().expect("No version found");
+//         if latest_version.version_number > 0 {
+//             if hash_from_file(file_path).get_one_hash() != latest_version.hash_pointer.get_one_hash()
+//             {
+//             }
+//         }
+//     }
+// }
 
 
-pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> T {
-    let content = fs::read_to_string(path).expect("File not found");
-    serde_json::from_str(&content).expect("Failed to deserialize")
+pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, String> {
+    let content = fs::read_to_string(path).map_err(|e| format!("File read error: {}", e))?; // Handle file read errors
+    let content: T = serde_json::from_str(&content).map_err(|e| format!("Deserialization error: {}", e))?; // Handle JSON parsing errors
+    Ok(content)
 }
 
 pub fn serialize_struct<T: Serialize>(data: &T) -> String {

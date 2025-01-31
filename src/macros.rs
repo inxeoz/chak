@@ -83,3 +83,14 @@ pub fn input_from_commandline(prompt: &str) -> String {
     io::stdin().read_line(&mut input).unwrap();
     input.trim().to_lowercase() // Return the trimmed and lowercase input
 }
+
+pub fn append_to_file(path: &Path, data: &str) -> io::Result<()> {
+    // Open the file in append mode (create it if it doesn't exist)
+    let mut file = OpenOptions::new()
+        .append(true) // Open in append mode
+        .create(true) // Create the file if it doesn't exist
+        .open(path)?;
+    // Write the data to the file
+    writeln!(file, "{}", data)?; // Use `writeln!` to add a newline after the data
+    Ok(())
+}

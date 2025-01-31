@@ -1,5 +1,7 @@
 
 use clap::{Parser, Subcommand};
+use crate::add::start_snapshot;
+use crate::commit::create_commit_from_stage;
 use crate::init::init;
 use crate::config::{get_current_dir};
 use crate::status::get_status;
@@ -14,24 +16,16 @@ struct Args {
     #[command(subcommand)]
     command: Option<Commands>,
 }
-
-#[derive(Subcommand)]
+#[derive(Debug, Subcommand)]
 enum Commands {
     /// Initializes a new repository
-    Init {
-    },
-
+    Init,
     /// Commits changes
     Commit {
         /// Commit message
         #[arg(short, long)]
-        message: String,
-
-        /// Files to commit (use '.' for all files)
-        #[arg(short, long, default_value = ".")]
-        files: String,
+        m: String,
     },
-
     Add {
         /// Files or directories to add
         #[arg(required = true)]
@@ -39,21 +33,19 @@ enum Commands {
     },
     /// Shows the status of the repository
     Status,
-
     /// Shows the commit history
     Log,
-
     /// Create and manage branches
     Branch {
         /// Create a new branch
         #[arg(short, long)]
         create: Option<String>,
-
         /// List all branches
         #[arg(short, long)]
         list: bool,
     },
 }
+
 
 
 
@@ -69,18 +61,18 @@ pub fn parse_commandline() {
 
         Some(Commands::Add {files }) => {
             if check_vcs_presence() {
-               //
+                if files.contains(&".".to_string()) {
+                   // println!(". seen");
+                    start_snapshot();
+                }
             }else {
                 println!("No vcs_presence configured. could not applied add operations.");
             }
         }
 
 
-        Some(Commands::Commit { message, files }) => {
-            println!("Committing changes with message: '{}'", message);
-            println!("Files to commit: {}", files);
-            // Add commit logic here (e.g., staging and committing files)
-            // commit_changes(&message, &files, &CURRENT_PATH);
+        Some(Commands::Commit { m }) => {
+            create_commit_from_stage( m, Some("inxeoz".to_string()));
         }
         Some(Commands::Status) => {
             if check_vcs_presence() {

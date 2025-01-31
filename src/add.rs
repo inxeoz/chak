@@ -1,17 +1,35 @@
-use crate::config::{blob_fold, get_current_dir, tree_fold, VCS_IGNORE_FILE};
+use crate::config::{blob_fold, get_current_dir, staging_area_fold, VCS_IGNORE_FILE};
 use crate::hashing::{hash_from_pointers, hash_from_save_blob, hash_from_save_tree, HashPointer};
 use crate::tree_object::{TreeObject, TreeObjectType};
 use crate::util::read_directory_entries;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use std::collections::HashSet;
+use std::fs::OpenOptions;
+use std::hash::Hash;
+use std::io::Write;
 use std::ops::Sub;
 use std::path::{Path, PathBuf};
+
+pub fn attach_latest_root_pointer_to_stage(root_pointer: HashPointer) {
+
+    let stage_file_path = &staging_area_fold().join("stage");
+    let mut file = OpenOptions::new()
+        .create(true)  // Create the file if it doesn't exist
+        .write(true)   // Enable writing
+        .truncate(true) // Clear file contents before writing
+        .open(&stage_file_path)
+        .expect("Couldn't open file");
+
+    file.write_all(root_pointer.get_one_hash().as_ref()).expect("TODO"); // Writing data
+
+}
 
 pub fn start_snapshot() {
     let mut ignore_build_vec = Vec::<Gitignore>::new();
     let start_path = get_current_dir();
-    dir_snapshot(start_path, &mut ignore_build_vec);
+    let root_tree_pointer = dir_snapshot(start_path, &mut ignore_build_vec);
+    attach_latest_root_pointer_to_stage(root_tree_pointer);
 }
 pub fn dir_snapshot(path: &Path, ignore_build_vec: &mut Vec<Gitignore>) -> HashPointer {
     // Ensure the path is a directory
@@ -63,7 +81,7 @@ pub fn dir_snapshot(path: &Path, ignore_build_vec: &mut Vec<Gitignore>) -> HashP
         }
     }
 
-    hash_from_save_tree(&tree_fold(), tree_object)
+    hash_from_save_tree(&blob_fold(), &mut tree_object)
 
     //   children_tree_object
 }

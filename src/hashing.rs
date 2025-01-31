@@ -63,7 +63,8 @@ impl HashPointer {
     }
 }
 
-pub fn from_hash_string(hash: String) -> HashPointer {
+
+pub fn hash_pointer_from_hash_string(hash: String) -> HashPointer {
     if hash.len() < MIN_HASH_LENGTH {
         panic!("Invalid hash length");
     }
@@ -91,7 +92,7 @@ pub fn hash_from_file(path: &Path) -> HashPointer {
             hasher.update(&buffer[..bytes_read]);
         }
 
-        from_hash_string(format!("{:x}", hasher.finalize()))
+        hash_pointer_from_hash_string(format!("{:x}", hasher.finalize()))
     }
 
     pub fn hash_from_save_blob(file_path: &Path, save_dir: &Path) -> HashPointer {
@@ -131,13 +132,13 @@ pub fn hash_from_file(path: &Path) -> HashPointer {
             hasher.update(pointer.get_one_hash().as_bytes());
         }
 
-        from_hash_string(format!("{:x}", hasher.finalize()))
+        hash_pointer_from_hash_string(format!("{:x}", hasher.finalize()))
     }
 
     pub fn hash_from_content(content: String) -> HashPointer {
         let mut hasher = Sha256::new();
         hasher.update(content.as_bytes());
-        from_hash_string(format!("{:x}", hasher.finalize()))
+        hash_pointer_from_hash_string(format!("{:x}", hasher.finalize()))
     }
 
     pub fn hash_from_string_vec(strings: &[String]) -> HashPointer {
@@ -145,10 +146,10 @@ pub fn hash_from_file(path: &Path) -> HashPointer {
         for string in strings {
             hasher.update(string.as_bytes());
         }
-        from_hash_string(format!("{:x}", hasher.finalize()))
+        hash_pointer_from_hash_string(format!("{:x}", hasher.finalize()))
     }
 
-pub fn hash_from_save_tree(save_dir: &Path, mut tree_object: TreeObject) -> HashPointer {
+pub fn hash_from_save_tree(save_dir: &Path,  tree_object: &mut TreeObject) -> HashPointer {
     tree_object.sort_children();
     let content = serde_json::to_string(&tree_object).expect("Failed to serialize tree_object");
     hash_from_save_content(save_dir, content)

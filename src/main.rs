@@ -10,17 +10,18 @@ mod hashing;
 mod diff;
 mod diff_algo;
 mod tree_object;
+mod commit;
 
 use clap::{Parser, Subcommand};
 use crate::add::{ start_snapshot};
+use crate::commandline::parse_commandline;
+use crate::commit::{create_commit_from_stage, get_root_pointer_from_stage};
 use crate::config::get_current_dir;
 use crate::diff_algo::{compare_hashed_content, to_interconnected_line};
 use crate::init::init;
 
 fn main() {
-  //  test();
-   // init();
-    start_snapshot()
+    parse_commandline();
 }
 
 
