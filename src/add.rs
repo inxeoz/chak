@@ -25,24 +25,32 @@ pub fn start_snapshot() {
 
     //implement the tree pointer with traversing fold/file and checking hash from tree pointer and so on .. TODO
     //get latest tree pointer from history_log
-    let tree_hie = {
-        if let Ok(commit_pointer) =
-            get_latest_pointer_from_file(&commit_history_fold().join("commit_log"), true)
-        {
-            let latest_commit: Commit =
-                deserialize_file_content(&commits_fold().join(commit_pointer.get_path()))
-                    .expect("Failed to deserialize latest commit file.");
-            deserialize_file_content(&blob_fold().join(latest_commit.root_tree_pointer.get_path())).unwrap_or_else(|e| { None })
+    let mut tree_object: Option<TreeObject> = None;
+    if let Ok(commit_pointer) = get_latest_pointer_from_file(&commit_history_fold().join("commit_log"), true) {
+        if let Ok(latest_commit) = deserialize_file_content::<Commit>(&commits_fold().join(commit_pointer.get_path())) {
+            let root_tree_pointer = latest_commit.root_tree_pointer.get_path();
 
-        } else {
-            None
+            match deserialize_file_content::<TreeObject>(&blob_fold().join(root_tree_pointer)) {
+                Ok(tree_object_s) => {
+                    tree_object = Some(tree_object_s);
+                    println!("We got tree_object");
+                }
+                Err(e) => {
+                    eprintln!("We got an error: {}", e);
+                }
+            }
         }
-    };
+    }
 
-let root_tree_pointer = dir_snapshot(start_path, &mut ignore_build_vec, tree_hie);
+
+    let root_tree_pointer = dir_snapshot(start_path, &mut ignore_build_vec,tree_object);
     attach_latest_root_pointer_to_stage(root_tree_pointer);
 }
-pub fn dir_snapshot(path: &Path, ignore_build_vec: &mut Vec<Gitignore>, tree_hie: Option<TreeObject>) -> HashPointer {
+pub fn dir_snapshot(
+    path: &Path,
+    ignore_build_vec: &mut Vec<Gitignore>,
+    tree_hie: Option<TreeObject>,
+) -> HashPointer {
     // Ensure the path is a directory
     assert!(path.is_dir(), "Path is not a directory");
 
@@ -89,9 +97,12 @@ pub fn dir_snapshot(path: &Path, ignore_build_vec: &mut Vec<Gitignore>, tree_hie
                 let hash_pointer = hash_from_save_blob(&entry, &blob_fold());
                 if let Some(ref tree) = tree_hie {
                     if tree.children.contains_key(&entry_name) {
-                        if let Some(child_object )= tree.children.get(&entry_name){
-                            if hash_pointer != child_object.pointer_to_blob {
+
+                        println!("entry name exists");
+                        if let Some(child_object) = tree.children.get(&entry_name) {
+                            if hash_pointer == child_object.pointer_to_blob {
                                 //get diff for pointer_to_blob and with entry and save the diff as
+                                println!("no changes as hashpointer is matched");
                             }
                         }
                     }
@@ -102,7 +113,7 @@ pub fn dir_snapshot(path: &Path, ignore_build_vec: &mut Vec<Gitignore>, tree_hie
                         is_file: false,
                         blob_type: TreeObjectType::BlobFile,
                         pointer_to_blob: hash_pointer.clone(),
-                        pointer_to_previous_node: hash_pointer
+                        pointer_to_previous_node: None,
                     },
                 );
             }

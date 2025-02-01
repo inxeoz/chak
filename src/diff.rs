@@ -50,9 +50,10 @@ enum VersionType {
 // }
 
 
-pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, String> {
-    let content = fs::read_to_string(path).map_err(|e| format!("File read error: {}", e))?; // Handle file read errors
-    let content: T = serde_json::from_str(&content).map_err(|e| format!("Deserialization error: {}", e))?; // Handle JSON parsing errors
+pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
+    let content_string = fs::read_to_string(path)?;  // Reads file, propagates error if any
+    let content = serde_json::from_str(&content_string)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?; // Converts serde error into io::Error
     Ok(content)
 }
 
