@@ -1,12 +1,12 @@
-use crate::config::{blob_fold};
+use crate::config::blob_fold;
 use crate::macros::create_file;
-use std::{fs, io};
 use std::path::Path;
+use std::{fs, io};
 
-use serde::{Deserialize, Serialize};
-use serde::de::DeserializeOwned;
-use crate::diff_algo::{compare_hashed_content, to_interconnected_line};
+use crate::diff_algo::{compare_hashed_content, to_interconnected_line, HashedContent};
 use crate::hashing::{hash_from_content, hash_from_file, hash_from_save_blob, HashPointer};
+use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Version {
@@ -20,7 +20,7 @@ enum VersionType {
     DIFF,
     FILE,
 }
-// pub fn start_versioning(file_path: &Path) {
+// pub fn make_version_diff(file_path: &Path) {
 //     let version_blob_pointer = hash_from_file(file_path);
 //     let version = version_fold().join(version_blob_pointer.get_path());
 //     if !&version.exists() && file_path.is_file() {
@@ -49,9 +49,8 @@ enum VersionType {
 //     }
 // }
 
-
 pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
-    let content_string = fs::read_to_string(path)?;  // Reads file, propagates error if any
+    let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
     let content = serde_json::from_str(&content_string)
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?; // Converts serde error into io::Error
     Ok(content)
@@ -62,27 +61,28 @@ pub fn serialize_struct<T: Serialize>(data: &T) -> String {
     serialized
 }
 
-pub fn get_diff(prev_file: &Path, new_file: &Path) {
-
+pub fn get_diff(prev_file: &Path, new_file: &Path) -> Result<HashedContent, io::Error> {
     // Generate mappings
-    let first = to_interconnected_line(prev_file);
-    let second = to_interconnected_line(new_file);
+    let first = to_interconnected_line(prev_file)?;
+    let second = to_interconnected_line(new_file)?;
 
-    // Serialize and print mappings
-    println!("Line to Hash:");
-    println!("{}", serde_json::to_string_pretty(&first.line_to_hash).unwrap());
-
-    println!("Hash to Content:");
-    println!("{}", serde_json::to_string_pretty(&first.hash_to_content).unwrap());
-
-    // Serialize and print mappings
-    println!("Line to Hash:");
-    println!("{}", serde_json::to_string_pretty(&second.line_to_hash).unwrap());
-
-    println!("Hash to Content:");
-    println!("{}", serde_json::to_string_pretty(&second.hash_to_content).unwrap());
+    // // Serialize and print mappings
+    // println!("Line to Hash:");
+    // println!("{}", serde_json::to_string_pretty(&first.line_to_hash).unwrap());
+    //
+    // println!("Hash to Content:");
+    // println!("{}", serde_json::to_string_pretty(&first.hash_to_content).unwrap());
+    //
+    // // Serialize and print mappings
+    // println!("Line to Hash:");
+    // println!("{}", serde_json::to_string_pretty(&second.line_to_hash).unwrap());
+    //
+    // println!("Hash to Content:");
+    // println!("{}", serde_json::to_string_pretty(&second.hash_to_content).unwrap());
 
     let diff = compare_hashed_content(first, second);
+
+    Ok(diff)
 
     // // Serialize and print mappings
     // println!("Line to Hash:");
@@ -90,7 +90,4 @@ pub fn get_diff(prev_file: &Path, new_file: &Path) {
     //
     // println!("Hash to Content:");
     // println!("{}", serde_json::to_string_pretty(&new.hash_to_content).unwrap());
-
-
-
 }

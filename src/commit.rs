@@ -1,9 +1,10 @@
-use crate::config::{commit_history_fold, commits_fold, staging_area_fold};
+use crate::config::{commits_fold, history_fold, staging_area_fold};
 use crate::diff::serialize_struct;
 use crate::hashing::{get_latest_pointer_from_file, hash_from_save_content, HashPointer};
 use crate::macros::append_to_file;
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
+use std::io;
 use std::io::Write;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -24,14 +25,14 @@ pub fn create_commit(
         author: author.unwrap_or("unknown".to_string()),
     }
 }
-pub fn save_commit(commit: Commit) -> HashPointer {
+pub fn save_commit(commit: Commit) -> io::Result<HashPointer> {
     let serialized_commit = serialize_struct(&commit);
     hash_from_save_content(&commits_fold(), serialized_commit)
 }
 
 pub fn append_commit_pointer_to_history(commit_pointer: HashPointer) {
     append_to_file(
-        &commit_history_fold().join("commit_log"),
+        &history_fold().join("commit_log"),
         &commit_pointer.get_one_hash(),
     )
     .expect("Failed to perform commit");

@@ -1,107 +1,77 @@
 use crate::hashing::HashPointer;
 use std::fs;
 use std::fs::{File, OpenOptions};
-use std::io::{self, Write};
+use std::io::{self, ErrorKind, Write};
 use std::path::{Path, PathBuf};
 
-/// Function to create a directory and all its parent directories if they don't exist.
-pub fn create_fold(dir: &Path) {
-    fs::create_dir_all(dir).expect("Failed to create directory");
+pub fn create_file_with_blob_pointer(
+    parent_fold: &Path,
+    blob_pointer: &HashPointer,
+    contents: Option<Vec<u8>>,
+) -> io::Result<()> {
+    let final_parent_fold = parent_fold.join(blob_pointer.get_fold_name());
+    let file_path = final_parent_fold.join(blob_pointer.get_file_name());
+
+    fs::create_dir_all(final_parent_fold)?;
+    let mut file = File::create(&file_path)?;
+
+
+    if let Some(content) = contents {
+        file.write_all(&content)?;
+    }
+
+    println!("File {} created", file_path.display());
+
+    Ok(())
 }
 
-/// Function to create a file and write a message to it.
-pub fn create_file_with_blob_pointer(parent_fold: &Path, blob_pointer: &HashPointer, contents: Option<Vec<u8>>) {
-    // Create the full file path
-    let file_path = parent_fold.join(blob_pointer.get_path());
-
-    // Ensure the parent directory exists, create it if not
+pub fn create_file<P: AsRef<Path>>(file_path: P) -> io::Result<()> {
+    let file_path = file_path.as_ref();
     if let Some(parent) = file_path.parent() {
-        if !parent.exists() {
-            if let Err(e) = fs::create_dir_all(parent) {
-                panic!("Failed to create parent directory {:?}: {}", parent, e);
-            }
-        }
-    } else {
-        panic!("Cannot get parent directory for file path: {:?}", file_path);
+        fs::create_dir_all(parent)?;
     }
-
-    // Create and write to the file
-    match File::create(&file_path) {
-        Ok(mut file) => {
-            if let Some(content) = contents {
-                // Write content to the file
-                if let Err(e) = file.write_all(&content) {
-                    panic!("Failed to write to file {:?}: {}", file_path, e);
-                }
-            }
-
-            println!("File {} created", file_path.display());
-        }
-        Err(e) => panic!("Failed to create file {:?}: {}", file_path, e),
-    }
+    File::create(file_path)?;
+    Ok(())
 }
 
-pub fn create_file(file_path: &PathBuf) {
-    // Ensure the parent directory exists, create it if not
-    if let Some(parent) = file_path.parent() {
-        if !parent.exists() {
-            if let Err(e) = fs::create_dir_all(parent) {
-                panic!("Failed to create parent directory {:?}: {}", parent, e);
-            }
-        }
-    } else {
-        panic!("Cannot get parent directory for file path: {:?}", file_path);
-    }
-    // Create and write to the file
-    match File::create(&file_path) {
-        Ok(mut file) => {
-            println!("File {} created", file_path.display());
-        }
-        Err(e) => panic!("Failed to create file {:?}: {}", file_path, e),
-    }
-}
 /// Function to save content to a file.
 //TODO fix saving anc creating
-pub fn save_to_file(file_path: &Path, content: &str, append: bool) {
-
-    if file_path.is_dir() || ! file_path.exists() {
-        panic!("cant save content in file {}", file_path.display());
+pub fn save_to_file(file_path: &Path, content: &str, append: bool) -> io::Result<()> {
+    if !file_path.exists() {
+        create_file(file_path)?;
     }
-    let file = if append {
+    if file_path.is_dir() {
+        return Err(io::Error::new(
+            ErrorKind::IsADirectory,
+            "file path is a directory",
+        ));
+    }
+    let mut file = if append {
         OpenOptions::new()
             .append(true) // Open the file in append mode
-            .open(file_path)
+            .open(file_path)?
     } else {
         OpenOptions::new()
             .write(true) // Open the file in write mode
             .truncate(true) // Truncate the file (clear its contents)
-            .open(file_path)
+            .open(file_path)?
     };
 
-    match file {
-        Ok(mut file) => {
-            // Write the content to the file
-            if let Err(e) = writeln!(file, "{}", content) {
-                eprintln!("Error writing to file '{}': {}", file_path.display(), e);
-            } else {
-                println!("Successfully saved content to '{}'", file_path.display());
-            }
-        }
-        Err(e) => eprintln!("Error opening file '{}': {}", file_path.display(), e),
-    }
+    writeln!(file, "{}", content)?;
+    Ok(())
 }
 
 /// Function to get input from the command line.
-pub fn input_from_commandline(prompt: &str) -> String {
+pub fn input_from_commandline(prompt: &str) -> io::Result<String> {
     let mut input = String::new();
 
-    // Print the prompt
-    print!("{}", prompt);
-    io::stdout().flush().unwrap(); // Ensure the prompt is displayed immediately
+    if prompt.len() > 0 {
+        print!("{}", prompt);
+        io::stdout().flush()?; // Ensure the prompt is displayed immediately
+    }
 
-    // Read user input
-    io::stdin().read_line(&mut input).unwrap();
-    input.trim().to_lowercase() // Return the trimmed and lowercase input
+    io::stdin().read_line(&mut input)?;
+    Ok(input.trim().to_lowercase())
 }
 
 pub fn append_to_file(path: &Path, data: &str) -> io::Result<()> {

@@ -38,6 +38,6 @@ pub fn commits_fold() -> PathBuf {
     get_vcs_store().join("commits")
 }
 
-pub fn commit_history_fold() -> PathBuf {
+pub fn history_fold() -> PathBuf {
     get_vcs_store().join("history")
 }

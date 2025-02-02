@@ -1,8 +1,5 @@
 use crate::commit::{attach_latest_root_pointer_to_stage, Commit};
-use crate::config::{
-    blob_fold, commit_history_fold, commits_fold, get_current_dir, staging_area_fold,
-    VCS_IGNORE_FILE,
-};
+use crate::config::{blob_fold, commits_fold, get_current_dir, history_fold, staging_area_fold, VCS_IGNORE_FILE};
 use crate::diff::deserialize_file_content;
 use crate::hashing::{
     get_latest_pointer_from_file, hash_from_pointers, hash_from_save_blob, hash_from_save_tree,
@@ -14,19 +11,18 @@ use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use indexmap::IndexMap;
 use itertools::Itertools;
-use std::collections::HashSet;
 use std::hash::Hash;
-use std::ops::Sub;
+use std::io;
 use std::path::{Path, PathBuf};
 
-pub fn start_snapshot() {
+pub fn start_snapshot() -> io::Result<()> {
     let mut ignore_build_vec = Vec::<Gitignore>::new();
     let start_path = get_current_dir();
 
     //implement the tree pointer with traversing fold/file and checking hash from tree pointer and so on .. TODO
     //get latest tree pointer from history_log
     let mut tree_object: Option<TreeObject> = None;
-    if let Ok(commit_pointer) = get_latest_pointer_from_file(&commit_history_fold().join("commit_log"), true) {
+    if let Ok(commit_pointer) = get_latest_pointer_from_file(&history_fold().join("commit_log"), true) {
         if let Ok(latest_commit) = deserialize_file_content::<Commit>(&commits_fold().join(commit_pointer.get_path())) {
             let root_tree_pointer = latest_commit.root_tree_pointer.get_path();
 
@@ -43,14 +39,15 @@ pub fn start_snapshot() {
     }
 
 
-    let root_tree_pointer = dir_snapshot(start_path, &mut ignore_build_vec,tree_object);
+    let root_tree_pointer = dir_snapshot(start_path, &mut ignore_build_vec,tree_object)?;
     attach_latest_root_pointer_to_stage(root_tree_pointer);
+    Ok(())
 }
 pub fn dir_snapshot(
     path: &Path,
     ignore_build_vec: &mut Vec<Gitignore>,
     tree_hie: Option<TreeObject>,
-) -> HashPointer {
+) -> io::Result<HashPointer> {
     // Ensure the path is a directory
     assert!(path.is_dir(), "Path is not a directory");
 
@@ -75,7 +72,7 @@ pub fn dir_snapshot(
     }
 
     // Read and filter directory entries based on ignore rules
-    let entries_set = parse_ignore_local_level(read_directory_entries(path), ignore_build_vec);
+    let entries_set = parse_ignore_local_level(read_directory_entries(path)?, ignore_build_vec);
 
     // Process each entry
     for entry in entries_set {
@@ -94,7 +91,7 @@ pub fn dir_snapshot(
                 .expect("Could not convert to str")
                 .to_string();
             if entry_name != VCS_IGNORE_FILE {
-                let hash_pointer = hash_from_save_blob(&entry, &blob_fold());
+                let hash_pointer = hash_from_save_blob(&entry, &blob_fold())?;
                 if let Some(ref tree) = tree_hie {
                     if tree.children.contains_key(&entry_name) {
 

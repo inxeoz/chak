@@ -1,54 +1,42 @@
 use crate::config::{get_current_dir};
 use std::collections::HashSet;
 use std::fs::read_dir;
+use std::io;
 use std::path::{Path, PathBuf};
 
-pub fn check_vcs_presence_in_subdir(vcs_name: &str) -> Vec<PathBuf> {
-    let mut presence_vec = Vec::new();
-    let current_dir = get_current_dir();
+pub fn check_vcs_presence(fold: &Path) -> bool {
+    // Check if the folder exists and if it contains the `.chak` folder
+    if fold.exists() {
+        if fold.join(".chak").exists() {
+            return true;
+        }
 
-    // Dereference CURRENT_PATH to satisfy AsRef<Path> requirement
-    for entry in read_dir(&current_dir)
-        .map_err(|_| format!("Failed to read directory: {}", &current_dir.display()))
-        .expect("Could not read directory")
-    {
-        if let Ok(entry) = entry {
-            if entry.path().join(vcs_name).exists() {
-                presence_vec.push(entry.path());
+        // Read the directory and check subdirectories recursively
+        if let Ok(entries) = read_dir(fold) {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    // Recursively check each subdirectory
+                    if check_vcs_presence(&entry.path()) {
+                        return true;
+                    }
+                }
             }
         }
     }
-
-    presence_vec
+    false
 }
 
-pub fn check_vcs_presence() -> bool {
-    if get_current_dir().join(".chak").exists() {
-        true
-    } else {
-        println!("VCS presence could not be found in current directory");
-        let present_subdirs = check_vcs_presence_in_subdir(".chak");
-        if !present_subdirs.is_empty() {
-            println!("VCS presence detected in these subdirectories:");
-            for _presence in present_subdirs {
-                println!("in this folder {} .chak/ folder exist", _presence.display());
-            }
-        }
-        false
-    }
-}
+pub fn read_directory_entries(path: &Path) -> io::Result<Vec<PathBuf>> {
 
-pub fn read_directory_entries(path: &Path) -> Vec<PathBuf> {
-
-    let entries = read_dir(path).expect("Could not read directory");
+    let entries = read_dir(path)?;
     let mut detected_entries = Vec::new();
 
     for entry in entries {
-        let entry = entry.expect("Could not read directory entry").path();
+        let entry = entry?.path();
         detected_entries.push(entry.clone());
     }
 
-    detected_entries
+    Ok(detected_entries)
 }
 
 // pub fn parse_ignore(path: &Path, ignore_build_vec: &mut Vec<Gitignore>) {

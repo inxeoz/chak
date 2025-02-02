@@ -1,13 +1,15 @@
 use crate::hashing::{hash_from_content, HashPointer};
+use indexmap::IndexMap;
 use itertools::{EitherOrBoth, Itertools};
 use serde::Serialize;
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fs::File;
 use std::hash::Hash;
+use std::io;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use indexmap::IndexMap;
+use crate::custom_error::ChakError;
 
 #[derive(Serialize, PartialEq, Debug, Clone, Copy)]
 pub enum DiffLineType {
@@ -27,8 +29,6 @@ impl Line {
         }
     }
 }
-
-
 
 #[derive(Serialize, Clone, Debug)]
 pub struct DiffLine {
@@ -127,8 +127,8 @@ pub struct HashedContent {
     pub line_to_hash: IndexMap<i64, String>,
     pub hash_to_content: HashMap<String, String>,
 }
-pub fn to_interconnected_line(file_path: &Path) -> HashedContent {
-    let file = File::open(file_path).expect("cannot open file");
+pub fn to_interconnected_line(file_path: &Path) -> io::Result<HashedContent> {
+    let file = File::open(file_path)?;
 
     let mut line_to_hash = IndexMap::<i64, String>::new();
     let mut hash_to_content = HashMap::<String, String>::new();
@@ -145,18 +145,17 @@ pub fn to_interconnected_line(file_path: &Path) -> HashedContent {
         }
     }
 
-    HashedContent {
+    Ok(HashedContent {
         pointer_to_previous_version: None,
         line_to_hash,
         hash_to_content,
-    }
+    })
 }
 
 pub fn compare_hashed_content(
     pre_content: HashedContent,
     new_content: HashedContent,
-) -> HashedContent{
-
+) -> HashedContent {
     let prev_line_to_hash = pre_content.line_to_hash;
     let pre_hash_to_content = pre_content.hash_to_content;
     let new_line_to_hash = new_content.line_to_hash;
@@ -164,14 +163,15 @@ pub fn compare_hashed_content(
     let mut diff_line_to_hash = IndexMap::<i64, String>::new();
     let mut diff_hash_to_content = HashMap::<String, String>::new();
 
-    let insert_hash_to_content_in_diff = |p_hash: &String, mut diff_hash_to_content: &mut HashMap<String, String>| {
-        if !diff_hash_to_content.contains_key(p_hash.as_str()) {
-            diff_hash_to_content.insert(
-                p_hash.clone(),
-                pre_hash_to_content.get(p_hash.as_str()).unwrap().clone(),
-            );
-        }
-    };
+    let insert_hash_to_content_in_diff =
+        |p_hash: &String, mut diff_hash_to_content: &mut HashMap<String, String>| {
+            if !diff_hash_to_content.contains_key(p_hash.as_str()) {
+                diff_hash_to_content.insert(
+                    p_hash.clone(),
+                    pre_hash_to_content.get(p_hash.as_str()).unwrap().clone(),
+                );
+            }
+        };
 
     for pair in prev_line_to_hash
         .iter()
@@ -197,7 +197,6 @@ pub fn compare_hashed_content(
         }
     }
 
-
     HashedContent {
         pointer_to_previous_version: None,
         line_to_hash: diff_line_to_hash,
@@ -205,18 +204,20 @@ pub fn compare_hashed_content(
     }
 }
 
-pub fn file_to_lines(file_path: &Path) -> Vec<Line> {
-    let file = File::open(file_path).expect("cannot open file");
+pub fn file_to_lines(file_path: &Path) -> Result<Vec<Line>,io::Error> {
+    let file = File::open(file_path)?;
     let reader = BufReader::new(file);
+    Ok (
     reader
         .lines()
         .map(|line| Line::new(line.unwrap()))
         .collect()
+    )
 }
 
-pub fn create_content_block(prev: &Path, new: &Path) {
-    let prev_content = file_to_lines(prev);
-    let new_content = file_to_lines(new);
+pub fn create_content_block(prev: &Path, new: &Path) -> Result<String, io::Error> {
+    let prev_content = file_to_lines(prev)?;
+    let new_content = file_to_lines(new)?;
 
     let mut final_content = ContentBlock::new();
 
@@ -237,6 +238,5 @@ pub fn create_content_block(prev: &Path, new: &Path) {
         }
     }
 
-    let json = serde_json::to_string_pretty(&final_content).unwrap();
-    println!("{}", json);
+    Ok(serde_json::to_string_pretty(&final_content)?)
 }

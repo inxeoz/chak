@@ -5,7 +5,6 @@ use crate::commit::{append_commit_pointer_to_history, create_commit, save_commit
 use crate::init::init;
 use crate::config::{get_current_dir, staging_area_fold};
 use crate::hashing::get_latest_pointer_from_file;
-use crate::status::get_status;
 use crate::util::check_vcs_presence;
 
 /// A simple version control system built with Rust
@@ -61,7 +60,7 @@ pub fn parse_commandline() {
         }
 
         Some(Commands::Add {files }) => {
-            if check_vcs_presence() {
+            if check_vcs_presence(get_current_dir()) {
                 if files.contains(&".".to_string()) {
                    // println!(". seen");
                     start_snapshot();
@@ -75,14 +74,14 @@ pub fn parse_commandline() {
         Some(Commands::Commit { m }) => {
 
             if let Ok(latest_tree_pointer) = get_latest_pointer_from_file(&staging_area_fold().join("stage"), false) {
-               append_commit_pointer_to_history( save_commit(create_commit(m, Some("inxeoz".to_string()), latest_tree_pointer)) );
+               append_commit_pointer_to_history( save_commit(create_commit(m, Some("inxeoz".to_string()), latest_tree_pointer)).expect("cant save commit "));
             }else {
                 println!("No commit configured");
             }
         }
         Some(Commands::Status) => {
-            if check_vcs_presence() {
-                println!("\n{:?}",get_status(get_current_dir()) );
+            if check_vcs_presence(get_current_dir()) {
+               // println!("\n{:?}",get_status(get_current_dir()) );
             }else {
                 println!("No vcs_presence configured. could not applied add operations.");
             }
