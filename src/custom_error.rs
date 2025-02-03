@@ -4,6 +4,7 @@ use std::io::ErrorKind;
 pub enum ChakError {
     StdIoError(ErrorKind), // Reuse std::io::ErrorKind
     CustomError(String),   // Your custom error
+    NoEntiresFound,
 }
 
 use std::fmt;
@@ -13,6 +14,7 @@ impl fmt::Display for ChakError {
         match self {
             ChakError::StdIoError(kind) => write!(f, "Standard I/O error: {:?}", kind),
             ChakError::CustomError(msg) => write!(f, "chak error: {}", msg),
+            ChakError::NoEntiresFound => write!(f, "no entries found"),
         }
     }
 }

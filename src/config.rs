@@ -11,7 +11,7 @@ pub static CURRENT_DIR: OnceCell<PathBuf> = OnceCell::new();
 
 static TEST_FOLD: &str = "example";
 
-pub fn get_current_dir() -> &'static PathBuf {
+pub fn get_project_dir() -> &'static PathBuf {
     CURRENT_DIR.get_or_init(|| {
         env::current_dir()
             .expect("Could not get current directory")
@@ -20,7 +20,7 @@ pub fn get_current_dir() -> &'static PathBuf {
 }
 
 pub fn get_vcs_fold() -> PathBuf {
-    get_current_dir().join(VCS_FOLDER)
+    get_project_dir().join(VCS_FOLDER)
 }
 pub fn get_vcs_store() -> PathBuf {
     get_vcs_fold().join("store")

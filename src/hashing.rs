@@ -1,7 +1,8 @@
 use crate::config::MIN_HASH_LENGTH;
-use crate::macros::{create_file, create_file_with_blob_pointer};
-use crate::tree_object::TreeObject;
 use crate::custom_error::ChakError;
+use crate::macros::{create_file, create_file_with_blob_pointer};
+use crate::tree_object::{TreeNode, TreeObject};
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::fs::File;
@@ -23,7 +24,7 @@ impl PartialEq<Self> for HashPointer {
 
 impl PartialOrd<Self> for HashPointer {
     fn partial_cmp(&self, other: &Self) -> std::option::Option<std::cmp::Ordering> {
-       Some(self.cmp(other))
+        Some(self.cmp(other))
     }
 }
 
@@ -41,7 +42,7 @@ impl HashPointer {
         self.file_name = hash_pointer.get_file_name();
     }
 
-    pub fn update_hash(&mut self, content: String)  {
+    pub fn update_hash(&mut self, content: String) {
         let has_p = hash_combine(&self, &hash_from_content(content));
         self.replace(&has_p);
     }
@@ -64,7 +65,7 @@ impl HashPointer {
 }
 
 fn _hash_pointer_from_hash_string(hash: String) -> HashPointer {
-  HashPointer {
+    HashPointer {
         fold_name: hash[..2].to_string(),
         file_name: hash[2..].to_string(),
     }
@@ -72,7 +73,9 @@ fn _hash_pointer_from_hash_string(hash: String) -> HashPointer {
 
 pub fn hash_pointer_from_hash_string(hash: String) -> Result<HashPointer, ChakError> {
     if hash.len() < MIN_HASH_LENGTH {
-        return Err(ChakError::CustomError("Invalid hash string length".to_string()));
+        return Err(ChakError::CustomError(
+            "Invalid hash string length".to_string(),
+        ));
     }
     Ok(_hash_pointer_from_hash_string(hash))
 }
@@ -121,7 +124,9 @@ pub fn hash_from_save_content(save_dir: &Path, content: String) -> io::Result<Ha
 
 pub fn hash_from_pointers(pointers: Vec<HashPointer>) -> Result<HashPointer, ChakError> {
     if pointers.is_empty() {
-        return  Err(ChakError::CustomError("Empty hash pointer vector".to_string()));
+        return Err(ChakError::CustomError(
+            "Empty hash pointer vector".to_string(),
+        ));
     }
     let mut hasher = Sha256::new();
     for pointer in pointers {
@@ -130,7 +135,7 @@ pub fn hash_from_pointers(pointers: Vec<HashPointer>) -> Result<HashPointer, Cha
     Ok(_hash_pointer_from_hash_string(format!(
         "{:x}",
         hasher.finalize()
-    ))   )
+    )))
 }
 
 pub fn hash_from_content(content: String) -> HashPointer {
@@ -139,7 +144,7 @@ pub fn hash_from_content(content: String) -> HashPointer {
     _hash_pointer_from_hash_string(format!("{:x}", hasher.finalize()))
 }
 
-pub fn hash_from_string_vec(strings: &[String]) ->HashPointer {
+pub fn hash_from_string_vec(strings: &[String]) -> HashPointer {
     let mut hasher = Sha256::new();
     for string in strings {
         hasher.update(string.as_bytes());
@@ -149,8 +154,9 @@ pub fn hash_from_string_vec(strings: &[String]) ->HashPointer {
 
 pub fn hash_from_save_tree(
     save_dir: &Path,
-    tree_object: &mut TreeObject,
+    children: IndexMap<String, TreeNode>,
 ) -> io::Result<HashPointer> {
+    let mut tree_object = TreeObject { children };
     tree_object.sort_children();
     let content = serde_json::to_string(&tree_object)?;
     hash_from_save_content(save_dir, content)
@@ -177,8 +183,7 @@ pub fn get_latest_pointer_from_file(
 
     // Try to create a HashPointer from the selected line
     match hps {
-        Some(hash) => hash_pointer_from_hash_string(hash.clone()),  // Clone the hash and process it
-        None => Err(ChakError::CustomError("Empty file".to_string())),  // Handle the case where the file is empty
+        Some(hash) => hash_pointer_from_hash_string(hash.clone()), // Clone the hash and process it
+        None => Err(ChakError::CustomError("Empty file".to_string())), // Handle the case where the file is empty
     }
 }
-

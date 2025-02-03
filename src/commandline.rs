@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 use crate::add::start_snapshot;
 use crate::commit::{append_commit_pointer_to_history, create_commit, save_commit};
 use crate::init::init;
-use crate::config::{get_current_dir, staging_area_fold};
+use crate::config::{get_project_dir, staging_area_fold};
 use crate::hashing::get_latest_pointer_from_file;
 use crate::util::check_vcs_presence;
 
@@ -60,7 +60,7 @@ pub fn parse_commandline() {
         }
 
         Some(Commands::Add {files }) => {
-            if check_vcs_presence(get_current_dir()) {
+            if check_vcs_presence(get_project_dir()) {
                 if files.contains(&".".to_string()) {
                    // println!(". seen");
                     start_snapshot();
@@ -80,8 +80,8 @@ pub fn parse_commandline() {
             }
         }
         Some(Commands::Status) => {
-            if check_vcs_presence(get_current_dir()) {
-               // println!("\n{:?}",get_status(get_current_dir()) );
+            if check_vcs_presence(get_project_dir()) {
+               // println!("\n{:?}",get_status(get_project_dir()) );
             }else {
                 println!("No vcs_presence configured. could not applied add operations.");
             }

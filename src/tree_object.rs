@@ -20,7 +20,6 @@ pub struct TreeObject {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct TreeNode {
-    pub is_file: bool,
     pub blob_type: TreeObjectType,
     pub pointer_to_blob: HashPointer,
     pub pointer_to_previous_node: Option<HashPointer>,

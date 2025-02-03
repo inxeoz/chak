@@ -1,4 +1,4 @@
-use crate::config::{get_current_dir};
+use crate::config::{get_project_dir};
 use std::collections::HashSet;
 use std::fs::read_dir;
 use std::io;
@@ -68,7 +68,7 @@ pub fn read_directory_entries(path: &Path) -> io::Result<Vec<PathBuf>> {
 //         }else {
 //             let hash = get_file_hash(&entry).expect("Could not get file hash");
 //             let content = fs::read_to_string(&entry).expect("Could not read content");
-//             let path_blob_fold = &get_current_dir().join("store").join("blobs").join(&hash[..2]).to_str().expect("Could not convert hash to str").to_string();
+//             let path_blob_fold = &get_project_dir().join("store").join("blobs").join(&hash[..2]).to_str().expect("Could not convert hash to str").to_string();
 //             let blob_file_name = &hash[2..];
 //             createfile!(&path_blob_fold, blob_file_name);
 //

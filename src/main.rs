@@ -16,7 +16,7 @@ mod custom_error;
 use std::io;
 use clap::{Parser, Subcommand};
 use crate::commandline::parse_commandline;
-use crate::config::get_current_dir;
+use crate::config::get_project_dir;
 use crate::diff_algo::{compare_hashed_content, to_interconnected_line};
 
 
@@ -29,8 +29,8 @@ fn test() -> io::Result<()>{
 
 
     // Convert the HashMap to a format suitable for serialization
-    let file_path = &get_current_dir().join("file.txt");
-    let file_path2 = &get_current_dir().join("file2.txt");
+    let file_path = &get_project_dir().join("file.txt");
+    let file_path2 = &get_project_dir().join("file2.txt");
 
     // Generate mappings
     let first = to_interconnected_line(file_path)?;

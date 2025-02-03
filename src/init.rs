@@ -1,5 +1,5 @@
 use crate::config::{
-    blob_fold, commits_fold, get_current_dir, get_vcs_fold, history_fold, staging_area_fold,
+    blob_fold, commits_fold, get_project_dir, get_vcs_fold, history_fold, staging_area_fold,
 };
 use crate::macros::{create_file, input_from_commandline};
 use std::fs::create_dir_all;
