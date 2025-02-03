@@ -215,28 +215,28 @@ pub fn file_to_lines(file_path: &Path) -> Result<Vec<Line>,io::Error> {
     )
 }
 
-pub fn create_content_block(prev: &Path, new: &Path) -> Result<String, io::Error> {
-    let prev_content = file_to_lines(prev)?;
-    let new_content = file_to_lines(new)?;
-
-    let mut final_content = ContentBlock::new();
-
-    for pair in prev_content.iter().zip_longest(new_content.iter()) {
-        match pair {
-            EitherOrBoth::Both(prev_line, new_line) => {
-                let diff_line = DiffLine::from(prev_line.clone(), new_line.clone());
-                final_content.add(diff_line);
-            }
-            EitherOrBoth::Left(prev_DiffLine) => {
-                let diff_line = DiffLine::from(prev_DiffLine.clone(), Line::new(String::new()));
-                final_content.add(diff_line);
-            }
-            EitherOrBoth::Right(new_DiffLine) => {
-                let diff_line = DiffLine::from(Line::new(String::new()), new_DiffLine.clone());
-                final_content.add(diff_line);
-            }
-        }
-    }
-
-    Ok(serde_json::to_string_pretty(&final_content)?)
-}
+// pub fn create_content_block(prev: &Path, new: &Path) -> Result<String, io::Error> {
+//     let prev_content = file_to_lines(prev)?;
+//     let new_content = file_to_lines(new)?;
+//
+//     let mut final_content = ContentBlock::new();
+//
+//     for pair in prev_content.iter().zip_longest(new_content.iter()) {
+//         match pair {
+//             EitherOrBoth::Both(prev_line, new_line) => {
+//                 let diff_line = DiffLine::from(prev_line.clone(), new_line.clone());
+//                 final_content.add(diff_line);
+//             }
+//             EitherOrBoth::Left(prev_DiffLine) => {
+//                 let diff_line = DiffLine::from(prev_DiffLine.clone(), Line::new(String::new()));
+//                 final_content.add(diff_line);
+//             }
+//             EitherOrBoth::Right(new_DiffLine) => {
+//                 let diff_line = DiffLine::from(Line::new(String::new()), new_DiffLine.clone());
+//                 final_content.add(diff_line);
+//             }
+//         }
+//     }
+//
+//     Ok(serde_json::to_string_pretty(&final_content)?)
+// }

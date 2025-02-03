@@ -3,20 +3,20 @@ use crate::config::{
     blob_fold, commits_fold, get_project_dir, history_fold, staging_area_fold, VCS_IGNORE_FILE,
 };
 use crate::custom_error::ChakError;
-use crate::diff::deserialize_file_content;
+use crate::diff::{deserialize_file_content, get_diff, serialize_struct};
 use crate::hashing::{
-    get_latest_pointer_from_file, hash_from_pointers, hash_from_save_blob, hash_from_save_tree,
-    HashPointer,
+    get_latest_pointer_from_file, hash_from_pointers, hash_from_save_blob, hash_from_save_content,
+    hash_from_save_tree, HashPointer,
 };
 use crate::tree_object::{TreeNode, TreeObject, TreeObjectType};
 use crate::util::read_directory_entries;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
-use indexmap::IndexMap;
+use indexmap::{map, IndexMap};
 use itertools::Itertools;
 use std::hash::Hash;
-use std::io;
 use std::path::{Path, PathBuf};
+use std::{fs, io};
 
 pub fn start_snapshot() -> io::Result<()> {
     let mut ignore_build_vec = Vec::<Gitignore>::new();
@@ -103,34 +103,51 @@ pub fn dir_snapshot(
                     }
                 }
 
-                let hash_pointer = dir_snapshot(&entry, ignore_build_vec, entry_tree_node)?;
+                let new_tree_hash_pointer = dir_snapshot(&entry, ignore_build_vec, entry_tree_node)?;
                 children.insert(
                     entry_name,
                     TreeNode {
                         blob_type: TreeObjectType::TreeObject,
-                        pointer_to_blob: hash_pointer.clone(),
-                        pointer_to_previous_node: None,
+                        pointer_to_blob: new_tree_hash_pointer.clone(),
+                        pointer_to_diff: None,
                     },
                 );
             }
         } else {
             if entry_name != VCS_IGNORE_FILE {
-                let hash_pointer = hash_from_save_blob(&entry, &blob_fold())?;
+                let new_hash_pointer = hash_from_save_blob(&entry, &blob_fold())?;
 
-                if let Some(child_object) =
+                if let Some(mut child_object) =
                     tree_node_from_tree_object(tree_hie.as_ref(), entry_name.clone())
                 {
-                    if hash_pointer == child_object.pointer_to_blob {
-                        //get diff for pointer_to_blob and with entry and save the diff as
-                        println!("no changes as hashpointer is matched");
+                    if new_hash_pointer != child_object.pointer_to_blob {
+                        let mut diff = get_diff(
+                            &blob_fold().join(new_hash_pointer.get_path()),
+                            &blob_fold().join(child_object.pointer_to_blob.get_path()),
+                        )?;
+
+                        if let Some(previous_version) = child_object.pointer_to_diff {
+                            diff.pointer_to_previous_version = Some(previous_version);
+                        }
+                        let new_pointer_to_diff =
+                            hash_from_save_content(&blob_fold(), serialize_struct(&diff))?;
+                        child_object.pointer_to_diff = Some(new_pointer_to_diff.clone());
+                        if let Err(e) = fs::remove_file(
+                            blob_fold().join(child_object.pointer_to_blob.get_path()),
+                        ) {
+                            eprintln!("Warning: Failed to delete file: {}", e);
+                        }
+                        child_object.pointer_to_blob = new_hash_pointer.clone();
+
+                        children.insert(entry_name, child_object);
                     }
                 } else {
                     children.insert(
                         entry_name,
                         TreeNode {
                             blob_type: TreeObjectType::BlobFile,
-                            pointer_to_blob: hash_pointer.clone(),
-                            pointer_to_previous_node: None,
+                            pointer_to_blob: new_hash_pointer.clone(),
+                            pointer_to_diff: None,
                         },
                     );
                 }

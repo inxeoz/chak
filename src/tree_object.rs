@@ -22,7 +22,7 @@ pub struct TreeObject {
 pub struct TreeNode {
     pub blob_type: TreeObjectType,
     pub pointer_to_blob: HashPointer,
-    pub pointer_to_previous_node: Option<HashPointer>,
+    pub pointer_to_diff: Option<HashPointer>,
 }
 
 impl PartialEq for TreeNode {
