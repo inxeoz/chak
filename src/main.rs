@@ -21,7 +21,8 @@ use crate::diff_algo::{compare_hashed_content, to_interconnected_line};
 
 
 fn main() {
-    parse_commandline();
+   // parse_commandline();
+    test();
 }
 
 

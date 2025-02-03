@@ -121,6 +121,7 @@ impl ContentBlock {
     }
 }
 
+
 #[derive(Serialize, PartialEq, Debug, Clone)]
 pub struct HashedContent {
     pub pointer_to_previous_version: Option<HashPointer>,
@@ -160,8 +161,8 @@ pub fn compare_hashed_content(
     let pre_hash_to_content = pre_content.hash_to_content;
     let new_line_to_hash = new_content.line_to_hash;
 
-    let mut diff_line_to_hash = IndexMap::<i64, String>::new();
-    let mut diff_hash_to_content = HashMap::<String, String>::new();
+    let mut diff_line_to_hash_base_new_content = IndexMap::<i64, String>::new();
+    let mut diff_hash_to_content_base_new_content = HashMap::<String, String>::new();
 
     let insert_hash_to_content_in_diff =
         |p_hash: &String, mut diff_hash_to_content: &mut HashMap<String, String>| {
@@ -180,27 +181,27 @@ pub fn compare_hashed_content(
         match pair {
             EitherOrBoth::Both((p_index, p_hash), (n_index, n_hash)) => {
                 if p_hash == n_hash {
-                    diff_line_to_hash.insert(*n_index, n_hash.clone());
+                    diff_line_to_hash_base_new_content.insert(*n_index, n_hash.clone());
                 } else {
-                    diff_line_to_hash.insert(*p_index, p_hash.clone());
-                    insert_hash_to_content_in_diff(p_hash, &mut diff_hash_to_content);
+                    diff_line_to_hash_base_new_content.insert(*p_index, p_hash.clone());
+                    insert_hash_to_content_in_diff(p_hash, &mut diff_hash_to_content_base_new_content);
                 }
             }
 
             EitherOrBoth::Left((p_index, p_hash)) => {
-                diff_line_to_hash.insert(*p_index, p_hash.clone());
-                insert_hash_to_content_in_diff(p_hash, &mut diff_hash_to_content);
+                diff_line_to_hash_base_new_content.insert(*p_index, p_hash.clone());
+                insert_hash_to_content_in_diff(p_hash, &mut diff_hash_to_content_base_new_content);
             }
             EitherOrBoth::Right((n_index, n_hash)) => {
-                diff_line_to_hash.insert(*n_index, n_hash.clone());
+                diff_line_to_hash_base_new_content.insert(*n_index, n_hash.clone());
             }
         }
     }
 
     HashedContent {
         pointer_to_previous_version: None,
-        line_to_hash: diff_line_to_hash,
-        hash_to_content: diff_hash_to_content,
+        line_to_hash: diff_line_to_hash_base_new_content,
+        hash_to_content: diff_hash_to_content_base_new_content,
     }
 }
 
@@ -215,28 +216,24 @@ pub fn file_to_lines(file_path: &Path) -> Result<Vec<Line>,io::Error> {
     )
 }
 
-// pub fn create_content_block(prev: &Path, new: &Path) -> Result<String, io::Error> {
-//     let prev_content = file_to_lines(prev)?;
-//     let new_content = file_to_lines(new)?;
-//
-//     let mut final_content = ContentBlock::new();
-//
-//     for pair in prev_content.iter().zip_longest(new_content.iter()) {
-//         match pair {
-//             EitherOrBoth::Both(prev_line, new_line) => {
-//                 let diff_line = DiffLine::from(prev_line.clone(), new_line.clone());
-//                 final_content.add(diff_line);
-//             }
-//             EitherOrBoth::Left(prev_DiffLine) => {
-//                 let diff_line = DiffLine::from(prev_DiffLine.clone(), Line::new(String::new()));
-//                 final_content.add(diff_line);
-//             }
-//             EitherOrBoth::Right(new_DiffLine) => {
-//                 let diff_line = DiffLine::from(Line::new(String::new()), new_DiffLine.clone());
-//                 final_content.add(diff_line);
-//             }
-//         }
-//     }
-//
-//     Ok(serde_json::to_string_pretty(&final_content)?)
-// }
+//TODO use this function for making previous version file
+pub fn previous_content_from_new_content_using_diff(
+    diff: HashedContent,
+    fixed_next_content: HashedContent,
+) -> IndexMap<i64, String> {
+    let mut previous_line_to_content = IndexMap::new();
+
+    for (line, hash) in &diff.line_to_hash {
+        let content = diff.hash_to_content
+            .get(hash)
+            .or_else(|| fixed_next_content.hash_to_content.get(hash))
+            .cloned()
+            .unwrap_or_default();
+
+        previous_line_to_content.insert(*line, content);
+    }
+
+    previous_line_to_content
+}
+
+
