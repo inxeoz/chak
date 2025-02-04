@@ -1,3 +1,6 @@
+test
+
+
 Rules for .gitignore
 
 Here are the general rules for matching patterns in .gitignore files:
