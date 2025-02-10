@@ -17,6 +17,7 @@ use itertools::Itertools;
 use std::hash::Hash;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
+use clap::Error;
 
 pub fn start_snapshot() -> io::Result<()> {
     let mut ignore_build_vec = Vec::<Gitignore>::new();
@@ -49,38 +50,22 @@ pub fn start_snapshot() -> io::Result<()> {
     attach_latest_root_pointer_to_stage(root_tree_pointer);
     Ok(())
 }
+
 pub fn dir_snapshot(
     path: &Path,
     ignore_build_vec: &mut Vec<Gitignore>,
     tree_hie: Option<TreeObject>,
 ) -> io::Result<HashPointer> {
-    // Ensure the path is a directory
     assert!(path.is_dir(), "Path is not a directory");
 
     let mut children = IndexMap::<String, TreeNode>::new();
 
-    // Add .ignore file to the ignore builder if it exists
-    let ignore_file = path.join(VCS_IGNORE_FILE);
-    if ignore_file.exists() {
-        let mut local_builder = GitignoreBuilder::new(path);
-        local_builder.add(&ignore_file);
-        if let Ok(ignore) = local_builder.build() {
-            ignore_build_vec.push(ignore);
-        } else {
-            eprintln!(
-                "Could not create Gitignore from path: {}",
-                ignore_file.display()
-            );
-        }
-    }
-    // Read and filter directory entries based on ignore rules
+    // Handle .ignore file
+    handle_ignore_file(path, ignore_build_vec);
 
-    let entries_set = read_directory_entries(path)?;
-    let allowed_entries_set = parse_ignore_local_level(entries_set.clone(), ignore_build_vec);
+    let allowed_entries = parse_ignore_local_level(path, ignore_build_vec);
 
-    // Process each entry
-    for entry in allowed_entries_set {
-        // Skip the `.ignore` file and process other files
+    for entry in allowed_entries {
         let entry_name = entry
             .file_name()
             .expect("Could not get file name")
@@ -88,75 +73,111 @@ pub fn dir_snapshot(
             .expect("Could not convert to str")
             .to_string();
 
+        // Skip `.chak` directory at the project root
+        if path == get_project_dir() && entry.ends_with(".chak") {
+            continue;
+        }
+
         if entry.is_dir() {
-            let mut entry_tree_node: Option<TreeObject> = None;
-            // Skip `.chak` directories at the current level
-            if !(path == get_project_dir() && entry.ends_with(".chak")) {
-                if let Some(child_object) =
-                    tree_node_from_tree_object(tree_hie.as_ref(), entry_name.clone())
-                {
-                    if child_object.blob_type == TreeObjectType::TreeObject {
-                        entry_tree_node = deserialize_file_content::<TreeObject>(
-                            &blob_fold().join(child_object.pointer_to_blob.get_path()),
-                        )
-                        .ok();
-                    }
-                }
-
-                let new_tree_hash_pointer = dir_snapshot(&entry, ignore_build_vec, entry_tree_node)?;
-                children.insert(
-                    entry_name,
-                    TreeNode {
-                        blob_type: TreeObjectType::TreeObject,
-                        pointer_to_blob: new_tree_hash_pointer.clone(),
-                        pointer_to_diff: None,
-                    },
-                );
-            }
-        } else {
-            if entry_name != VCS_IGNORE_FILE {
-                let new_hash_pointer = hash_from_save_blob(&entry, &blob_fold())?;
-
-                if let Some(mut child_object) =
-                    tree_node_from_tree_object(tree_hie.as_ref(), entry_name.clone())
-                {
-                    if new_hash_pointer != child_object.pointer_to_blob {
-                        let mut diff = get_diff(
-                            &blob_fold().join(new_hash_pointer.get_path()),
-                            &blob_fold().join(child_object.pointer_to_blob.get_path()),
-                        )?;
-
-                        if let Some(previous_version) = child_object.pointer_to_diff {
-                            diff.pointer_to_previous_version = Some(previous_version);
-                        }
-                        let new_pointer_to_diff =
-                            hash_from_save_content(&blob_fold(), serialize_struct(&diff))?;
-                        child_object.pointer_to_diff = Some(new_pointer_to_diff.clone());
-                        if let Err(e) = fs::remove_file(
-                            blob_fold().join(child_object.pointer_to_blob.get_path()),
-                        ) {
-                            eprintln!("Warning: Failed to delete file: {}", e);
-                        }
-                        child_object.pointer_to_blob = new_hash_pointer.clone();
-
-                        children.insert(entry_name, child_object);
-                    }
-                } else {
-                    children.insert(
-                        entry_name,
-                        TreeNode {
-                            blob_type: TreeObjectType::BlobFile,
-                            pointer_to_blob: new_hash_pointer.clone(),
-                            pointer_to_diff: None,
-                        },
-                    );
-                }
-            }
+            process_directory( &entry, &entry_name, &tree_hie, ignore_build_vec, &mut children)?;
+        } else if entry_name != VCS_IGNORE_FILE {
+            process_file(&entry, &entry_name, &tree_hie, &mut children)?;
         }
     }
 
     hash_from_save_tree(&blob_fold(), children)
 }
+
+/// Handles .ignore file processing and adds it to `ignore_build_vec`
+fn handle_ignore_file(path: &Path, ignore_build_vec: &mut Vec<Gitignore>) {
+    let ignore_file = path.join(VCS_IGNORE_FILE);
+    if ignore_file.exists() {
+        let mut local_builder = GitignoreBuilder::new(path);
+        local_builder.add(&ignore_file);
+        if let Ok(ignore) = local_builder.build()
+        {
+            ignore_build_vec.push(ignore);
+        } else {
+            eprintln!("Could not create Gitignore from path: {}", ignore_file.display());
+        }
+    }
+}
+
+
+/// Processes a directory entry and updates the `children` map
+fn process_directory(
+    entry: &Path,
+    entry_name: &str,
+    tree_hie: &Option<TreeObject>,
+    ignore_build_vec: &mut Vec<Gitignore>,
+    children: &mut IndexMap<String, TreeNode>,
+) -> io::Result<()> {
+    let existing_tree = tree_node_from_tree_object(tree_hie.as_ref(), entry_name.to_string())
+        .and_then(|obj| {
+            if obj.blob_type == TreeObjectType::TreeObject {
+                deserialize_file_content::<TreeObject>(&blob_fold().join(obj.pointer_to_blob.get_path())).ok()
+            } else {
+                None
+            }
+        });
+
+    let new_tree_hash = dir_snapshot(entry, ignore_build_vec, existing_tree)?;
+
+    children.insert(entry_name.to_string(), TreeNode {
+        blob_type: TreeObjectType::TreeObject,
+        pointer_to_blob: new_tree_hash,
+        pointer_to_diff: None,
+    });
+
+    Ok(())
+}
+
+/// Processes a file entry and updates the `children` map
+fn process_file(
+    entry: &Path,
+    entry_name: &str,
+    tree_hie: &Option<TreeObject>,
+    children: &mut IndexMap<String, TreeNode>,
+) -> io::Result<()> {
+    let new_hash = hash_from_save_blob(entry, &blob_fold())?;
+
+    match tree_node_from_tree_object(tree_hie.as_ref(), entry_name.to_string()) {
+        Some(mut existing_node) if new_hash != existing_node.pointer_to_blob => {
+            // Handle changes in the file
+            let mut diff = get_diff(
+                &blob_fold().join(new_hash.get_path()),
+                &blob_fold().join(existing_node.pointer_to_blob.get_path()),
+            )?;
+
+            if let Some(prev_version) = existing_node.pointer_to_diff {
+                diff.pointer_to_previous_version = Some(prev_version);
+            }
+
+            let diff_hash = hash_from_save_content(&blob_fold(), serialize_struct(&diff))?;
+            existing_node.pointer_to_diff = Some(diff_hash);
+
+            // Remove old blob
+            if let Err(e) = fs::remove_file(blob_fold().join(existing_node.pointer_to_blob.get_path())) {
+                eprintln!("Warning: Failed to delete file: {}", e);
+            }
+
+            existing_node.pointer_to_blob = new_hash.clone();
+            children.insert(entry_name.to_string(), existing_node);
+        }
+        None => {
+            // New file
+            children.insert(entry_name.to_string(), TreeNode {
+                blob_type: TreeObjectType::BlobFile,
+                pointer_to_blob: new_hash,
+                pointer_to_diff: None,
+            });
+        }
+        _ => {}
+    }
+
+    Ok(())
+}
+
 
 pub fn tree_node_from_tree_object(
     tree_hie: Option<&TreeObject>,
@@ -174,9 +195,11 @@ pub fn tree_node_from_tree_object(
 }
 
 pub fn parse_ignore_local_level(
-    detected_entries: Vec<PathBuf>,
+    dir_path: &Path,
     ignore_build_vec: &mut Vec<Gitignore>,
 ) -> Vec<PathBuf> {
+    // Read and filter directory entries
+    let detected_entries = read_directory_entries(dir_path).expect("Could not read directory entries");
     let mut allowed_entries = Vec::new();
 
     // Check entries against ignore rules

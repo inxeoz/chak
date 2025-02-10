@@ -5,24 +5,18 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 pub fn check_vcs_presence(fold: &Path) -> bool {
-    // Check if the folder exists and if it contains the `.chak` folder
-    if fold.exists() {
         if fold.join(".chak").exists() {
             return true;
         }
-
         // Read the directory and check subdirectories recursively
         if let Ok(entries) = read_dir(fold) {
             for entry in entries {
                 if let Ok(entry) = entry {
                     // Recursively check each subdirectory
-                    if check_vcs_presence(&entry.path()) {
-                        return true;
-                    }
+                    return check_vcs_presence(&entry.path())
                 }
             }
         }
-    }
     false
 }
 
