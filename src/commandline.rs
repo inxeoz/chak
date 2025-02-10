@@ -44,6 +44,11 @@ enum Commands {
         #[arg(short, long)]
         list: bool,
     },
+
+    Restore {
+        file: String,
+        diff: String,
+    }
 }
 
 
@@ -78,6 +83,9 @@ pub fn parse_commandline() {
             }else {
                 println!("No commit configured");
             }
+        }
+        Some(Commands::Restore { file, diff }) => {
+
         }
         Some(Commands::Status) => {
             if check_vcs_presence(get_project_dir()) {

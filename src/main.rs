@@ -21,8 +21,8 @@ use crate::diff_algo::{compare_hashed_content, to_interconnected_line};
 
 
 fn main() {
-    parse_commandline();
-    //test();
+  //  parse_commandline();
+    test();
 }
 
 
@@ -38,15 +38,15 @@ fn test() -> io::Result<()>{
     let second = to_interconnected_line(file_path2)?;
 
     // Serialize and print mappings
-    println!("Line to Hash:");
-    println!("{}", serde_json::to_string_pretty(&first.line_to_hash)?);
+    println!("hash lines:");
+    println!("{}", serde_json::to_string_pretty(&first.hash_lines)?);
 
     println!("Hash to Content:");
     println!("{}", serde_json::to_string_pretty(&first.hash_to_content)?);
 
     // Serialize and print mappings
-    println!("Line to Hash:");
-    println!("{}", serde_json::to_string_pretty(&second.line_to_hash)?);
+    println!("hash lines:");
+    println!("{}", serde_json::to_string_pretty(&second.hash_lines)?);
 
     println!("Hash to Content:");
     println!("{}", serde_json::to_string_pretty(&second.hash_to_content)?);
@@ -54,8 +54,8 @@ fn test() -> io::Result<()>{
     let new = compare_hashed_content(first, second);
 
     // Serialize and print mappings
-    println!("Line to Hash:");
-    println!("{}", serde_json::to_string_pretty(&new.line_to_hash)?);
+    println!("hash lines:");
+    println!("{}", serde_json::to_string_pretty(&new.hash_lines)?);
 
     println!("Hash to Content:");
     println!("{}", serde_json::to_string_pretty(&new.hash_to_content)?);
