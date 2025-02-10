@@ -1,7 +1,6 @@
 use crate::config::{commits_fold, history_fold, staging_area_fold};
 use crate::diff::serialize_struct;
-use crate::hashing::{get_latest_pointer_from_file, hash_from_save_content, HashPointer};
-use crate::macros::append_to_file;
+use crate::hashing::{get_latest_pointer_from_file, hash_from_content, hash_from_save_content, HashPointer};
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io;
@@ -27,17 +26,8 @@ pub fn create_commit(
 }
 pub fn save_commit(commit: Commit) -> io::Result<HashPointer> {
     let serialized_commit = serialize_struct(&commit);
-    hash_from_save_content(&commits_fold(), serialized_commit)
+    hash_from_save_content( &serialized_commit, &commits_fold())
 }
-
-pub fn append_commit_pointer_to_history(commit_pointer: HashPointer) {
-    append_to_file(
-        &history_fold().join("commit_log"),
-        &commit_pointer.get_one_hash(),
-    )
-    .expect("Failed to perform commit");
-}
-
 
 pub fn attach_latest_root_pointer_to_stage(root_pointer: HashPointer) {
     let stage_file_path = &staging_area_fold().join("stage");
@@ -49,7 +39,7 @@ pub fn attach_latest_root_pointer_to_stage(root_pointer: HashPointer) {
         .expect("Couldn't open file");
 
     file.write_all(root_pointer.get_one_hash().as_ref())
-        .expect("TODO"); // Writing data
+        .expect("failed to attach root pointer to stage"); // Writing data
 }
 
 pub fn clear_commit_stage() {

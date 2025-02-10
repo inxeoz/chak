@@ -1,10 +1,11 @@
-
+use std::fs::File;
 use clap::{Parser, Subcommand};
 use crate::add::start_snapshot;
-use crate::commit::{append_commit_pointer_to_history, create_commit, save_commit, clear_commit_stage};
+use crate::commit::{ create_commit, save_commit, clear_commit_stage};
 use crate::init::init;
-use crate::config::{get_project_dir, staging_area_fold};
+use crate::config::{get_project_dir, history_fold, staging_area_fold};
 use crate::hashing::get_latest_pointer_from_file;
+use crate::macros::save_or_create_file;
 use crate::util::check_vcs_presence;
 
 /// A simple version control system built with Rust
@@ -78,8 +79,14 @@ pub fn parse_commandline() {
 
         Some(Commands::Commit { m }) => {
 
-            if let Ok(latest_tree_pointer) = get_latest_pointer_from_file(&staging_area_fold().join("stage"), false) {
-               append_commit_pointer_to_history( save_commit(create_commit(m, Some("inxeoz".to_string()), latest_tree_pointer)).expect("cant save commit "));
+            let staging_file = File::open(&staging_area_fold().join("stage")).expect("failed to open stage file");
+            if let Some(latest_tree_pointer) = get_latest_pointer_from_file(&staging_file, false) {
+
+                let commit_pointer = save_commit(create_commit(m, Some("inxeoz".to_string()), latest_tree_pointer)).expect("cant save commit ");
+                save_or_create_file(
+                    &history_fold().join("commit_log").join(&commit_pointer.get_path()), None, true,
+                ).expect("cant save commit ");
+
                 clear_commit_stage();
             }else {
                 println!("No commit configured");

@@ -1,10 +1,9 @@
-use crate::config::blob_fold;
-use crate::macros::create_file;
+
 use std::path::Path;
 use std::{fs, io};
-
+use std::fs::File;
 use crate::diff_algo::{compare_hashed_content, to_hashed_content, HashedContent};
-use crate::hashing::{hash_from_content, hash_from_file, hash_from_save_blob, HashPointer};
+use crate::hashing::{ HashPointer};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
@@ -34,12 +33,10 @@ pub fn serialize_struct<T: Serialize>(data: &T) -> String {
     serialized
 }
 
-pub fn get_diff(prev_file: &Path, new_file: &Path) -> Result<HashedContent, io::Error> {
-    // Generate mappings
-    let first = to_hashed_content(prev_file)?;
-    let second = to_hashed_content(new_file)?;
-
+pub fn get_diff(prev_file: &File, new_file: &File) ->HashedContent {
+    let first = to_hashed_content(&prev_file);
+    let second = to_hashed_content(&new_file);
     let diff = compare_hashed_content(first, second);
-    Ok(diff)
+    diff
 
 }

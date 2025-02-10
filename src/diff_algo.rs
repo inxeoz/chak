@@ -2,7 +2,7 @@ use crate::config::{blob_fold, get_project_dir};
 use crate::custom_error::ChakError;
 use crate::diff::deserialize_file_content;
 use crate::hashing::{hash_from_content, HashPointer};
-use crate::macros::{append_to_file, create_file};
+use crate::macros::{ save_or_create_file};
 use indexmap::IndexMap;
 use itertools::{EitherOrBoth, Itertools};
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::hash::Hash;
 use std::io;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 
 #[derive(Serialize, PartialEq, Debug, Clone, Copy)]
@@ -28,7 +28,7 @@ impl Line {
     pub fn new(line: String) -> Line {
         Line {
             line_value: line.clone(),
-            line_hash: hash_from_content(line),
+            line_hash: hash_from_content(&line),
         }
     }
 }
@@ -98,7 +98,7 @@ pub struct ContentBlock {
 impl ContentBlock {
     pub fn new() -> Self {
         Self {
-            content_hash: hash_from_content(String::new()),
+            content_hash: hash_from_content(&String::new()),
             content: vec![],
         }
     }
@@ -130,27 +130,23 @@ pub struct HashedContent {
     pub hash_lines: Vec<String>,
     pub hash_to_content: HashMap<String, String>,
 }
-pub fn to_hashed_content(file_path: &Path) -> io::Result<HashedContent> {
-    let file = File::open(file_path)?;
-
+pub fn to_hashed_content(file: &File) -> HashedContent {
     let mut hash_lines = Vec::<String>::new();
     let mut hash_to_content = HashMap::<String, String>::new();
-
     for res_line in BufReader::new(file).lines() {
         if let Ok(line) = res_line {
-            let hash_string = hash_from_content(line.clone()).get_one_hash();
+            let hash_string = hash_from_content(&line).get_one_hash();
             hash_lines.push(hash_string.clone());
 
             // Map hash string to actual line content (only if not already mapped)
             hash_to_content.entry(hash_string).or_insert(line);
         }
     }
-
-    Ok(HashedContent {
+    HashedContent {
         pointer_to_previous_version: None,
         hash_lines,
         hash_to_content,
-    })
+    }
 }
 
 //biased toward previous content
@@ -205,13 +201,12 @@ pub fn compare_hashed_content(
     }
 }
 
-pub fn file_to_lines(file_path: &Path) -> Result<Vec<Line>, io::Error> {
-    let file = File::open(file_path)?;
+pub fn file_to_lines(file: &File) -> Vec<String> {
     let reader = BufReader::new(file);
-    Ok(reader
+    reader
         .lines()
-        .map(|line| Line::new(line.unwrap()))
-        .collect())
+        .map(|line|line.unwrap_or_default())
+        .collect()
 }
 
 //TODO use this function for making previous version file
@@ -220,7 +215,6 @@ pub fn previous_content_from_new_content_using_diff(
     fixed_next_content: HashedContent,
 ) -> Vec<String> {
     let mut previous_lines = Vec::<String>::new();
-
     for line_hash in &diff.hash_lines {
         let content = diff
             .hash_to_content
@@ -235,17 +229,16 @@ pub fn previous_content_from_new_content_using_diff(
     previous_lines
 }
 
-pub fn restore_previous_version(blob_path: &Path, diff_path: &Path) {
-
-    let fixed_next_content: HashedContent =
-        to_hashed_content(&blob_path).expect("Failed to deserialize file");
-    let diff: HashedContent =
-        deserialize_file_content(&diff_path).expect("Failed to deserialize file");
+pub fn restore_previous_version(blob_path: &Path, diff_path: &Path) -> Result<(), io::Error> {
+    let blob_file = File::open(blob_path)?;
+    let fixed_next_content = to_hashed_content(&blob_file);
+    let diff = deserialize_file_content(&diff_path)?;
     let previous_version = previous_content_from_new_content_using_diff(diff, fixed_next_content);
-    let restore_file = get_project_dir().join("restore").join("file.txt");
-    create_file(restore_file.clone()).expect("Failed to create file");
+    let mut restore_file = save_or_create_file(&get_project_dir().join("restore").join("file.txt"), None, true)?;
 
     for lines in previous_version.iter() {
-        append_to_file(&restore_file, &lines).expect("Failed to save file");
+        restore_file.write_all(lines.as_bytes())?// /n would work not here  ?
     }
+
+    Ok(())
 }

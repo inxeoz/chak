@@ -4,10 +4,7 @@ use crate::config::{
 };
 use crate::custom_error::ChakError;
 use crate::diff::{deserialize_file_content, get_diff, serialize_struct};
-use crate::hashing::{
-    get_latest_pointer_from_file, hash_from_pointers, hash_from_save_blob, hash_from_save_content,
-    hash_from_save_tree, HashPointer,
-};
+use crate::hashing::{get_latest_pointer_from_file, hash_and_content_from_file_path_ref, hash_from_file, hash_from_save_content, hash_from_save_tree, HashPointer};
 use crate::tree_object::{TreeNode, TreeObject, TreeObjectType};
 use crate::util::read_directory_entries;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
@@ -17,7 +14,9 @@ use itertools::Itertools;
 use std::hash::Hash;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
+use std::fs::File;
 use clap::Error;
+use crate::macros::{file_to_string, save_or_create_file};
 
 pub fn start_snapshot() -> io::Result<()> {
     let mut ignore_build_vec = Vec::<Gitignore>::new();
@@ -26,8 +25,10 @@ pub fn start_snapshot() -> io::Result<()> {
     //implement the tree pointer with traversing fold/file and checking hash from tree pointer and so on .. TODO
     //get latest tree pointer from history_log
     let mut tree_object: Option<TreeObject> = None;
-    if let Ok(commit_pointer) =
-        get_latest_pointer_from_file(&history_fold().join("commit_log"), true)
+    let commit_file = File::open(&history_fold().join("commit_log")).expect("Unable to open commit_log file");
+
+    if let Some(commit_pointer) =
+        get_latest_pointer_from_file(&commit_file, true)
     {
         if let Ok(latest_commit) =
             deserialize_file_content::<Commit>(&commits_fold().join(commit_pointer.get_path()))
@@ -139,21 +140,24 @@ fn process_file(
     tree_hie: &Option<TreeObject>,
     children: &mut IndexMap<String, TreeNode>,
 ) -> io::Result<()> {
-    let new_hash = hash_from_save_blob(entry, &blob_fold())?;
+    let (new_hash, content) = hash_and_content_from_file_path_ref(entry)?;
 
-    match tree_node_from_tree_object(tree_hie.as_ref(), entry_name.to_string()) {
-        Some(mut existing_node) if new_hash != existing_node.pointer_to_blob => {
+    if let Some(mut existing_node) =  tree_node_from_tree_object(tree_hie.as_ref(), entry_name.to_string()) {
+         if new_hash != existing_node.pointer_to_blob  {
             // Handle changes in the file
-            let mut diff = get_diff(
-                &blob_fold().join(new_hash.get_path()),
-                &blob_fold().join(existing_node.pointer_to_blob.get_path()),
-            )?;
 
+            let prev_file = File::open(&blob_fold().join(new_hash.get_path()))?;
+            let new_file = File::open(&blob_fold().join(existing_node.pointer_to_blob.get_path()))?;
+
+            let mut diff = get_diff(
+              &prev_file,
+              &new_file,
+            );
             if let Some(prev_version) = existing_node.pointer_to_diff {
                 diff.pointer_to_previous_version = Some(prev_version);
             }
 
-            let diff_hash = hash_from_save_content(&blob_fold(), serialize_struct(&diff))?;
+            let diff_hash = hash_from_save_content( &serialize_struct(&diff), &blob_fold())?;
             existing_node.pointer_to_diff = Some(diff_hash);
 
             // Remove old blob
@@ -163,19 +167,20 @@ fn process_file(
 
             existing_node.pointer_to_blob = new_hash.clone();
             children.insert(entry_name.to_string(), existing_node);
-        }
-        None => {
-            // New file
-            children.insert(entry_name.to_string(), TreeNode {
-                blob_type: TreeObjectType::BlobFile,
-                pointer_to_blob: new_hash,
-                pointer_to_diff: None,
-            });
-        }
-        _ => {}
+
+             Ok(())
+        }else { println!("hash is same");  Ok(())}
+
+    }else {
+        save_or_create_file(&blob_fold().join(&new_hash.get_path()),  Some(&content), false).expect("Could not save file");
+        children.insert(entry_name.to_string(), TreeNode {
+            blob_type: TreeObjectType::BlobFile,
+            pointer_to_blob: new_hash,
+            pointer_to_diff: None,
+        });
+        Ok(())
     }
 
-    Ok(())
 }
 
 

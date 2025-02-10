@@ -1,6 +1,7 @@
 use crate::config::MIN_HASH_LENGTH;
 use crate::custom_error::ChakError;
-use crate::macros::{create_file, create_file_with_blob_pointer};
+use crate::diff::serialize_struct;
+use crate::diff_algo::file_to_lines;
 use crate::tree_object::{TreeNode, TreeObject};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
@@ -9,7 +10,8 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Error, Read, Write};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
-use crate::diff::serialize_struct;
+use clap::builder::Str;
+use crate::macros::{file_to_string, save_or_create_file};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct HashPointer {
@@ -44,7 +46,7 @@ impl HashPointer {
     }
 
     pub fn update_hash(&mut self, content: String) {
-        let has_p = hash_combine(&self, &hash_from_content(content));
+        let has_p = hash_combine(&self, &hash_from_content(&content));
         self.replace(&has_p);
     }
 
@@ -82,11 +84,10 @@ pub fn hash_pointer_from_hash_string(hash: String) -> Result<HashPointer, ChakEr
 }
 
 pub fn hash_combine(first: &HashPointer, second: &HashPointer) -> HashPointer {
-    hash_from_content(first.get_one_hash() + &second.get_one_hash())
+    hash_from_content(& ( first.get_one_hash() + &second.get_one_hash()  ) )
 }
 
-pub fn hash_from_file(path: &Path) -> io::Result<HashPointer> {
-    let file = File::open(path)?;
+pub fn hash_from_file(file: &File) -> HashPointer {
     let mut buf_file = BufReader::new(file);
     let mut hasher = Sha256::new();
     let mut buffer = [0u8; 1024];
@@ -97,29 +98,12 @@ pub fn hash_from_file(path: &Path) -> io::Result<HashPointer> {
         }
         hasher.update(&buffer[..bytes_read]);
     }
-    Ok(_hash_pointer_from_hash_string(format!(
-        "{:x}",
-        hasher.finalize()
-    )))
+    _hash_pointer_from_hash_string(format!("{:x}", hasher.finalize()))
 }
 
-pub fn hash_from_save_blob(file_path: &Path, save_dir: &Path) -> io::Result<HashPointer> {
-    let hash_pointer = hash_from_file(file_path)?;
-    let blob_file = save_dir.join(hash_pointer.get_path());
-    if blob_file.exists() {
-        println!("file already exists");
-        return Ok(hash_pointer);
-    }
-
-    let content = fs::read(file_path)?;
-    create_file_with_blob_pointer(save_dir, &hash_pointer, Some(content))?;
-    Ok(hash_pointer)
-}
-pub fn hash_from_save_content(save_dir: &Path, content: String) -> io::Result<HashPointer> {
-    let hash_pointer = hash_from_content(content.clone());
-    if !save_dir.join(hash_pointer.get_path()).exists() {
-        create_file_with_blob_pointer(save_dir, &hash_pointer, Some(content.into_bytes()))?;
-    }
+pub fn hash_from_save_content(content: &str, save_dir: &Path) -> io::Result<HashPointer> {
+    let hash_pointer = hash_from_content(content);
+    save_or_create_file(&save_dir.join(hash_pointer.get_path()),  Some(&content), false)?;
     Ok(hash_pointer)
 }
 
@@ -139,7 +123,7 @@ pub fn hash_from_pointers(pointers: Vec<HashPointer>) -> Result<HashPointer, Cha
     )))
 }
 
-pub fn hash_from_content(content: String) -> HashPointer {
+pub fn hash_from_content(content: &str) -> HashPointer {
     let mut hasher = Sha256::new();
     hasher.update(content.as_bytes());
     _hash_pointer_from_hash_string(format!("{:x}", hasher.finalize()))
@@ -160,31 +144,24 @@ pub fn hash_from_save_tree(
     let mut tree_object = TreeObject { children };
     tree_object.sort_children();
     let content = serialize_struct(&tree_object);
-    hash_from_save_content(save_dir, content)
+    hash_from_save_content(&content, save_dir)
 }
 
-pub fn get_latest_pointer_from_file(
-    file_path: &Path,
-    from_bottom: bool,
-) -> Result<HashPointer, ChakError> {
-    // Open the file and handle any I/O error by converting it into your custom error
-    let file = File::open(file_path).map_err(|e| ChakError::StdIoError(e.kind()))?;
-    let reader = BufReader::new(file);
+pub fn get_latest_pointer_from_file(file: &File, from_bottom: bool) -> Option<HashPointer> {
+    let lines = file_to_lines(file);
 
-    // Collect all lines into a vector of Strings, handling any I/O errors that might occur
-    let lines: Result<Vec<String>, io::Error> = reader.lines().collect();
-    let lines = lines.map_err(|e| ChakError::StdIoError(e.kind()))?;
-
-    // Select the first or last line based on the from_bottom flag
-    let hps = if from_bottom {
-        lines.last()
+    let line = if from_bottom {
+        lines.last() // Get the last line
     } else {
-        lines.first()
+        lines.first() // Get the first line
     };
 
-    // Try to create a HashPointer from the selected line
-    match hps {
-        Some(hash) => hash_pointer_from_hash_string(hash.clone()), // Clone the hash and process it
-        None => Err(ChakError::CustomError("Empty file".to_string())), // Handle the case where the file is empty
-    }
+    line.and_then(|l| hash_pointer_from_hash_string(l.to_string()).ok())
+}
+
+pub fn hash_and_content_from_file_path_ref(file_path: &Path)  -> io::Result<(HashPointer, String)> {
+    let mut file = File::open(file_path)?;
+    let content = file_to_string(&mut file)?;
+    let hash_pointer = hash_from_content(&content);
+    Ok( (hash_pointer, content) )
 }

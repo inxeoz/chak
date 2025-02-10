@@ -5,7 +5,6 @@ mod macros;
 mod util;
 mod config;
 mod commandline;
-mod status;
 mod hashing;
 mod diff;
 mod diff_algo;
@@ -13,6 +12,7 @@ mod tree_object;
 mod commit;
 mod custom_error;
 
+use std::fs::File;
 use std::io;
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
@@ -32,12 +32,12 @@ fn test() -> io::Result<()>{
 
 
     // Convert the HashMap to a format suitable for serialization
-    let file_path = &get_project_dir().join("file.txt");
-    let file_path2 = &get_project_dir().join("file2.txt");
+    let file1 = File::open(&get_project_dir().join("file1.txt"))?;
+    let file2 = File::open(&get_project_dir().join("file2.txt"))?;
 
     // Generate mappings
-    let first = to_hashed_content(file_path)?;
-    let second = to_hashed_content(file_path2)?;
+    let first = to_hashed_content(&file1);
+    let second = to_hashed_content(&file2);
 
     // Serialize and print mappings
     println!("hash lines:");
@@ -70,9 +70,10 @@ fn test() -> io::Result<()>{
 
 fn restore_test(){
 
-    let blob_path =PathBuf::from("example/.chak/store/blobs/d2/1cb45e6aa32737784b46fc29a8af38e649ba96d6472f7ca558b2565639e349");
-    let diff_path = PathBuf::from("example/.chak/store/blobs/1c/621c216a0090a4381722d184f94f651508b42ee422b9116a0a68ef19251613");
-    restore_previous_version(&blob_path, &diff_path);
+    let prev_file =PathBuf::from("file1.txt");
+    let new_file = PathBuf::from("file2.txt");
+
+   // restore_previous_version(&blob_path, &diff_path);
 
 
 }
