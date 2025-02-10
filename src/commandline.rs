@@ -1,7 +1,7 @@
 
 use clap::{Parser, Subcommand};
 use crate::add::start_snapshot;
-use crate::commit::{append_commit_pointer_to_history, create_commit, save_commit};
+use crate::commit::{append_commit_pointer_to_history, create_commit, save_commit, clear_commit_stage};
 use crate::init::init;
 use crate::config::{get_project_dir, staging_area_fold};
 use crate::hashing::get_latest_pointer_from_file;
@@ -80,6 +80,7 @@ pub fn parse_commandline() {
 
             if let Ok(latest_tree_pointer) = get_latest_pointer_from_file(&staging_area_fold().join("stage"), false) {
                append_commit_pointer_to_history( save_commit(create_commit(m, Some("inxeoz".to_string()), latest_tree_pointer)).expect("cant save commit "));
+                clear_commit_stage();
             }else {
                 println!("No commit configured");
             }

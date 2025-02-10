@@ -23,7 +23,7 @@ pub fn get_vcs_fold() -> PathBuf {
     get_project_dir().join(VCS_FOLDER)
 }
 pub fn get_vcs_store() -> PathBuf {
-    get_vcs_fold().join("store")
+    get_vcs_fold() //.join("store")
 }
 
 pub fn blob_fold() -> PathBuf {

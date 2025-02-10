@@ -51,3 +51,8 @@ pub fn attach_latest_root_pointer_to_stage(root_pointer: HashPointer) {
     file.write_all(root_pointer.get_one_hash().as_ref())
         .expect("TODO"); // Writing data
 }
+
+pub fn clear_commit_stage() {
+    let stage_file_path = &staging_area_fold().join("stage");
+    std::fs::write(stage_file_path, "").expect("Couldn't write to stage file");
+}

@@ -9,6 +9,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Error, Read, Write};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
+use crate::diff::serialize_struct;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct HashPointer {
@@ -158,7 +159,7 @@ pub fn hash_from_save_tree(
 ) -> io::Result<HashPointer> {
     let mut tree_object = TreeObject { children };
     tree_object.sort_children();
-    let content = serde_json::to_string(&tree_object)?;
+    let content = serialize_struct(&tree_object);
     hash_from_save_content(save_dir, content)
 }
 

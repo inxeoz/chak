@@ -1,7 +1,11 @@
+use crate::config::{blob_fold, get_project_dir};
+use crate::custom_error::ChakError;
+use crate::diff::deserialize_file_content;
 use crate::hashing::{hash_from_content, HashPointer};
+use crate::macros::{append_to_file, create_file};
 use indexmap::IndexMap;
 use itertools::{EitherOrBoth, Itertools};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fs::File;
@@ -9,8 +13,6 @@ use std::hash::Hash;
 use std::io;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use crate::config::blob_fold;
-use crate::custom_error::ChakError;
 
 #[derive(Serialize, PartialEq, Debug, Clone, Copy)]
 pub enum DiffLineType {
@@ -122,14 +124,13 @@ impl ContentBlock {
     }
 }
 
-
-#[derive(Serialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct HashedContent {
     pub pointer_to_previous_version: Option<HashPointer>,
     pub hash_lines: Vec<String>,
     pub hash_to_content: HashMap<String, String>,
 }
-pub fn to_interconnected_line(file_path: &Path) -> io::Result<HashedContent> {
+pub fn to_hashed_content(file_path: &Path) -> io::Result<HashedContent> {
     let file = File::open(file_path)?;
 
     let mut hash_lines = Vec::<String>::new();
@@ -139,7 +140,7 @@ pub fn to_interconnected_line(file_path: &Path) -> io::Result<HashedContent> {
         if let Ok(line) = res_line {
             let hash_string = hash_from_content(line.clone()).get_one_hash();
             hash_lines.push(hash_string.clone());
-            
+
             // Map hash string to actual line content (only if not already mapped)
             hash_to_content.entry(hash_string).or_insert(line);
         }
@@ -152,12 +153,14 @@ pub fn to_interconnected_line(file_path: &Path) -> io::Result<HashedContent> {
     })
 }
 
+//biased toward previous content
 pub fn compare_hashed_content(
     pre_content: HashedContent,
     new_content: HashedContent,
 ) -> HashedContent {
     let prev_hash_lines = pre_content.hash_lines;
     let pre_hash_to_content = pre_content.hash_to_content;
+
     let new_hash_lines = new_content.hash_lines;
 
     let mut diff_hash_lines_base_new_content = Vec::<String>::new();
@@ -173,26 +176,24 @@ pub fn compare_hashed_content(
             }
         };
 
-    for pair in prev_hash_lines
-        .iter()
-        .zip_longest(new_hash_lines.iter())
-    {
+    for pair in prev_hash_lines.iter().zip_longest(new_hash_lines.iter()) {
         match pair {
-            EitherOrBoth::Both( p_hash, n_hash) => {
-                if p_hash == n_hash {
-                    diff_hash_lines_base_new_content.push(n_hash.clone());
-                } else {
-                    diff_hash_lines_base_new_content.push(p_hash.clone());
-                    insert_hash_to_content_in_diff(p_hash, &mut diff_hash_to_content_base_new_content);
+            EitherOrBoth::Both(p_hash, n_hash) => {
+                diff_hash_lines_base_new_content.push(p_hash.clone());
+                if p_hash != n_hash {
+                    insert_hash_to_content_in_diff(
+                        p_hash,
+                        &mut diff_hash_to_content_base_new_content,
+                    );
                 }
             }
 
-            EitherOrBoth::Left( p_hash) => {
-                diff_hash_lines_base_new_content.push( p_hash.clone());
+            EitherOrBoth::Left(p_hash) => {
+                diff_hash_lines_base_new_content.push(p_hash.clone());
                 insert_hash_to_content_in_diff(p_hash, &mut diff_hash_to_content_base_new_content);
             }
-            EitherOrBoth::Right( n_hash) => {
-                diff_hash_lines_base_new_content.push( n_hash.clone());
+            EitherOrBoth::Right(n_hash) => {
+                diff_hash_lines_base_new_content.push(n_hash.clone());
             }
         }
     }
@@ -204,42 +205,47 @@ pub fn compare_hashed_content(
     }
 }
 
-pub fn file_to_lines(file_path: &Path) -> Result<Vec<Line>,io::Error> {
+pub fn file_to_lines(file_path: &Path) -> Result<Vec<Line>, io::Error> {
     let file = File::open(file_path)?;
     let reader = BufReader::new(file);
-    Ok (
-    reader
+    Ok(reader
         .lines()
         .map(|line| Line::new(line.unwrap()))
-        .collect()
-    )
+        .collect())
 }
 
 //TODO use this function for making previous version file
 pub fn previous_content_from_new_content_using_diff(
     diff: HashedContent,
     fixed_next_content: HashedContent,
-) -> IndexMap<String, String> {
-    let mut previous_line_to_content = IndexMap::<String, String>::new();
+) -> Vec<String> {
+    let mut previous_lines = Vec::<String>::new();
 
     for line_hash in &diff.hash_lines {
-        let content = diff.hash_to_content
+        let content = diff
+            .hash_to_content
             .get(line_hash)
             .or_else(|| fixed_next_content.hash_to_content.get(line_hash))
             .cloned()
             .unwrap_or_default();
 
-        previous_line_to_content.insert(line_hash.clone(), content);
+        previous_lines.push(content);
     }
 
-    previous_line_to_content
+    previous_lines
 }
 
+pub fn restore_previous_version(blob_path: &Path, diff_path: &Path) {
 
-// pub fn restore_previous_version(blob_path: &HashPointer, diff_path: &HashPointer )  {
-//     let blob_path = blob_fold().join(blob_path.get_path());
-//     let diff_path = blob_fold().join(&diff_path.get_path());
-//     let
-//
-// }
+    let fixed_next_content: HashedContent =
+        to_hashed_content(&blob_path).expect("Failed to deserialize file");
+    let diff: HashedContent =
+        deserialize_file_content(&diff_path).expect("Failed to deserialize file");
+    let previous_version = previous_content_from_new_content_using_diff(diff, fixed_next_content);
+    let restore_file = get_project_dir().join("restore").join("file.txt");
+    create_file(restore_file.clone()).expect("Failed to create file");
 
+    for lines in previous_version.iter() {
+        append_to_file(&restore_file, &lines).expect("Failed to save file");
+    }
+}
