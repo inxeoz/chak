@@ -10,7 +10,7 @@ pub enum TreeObjectType {
     TreeObject,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TreeObject {
     pub children: IndexMap<String, TreeNode>,
 }

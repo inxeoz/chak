@@ -84,7 +84,7 @@ pub fn parse_commandline() {
 
                 let commit_pointer = save_commit(create_commit(m, Some("inxeoz".to_string()), latest_tree_pointer)).expect("cant save commit ");
                 save_or_create_file(
-                    &history_fold().join("commit_log").join(&commit_pointer.get_path()), None, true,
+                    &history_fold().join("commit_log"), Some(&commit_pointer.get_one_hash()), true,
                 ).expect("cant save commit ");
 
                 clear_commit_stage();

@@ -1,18 +1,18 @@
-
-use crate::diff::{ HashedContent};
-use crate::hashing::{hash_from_content};
+use crate::config::blob_fold;
+use crate::diff::HashedContent;
+use crate::hashing::hash_from_content;
 use indexmap::{IndexMap, IndexSet};
 use itertools::{EitherOrBoth, Itertools};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fs::File;
 use std::hash::Hash;
-use std::{fs, io};
 use std::io::{BufRead, BufReader, Write};
 use std::ops::Sub;
 use std::path::Path;
-use serde::de::DeserializeOwned;
+use std::{fs, io};
 
 pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
     let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
@@ -27,14 +27,13 @@ pub fn serialize_struct<T: Serialize>(data: &T) -> String {
     serialized
 }
 
-pub fn get_diff(prev_file: &File, new_file: &File) ->HashedContent {
-    let first = to_hashed_content(&prev_file);
-    let second = to_hashed_content(&new_file);
+pub fn get_diff(prev_file: &File, new_file: &File) -> HashedContent {
+    let first = hashed_content_from_file(&prev_file);
+    let second = hashed_content_from_file(&new_file);
     let diff = compare_hashed_content(&first, &second);
     diff
-
 }
-pub fn to_hashed_content(file: &File) -> HashedContent {
+pub fn hashed_content_from_file(file: &File) -> HashedContent {
     let mut hash_lines = IndexSet::new();
     let mut hash_to_content = HashMap::<String, String>::new();
     for res_line in BufReader::new(file).lines() {
@@ -51,6 +50,11 @@ pub fn to_hashed_content(file: &File) -> HashedContent {
         hash_lines,
         hash_to_content,
     }
+}
+
+pub fn hashed_content_from_path(path: &Path) -> HashedContent {
+    let file = File::open(&path).expect("Failed to open file");
+    hashed_content_from_file(&file)
 }
 
 //biased toward previous content
@@ -109,16 +113,12 @@ pub fn restore_previous_version(
 #[cfg(test)]
 mod tests {
     use crate::config::get_project_dir;
-    use crate::diff::{hashed_content_from_string_lines};
-    use crate::diff_algo::{
-        compare_hashed_content, restore_previous_version, to_hashed_content, HashedContent,
-        serialize_struct,deserialize_file_content
-
-    };
+    use crate::diff::hashed_content_from_string_lines;
+    use crate::diff_algo::{compare_hashed_content, deserialize_file_content, hashed_content_from_file, restore_previous_version, serialize_struct, HashedContent};
+    use crate::hashing::{HashPointer, _hash_pointer_from_hash_string};
     use crate::util::save_or_create_file;
     use std::fs::File;
     use std::{env, io};
-    use crate::hashing::{HashPointer, _hash_pointer_from_hash_string};
 
     #[test]
     fn test_diff_algo() -> io::Result<()> {
@@ -126,10 +126,9 @@ mod tests {
         let file2 = File::open(env::current_dir()?.join("file2.txt"))?;
         let file3 = File::open(env::current_dir()?.join("file3.txt"))?;
         // Generate mappings
-        let file1_content = to_hashed_content(&file1);
-        let file2_content = to_hashed_content(&file2);
-        let file3_content = to_hashed_content(&file3);
-
+        let file1_content = hashed_content_from_file(&file1);
+        let file2_content = hashed_content_from_file(&file2);
+        let file3_content = hashed_content_from_file(&file3);
 
         let diff_base_1 = compare_hashed_content(&file1_content, &file2_content);
         let serialized_1 = serialize_struct(&diff_base_1);
@@ -140,7 +139,8 @@ mod tests {
         )?;
 
         let mut diff_base_2 = compare_hashed_content(&file2_content, &file3_content);
-        diff_base_2.pointer_to_previous_version = Some(_hash_pointer_from_hash_string("restore".to_string()));
+        diff_base_2.pointer_to_previous_version =
+            Some(_hash_pointer_from_hash_string("restore".to_string()));
         let serialized_2 = serialize_struct(&diff_base_2);
         save_or_create_file(
             &get_project_dir().join("restore").join("diff2.json"),
@@ -151,10 +151,10 @@ mod tests {
         Ok(())
     }
 
-   // #[test]
+    // #[test]
     fn restore_previous_version_test() -> io::Result<()> {
         let file3 = File::open(env::current_dir()?.join("file3.txt"))?;
-        let file3_content = to_hashed_content(&file3);
+        let file3_content = hashed_content_from_file(&file3);
 
         // Generate mappings
         let diff2 = deserialize_file_content::<HashedContent>(
@@ -166,17 +166,12 @@ mod tests {
         let diff1 = deserialize_file_content::<HashedContent>(
             &get_project_dir().join("restore").join("diff1.json"),
         )
-            .ok()
-            .expect("restore failed");
+        .ok()
+        .expect("restore failed");
 
-
-
-        if let Ok(file2_content_vec) =
-            restore_previous_version(&file3_content, &diff2)
-        {
-
+        if let Ok(file2_content_vec) = restore_previous_version(&file3_content, &diff2) {
             let file2_content = hashed_content_from_string_lines(file2_content_vec.clone());
-           // println!("diff content\n{}", serde_json::to_string_pretty(&)?);
+            // println!("diff content\n{}", serde_json::to_string_pretty(&)?);
 
             let serialzed = serialize_struct(&file2_content);
             save_or_create_file(
@@ -185,11 +180,7 @@ mod tests {
                 false,
             )?;
 
-
-            if let Ok(file1_content_vec) =
-                restore_previous_version(&file2_content, &diff1)
-            {
-
+            if let Ok(file1_content_vec) = restore_previous_version(&file2_content, &diff1) {
                 let file1_content = hashed_content_from_string_lines(file1_content_vec.clone());
                 // println!("diff content\n{}", serde_json::to_string_pretty(&)?);
 
@@ -199,13 +190,7 @@ mod tests {
                     Some(&serialzed),
                     false,
                 )?;
-
-
-
             }
-
-
-
         }
 
         Ok(())

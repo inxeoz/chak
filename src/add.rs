@@ -1,13 +1,8 @@
 use crate::commit::{attach_latest_root_pointer_to_stage, Commit};
-use crate::config::{
-    blob_fold, commits_fold, get_project_dir, history_fold, staging_area_fold, trees_fold,
-    VCS_IGNORE_FILE,
-};
+use crate::config::{blob_fold, commits_fold, get_project_dir, history_fold, staging_area_fold, trees_fold, versions_fold, VCS_IGNORE_FILE};
 use crate::custom_error::ChakError;
 use crate::diff::{hashed_content_from_string_lines, HashedContent};
-use crate::diff_algo::{
-    compare_hashed_content, deserialize_file_content, get_diff, serialize_struct, to_hashed_content,
-};
+use crate::diff_algo::{compare_hashed_content, deserialize_file_content, get_diff, hashed_content_from_path, serialize_struct};
 use crate::hashing::{
     get_latest_pointer_from_file, hash_and_content_from_file_path_ref, hash_from_file,
     hash_from_save_content, hash_from_save_tree, HashPointer,
@@ -75,11 +70,60 @@ fn handle_ignore_file(path: &Path, ignore_build_vec: &mut Vec<Gitignore>) {
     }
 }
 
+pub fn dir_snapshot(
+    path: &Path,
+    ignore_build_vec: &mut Vec<Gitignore>,
+    tree_hie: Option<TreeObject>,
+) -> io::Result<HashPointer> {
+
+    assert!(path.is_dir(), "Path is not a directory");
+
+    let mut children = IndexMap::<String, TreeNode>::new();
+
+    // Handle .ignore file
+    handle_ignore_file(path, ignore_build_vec);
+
+    let allowed_entries = parse_ignore_local_level(path, ignore_build_vec);
+
+    for entry in allowed_entries {
+        let entry_name = entry
+            .file_name()
+            .expect("Could not get file name")
+            .to_str()
+            .expect("Could not convert to str")
+            .to_string();
+
+        // Skip `.chak` directory at the project root
+        if path == get_project_dir() && entry.ends_with(".chak") {
+            continue;
+        }
+
+
+
+        if entry.is_file()  {
+            if &entry_name != VCS_IGNORE_FILE {
+                process_file(&entry, &entry_name, tree_hie.clone(), &mut children)?
+            }
+        } else {
+           // let existing_tree = tree_node_from_tree_object(tree_hie.as_ref(), entry_name.to_string())
+            process_directory(
+                &entry,
+                &entry_name,
+                tree_hie.clone(),
+                ignore_build_vec,
+                &mut children,
+            )?;
+        }
+    }
+
+    hash_from_save_tree(&trees_fold(), children)
+}
+
 /// Processes a directory entry and updates the `children` map
 fn process_directory(
     entry: &Path,
     entry_name: &str,
-    tree_hie: &Option<TreeObject>,
+    tree_hie: Option<TreeObject>,
     ignore_build_vec: &mut Vec<Gitignore>,
     children: &mut IndexMap<String, TreeNode>,
 ) -> io::Result<()> {
@@ -109,80 +153,45 @@ fn process_directory(
     Ok(())
 }
 
-pub fn dir_snapshot(
-    path: &Path,
-    ignore_build_vec: &mut Vec<Gitignore>,
+fn process_file(
+    entry: &Path,
+    entry_name: &str,
     tree_hie: Option<TreeObject>,
-) -> io::Result<HashPointer> {
-    assert!(path.is_dir(), "Path is not a directory");
+    children: &mut IndexMap<String, TreeNode>,
+) -> io::Result<()>{
+    let (new_file_hash,new_file_content ) = hash_and_content_from_file_path_ref(&entry)?;
 
-    let mut children = IndexMap::<String, TreeNode>::new();
-
-    // Handle .ignore file
-    handle_ignore_file(path, ignore_build_vec);
-
-    let allowed_entries = parse_ignore_local_level(path, ignore_build_vec);
-
-    for entry in allowed_entries {
-        let entry_name = entry
-            .file_name()
-            .expect("Could not get file name")
-            .to_str()
-            .expect("Could not convert to str")
-            .to_string();
-
-        // Skip `.chak` directory at the project root
-        if path == get_project_dir() && entry.ends_with(".chak") {
-            continue;
-        }
-
-        if entry.is_dir() {
-            process_directory(
-                &entry,
-                &entry_name,
-                &tree_hie,
-                ignore_build_vec,
-                &mut children,
-            )?;
-        } else if entry_name != VCS_IGNORE_FILE {
-            let (new_file_hash,new_file_hashed_content ) = hash_and_content_from_file_path_ref(&entry).map(|(new_file_hash, new_file_content)| {
-                return (new_file_hash, hashed_content_from_string_lines(string_content_to_string_vec(&new_file_content)))
-            })?;
-
-            if let Some(mut existing_version) =
-                tree_node_from_tree_object(tree_hie.as_ref(), entry_name.to_string())
-            {
-                    process_file(
-                        &new_file_hash,
-                        &new_file_hashed_content,
-                        &entry_name,
-                        &mut existing_version,
-                        &mut children,
-                    )?;
-            } else {
-                save_or_create_file(
-                    &blob_fold().join(&new_file_hash.get_path()),
-                    Some(&serialize_struct(&new_file_hashed_content)),
-                    false,
-                )
-                .expect("Could not save file");
-                children.insert(
-                    entry_name.to_string(),
-                    TreeNode {
-                        node_type: TreeObjectType::BlobFile,
-                        hash_pointer_to_this_node: new_file_hash,
-                        hash_pointer_to_diff: None,
-                    },
-                );
-            }
-        }
+    if let Some(mut existing_version) =
+        tree_node_from_tree_object(tree_hie.as_ref(), entry_name.to_string())
+    {
+        process_file_when_previous_version_exist(
+            &new_file_hash,
+            &hashed_content_from_string_lines(string_content_to_string_vec(&new_file_content)),
+            &entry_name,
+            &mut existing_version,
+            children,
+        )?;
+    } else {
+        save_or_create_file(
+            &blob_fold().join(&new_file_hash.get_path()),
+            Some(&new_file_content),
+            false,
+        )
+            .expect("Could not save file");
+        children.insert(
+            entry_name.to_string(),
+            TreeNode {
+                node_type: TreeObjectType::BlobFile,
+                hash_pointer_to_this_node: new_file_hash,
+                hash_pointer_to_diff: None,
+            },
+        );
     }
 
-    hash_from_save_tree(&trees_fold(), children)
+    Ok(())
 }
-
 /// Processes a file entry and updates the `children` map
-fn process_file(
+fn process_file_when_previous_version_exist(
     new_file_hash: &HashPointer,
     new_file_hashed_content: &HashedContent,
     entry_name: &str,
@@ -191,9 +200,8 @@ fn process_file(
 ) -> io::Result<()> {
 
     if new_file_hash != &existing_version.hash_pointer_to_this_node {
-        let prev_blob =
-            File::open(&blob_fold().join(existing_version.hash_pointer_to_this_node.get_path()))?;
-        let prev_blob_hashed_content = to_hashed_content(&prev_blob);
+        let previous_blob_path  = blob_fold().join(existing_version.hash_pointer_to_this_node.get_path());
+        let prev_blob_hashed_content = hashed_content_from_path(&previous_blob_path);
 
         let mut diff = compare_hashed_content(
             &prev_blob_hashed_content,
@@ -203,12 +211,12 @@ fn process_file(
             diff.pointer_to_previous_version = Some(prev_version);
         }
 
-        let diff_hash = hash_from_save_content(&serialize_struct(&diff), &blob_fold())?;
+        let diff_hash = hash_from_save_content(&serialize_struct(&diff), &versions_fold())?; // diff has to be saved in version fold
         existing_version.hash_pointer_to_diff = Some(diff_hash);
 
         // Remove old blob
         if let Err(e) =
-            fs::remove_file(blob_fold().join(existing_version.hash_pointer_to_this_node.get_path()))
+            fs::remove_file(previous_blob_path)
         {
             eprintln!("Warning: Failed to delete file: {}", e);
         }
@@ -220,8 +228,6 @@ fn process_file(
         eprintln!("Warning: File hash already exists ; no need extra effort ");
     }
     Ok(())
-
-
 }
 
 pub fn tree_node_from_tree_object(

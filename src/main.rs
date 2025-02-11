@@ -17,7 +17,7 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use crate::commandline::parse_commandline;
 use crate::config::{blob_fold, get_project_dir};
-use crate::diff_algo::{compare_hashed_content, restore_previous_version, to_hashed_content};
+use crate::diff_algo::{compare_hashed_content, hashed_content_from_file, restore_previous_version};
 
 
 fn main() {
@@ -35,8 +35,8 @@ fn test() -> io::Result<()>{
     let file2 = File::open(&get_project_dir().join("file2.txt"))?;
 
     // Generate mappings
-    let first = to_hashed_content(&file1);
-    let second = to_hashed_content(&file2);
+    let first = hashed_content_from_file(&file1);
+    let second = hashed_content_from_file(&file2);
 
     // Serialize and print mappings
     println!("hash lines:");
