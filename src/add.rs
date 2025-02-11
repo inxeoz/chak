@@ -3,7 +3,7 @@ use crate::config::{
     blob_fold, commits_fold, get_project_dir, history_fold, staging_area_fold, VCS_IGNORE_FILE,
 };
 use crate::custom_error::ChakError;
-use crate::diff::{deserialize_file_content, get_diff, serialize_struct};
+use crate::diff_algo::{deserialize_file_content, get_diff, serialize_struct};
 use crate::hashing::{get_latest_pointer_from_file, hash_and_content_from_file_path_ref, hash_from_file, hash_from_save_content, hash_from_save_tree, HashPointer};
 use crate::tree_object::{TreeNode, TreeObject, TreeObjectType};
 use crate::util::read_directory_entries;

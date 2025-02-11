@@ -1,6 +1,6 @@
 use crate::config::MIN_HASH_LENGTH;
 use crate::custom_error::ChakError;
-use crate::diff::serialize_struct;
+use crate::diff_algo::serialize_struct;
 use crate::diff_algo::file_to_lines;
 use crate::tree_object::{TreeNode, TreeObject};
 use indexmap::IndexMap;

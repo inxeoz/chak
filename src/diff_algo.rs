@@ -1,9 +1,6 @@
-use crate::config::{blob_fold, get_project_dir};
-use crate::custom_error::ChakError;
-use crate::diff::deserialize_file_content;
-use crate::hashing::{hash_from_content, HashPointer};
-use crate::macros::save_or_create_file;
-use clap::builder::Str;
+
+use crate::diff::{ HashedContent};
+use crate::hashing::{hash_from_content};
 use indexmap::{IndexMap, IndexSet};
 use itertools::{EitherOrBoth, Itertools};
 use serde::{Deserialize, Serialize};
@@ -11,126 +8,31 @@ use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fs::File;
 use std::hash::Hash;
-use std::io;
+use std::{fs, io};
 use std::io::{BufRead, BufReader, Write};
 use std::ops::Sub;
 use std::path::Path;
+use serde::de::DeserializeOwned;
 
-#[derive(Serialize, PartialEq, Debug, Clone, Copy)]
-pub enum DiffLineType {
-    NOCHANGE,
-    REPLACE,
-}
-#[derive(Serialize, Clone, Debug)]
-pub struct Line {
-    line_value: String,
-    line_hash: HashPointer,
-}
-impl Line {
-    pub fn new(line: String) -> Line {
-        Line {
-            line_value: line.clone(),
-            line_hash: hash_from_content(&line),
-        }
-    }
+pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
+    let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
+    let content = serde_json::from_str(&content_string)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?; // Converts serde error into io::Error
+    Ok(content)
 }
 
-#[derive(Serialize, Clone, Debug)]
-pub struct DiffLine {
-    #[serde(skip)]
-    pub diff_line_type: DiffLineType,
-    #[serde(skip)]
-    pub copy_from_live: Line,
+pub fn serialize_struct<T: Serialize>(data: &T) -> String {
+    let serialized = serde_json::to_string_pretty(&data).expect("Failed to serialize");
+    println!("{}", serialized);
+    serialized
 }
 
-impl DiffLine {
-    pub fn from(prev_line: Line, live_line: Line) -> Self {
-        let diff_line_type = if prev_line.line_hash == live_line.line_hash {
-            DiffLineType::NOCHANGE
-        } else {
-            DiffLineType::REPLACE
-        };
+pub fn get_diff(prev_file: &File, new_file: &File) ->HashedContent {
+    let first = to_hashed_content(&prev_file);
+    let second = to_hashed_content(&new_file);
+    let diff = compare_hashed_content(&first, &second);
+    diff
 
-        Self {
-            diff_line_type,
-            copy_from_live: if diff_line_type == DiffLineType::REPLACE {
-                prev_line
-            } else {
-                Line::new(String::new())
-            },
-        }
-    }
-}
-
-#[derive(Serialize, Clone, Debug)]
-pub struct Block {
-    pub block_content: Vec<DiffLine>,
-    pub block_type: DiffLineType,
-    // #[serde(skip)]
-    pub block_hash: HashPointer,
-}
-
-impl Block {
-    pub fn from(diff_line: DiffLine) -> Self {
-        Self {
-            block_content: vec![diff_line.clone()],
-            block_type: diff_line.diff_line_type,
-            block_hash: diff_line.copy_from_live.line_hash,
-        }
-    }
-
-    pub fn add(&mut self, diff_line: DiffLine) -> Result<(), String> {
-        if diff_line.diff_line_type == self.block_type {
-            self.block_hash
-                .update_hash(diff_line.copy_from_live.line_hash.get_one_hash());
-            self.block_content.push(diff_line);
-            Ok(())
-        } else {
-            Err("DiffLine type mismatch".into())
-        }
-    }
-}
-
-#[derive(Serialize, Clone, Debug)]
-pub struct ContentBlock {
-    pub content: Vec<Block>,
-    pub content_hash: HashPointer,
-}
-
-impl ContentBlock {
-    pub fn new() -> Self {
-        Self {
-            content_hash: hash_from_content(&String::new()),
-            content: vec![],
-        }
-    }
-    pub fn from(block: Block) -> Self {
-        Self {
-            content_hash: block.block_hash.clone(),
-            content: vec![block],
-        }
-    }
-
-    pub fn add(&mut self, diff_line: DiffLine) {
-        if let Some(last_block) = self.content.last_mut() {
-            if last_block.block_type == diff_line.diff_line_type {
-                last_block.add(diff_line).unwrap();
-            } else {
-                self.content.push(Block::from(diff_line));
-            }
-        } else {
-            let block = Block::from(diff_line);
-            self.content_hash = block.block_hash.clone();
-            self.content.push(block);
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub struct HashedContent {
-    pub pointer_to_previous_version: Option<HashPointer>,
-    pub hash_lines: IndexSet<String>,
-    pub hash_to_content: HashMap<String, String>,
 }
 pub fn to_hashed_content(file: &File) -> HashedContent {
     let mut hash_lines = IndexSet::new();
@@ -207,9 +109,10 @@ pub fn restore_previous_version(
 #[cfg(test)]
 mod tests {
     use crate::config::get_project_dir;
-    use crate::diff::{deserialize_file_content, serialize_struct};
     use crate::diff_algo::{
         compare_hashed_content, restore_previous_version, to_hashed_content, HashedContent,
+        serialize_struct,deserialize_file_content
+
     };
     use crate::macros::save_or_create_file;
     use std::fs::File;
