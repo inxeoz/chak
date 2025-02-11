@@ -2,8 +2,8 @@ use crate::config::{blob_fold, get_project_dir};
 use crate::custom_error::ChakError;
 use crate::diff::deserialize_file_content;
 use crate::hashing::{hash_from_content, HashPointer};
-use crate::macros::{ save_or_create_file};
-use indexmap::IndexMap;
+use crate::macros::save_or_create_file;
+use indexmap::{IndexMap, IndexSet};
 use itertools::{EitherOrBoth, Itertools};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
@@ -12,7 +12,9 @@ use std::fs::File;
 use std::hash::Hash;
 use std::io;
 use std::io::{BufRead, BufReader, Write};
+use std::ops::Sub;
 use std::path::Path;
+use clap::builder::Str;
 
 #[derive(Serialize, PartialEq, Debug, Clone, Copy)]
 pub enum DiffLineType {
@@ -127,16 +129,16 @@ impl ContentBlock {
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct HashedContent {
     pub pointer_to_previous_version: Option<HashPointer>,
-    pub hash_lines: Vec<String>,
+    pub hash_lines: IndexSet<String>,
     pub hash_to_content: HashMap<String, String>,
 }
 pub fn to_hashed_content(file: &File) -> HashedContent {
-    let mut hash_lines = Vec::<String>::new();
+    let mut hash_lines = IndexSet::new();
     let mut hash_to_content = HashMap::<String, String>::new();
     for res_line in BufReader::new(file).lines() {
         if let Ok(line) = res_line {
             let hash_string = hash_from_content(&line).get_one_hash();
-            hash_lines.push(hash_string.clone());
+            hash_lines.insert(hash_string.clone());
 
             // Map hash string to actual line content (only if not already mapped)
             hash_to_content.entry(hash_string).or_insert(line);
@@ -154,50 +156,25 @@ pub fn compare_hashed_content(
     pre_content: HashedContent,
     new_content: HashedContent,
 ) -> HashedContent {
+    //content has to be unquie in prev content to add hash -> content map for diff because diff going to biased toward prev content
     let prev_hash_lines = pre_content.hash_lines;
-    let pre_hash_to_content = pre_content.hash_to_content;
-
+    let prev_line_contents = pre_content.hash_to_content;
     let new_hash_lines = new_content.hash_lines;
+    let unique_hash_lines_in_prev_lines = prev_hash_lines.sub(&new_hash_lines);
 
-    let mut diff_hash_lines_base_new_content = Vec::<String>::new();
-    let mut diff_hash_to_content_base_new_content = HashMap::<String, String>::new();
+    let mut unique_line_contents = HashMap::<String, String>::new();
 
-    let insert_hash_to_content_in_diff =
-        |p_hash: &String, mut diff_hash_to_content: &mut HashMap<String, String>| {
-            if !diff_hash_to_content.contains_key(p_hash.as_str()) {
-                diff_hash_to_content.insert(
-                    p_hash.clone(),
-                    pre_hash_to_content.get(p_hash.as_str()).unwrap().clone(),
-                );
-            }
-        };
-
-    for pair in prev_hash_lines.iter().zip_longest(new_hash_lines.iter()) {
-        match pair {
-            EitherOrBoth::Both(p_hash, n_hash) => {
-                diff_hash_lines_base_new_content.push(p_hash.clone());
-                if p_hash != n_hash {
-                    insert_hash_to_content_in_diff(
-                        p_hash,
-                        &mut diff_hash_to_content_base_new_content,
-                    );
-                }
-            }
-
-            EitherOrBoth::Left(p_hash) => {
-                diff_hash_lines_base_new_content.push(p_hash.clone());
-                insert_hash_to_content_in_diff(p_hash, &mut diff_hash_to_content_base_new_content);
-            }
-            EitherOrBoth::Right(n_hash) => {
-                diff_hash_lines_base_new_content.push(n_hash.clone());
-            }
-        }
+    for unique_prev_line_hash in unique_hash_lines_in_prev_lines {
+       if let Some(unique_line_content) = prev_line_contents.get(&unique_prev_line_hash) {
+           unique_line_contents.insert(unique_prev_line_hash.clone(), unique_line_content.clone());
+       }
     }
+
 
     HashedContent {
         pointer_to_previous_version: None,
-        hash_lines: diff_hash_lines_base_new_content,
-        hash_to_content: diff_hash_to_content_base_new_content,
+        hash_lines: prev_hash_lines,
+        hash_to_content: unique_line_contents,
     }
 }
 
@@ -205,7 +182,7 @@ pub fn file_to_lines(file: &File) -> Vec<String> {
     let reader = BufReader::new(file);
     reader
         .lines()
-        .map(|line|line.unwrap_or_default())
+        .map(|line| line.unwrap_or_default())
         .collect()
 }
 
@@ -234,11 +211,44 @@ pub fn restore_previous_version(blob_path: &Path, diff_path: &Path) -> Result<()
     let fixed_next_content = to_hashed_content(&blob_file);
     let diff = deserialize_file_content(&diff_path)?;
     let previous_version = previous_content_from_new_content_using_diff(diff, fixed_next_content);
-    let mut restore_file = save_or_create_file(&get_project_dir().join("restore").join("file.txt"), None, true)?;
+    let mut restore_file = save_or_create_file(
+        &get_project_dir().join("restore").join("file.txt"),
+        None,
+        true,
+    )?;
 
     for lines in previous_version.iter() {
-        restore_file.write_all(lines.as_bytes())?// /n would work not here  ?
+        restore_file.write_all(lines.as_bytes())? // /n would work not here  ?
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::diff_algo::{compare_hashed_content, to_hashed_content};
+    use std::fs::File;
+    use std::{env, io};
+
+    #[test]
+    fn test_diff_algo() -> io::Result<()> {
+        let prev_file = File::open(env::current_dir()?.join("file1.txt"))?;
+        let new_file = File::open(env::current_dir()?.join("file2.txt"))?;
+
+        // Generate mappings
+        let prev_file_content = to_hashed_content(&prev_file);
+        let new_file_content = to_hashed_content(&new_file);
+
+        println!(
+            "prev\n{}",
+            serde_json::to_string_pretty(&prev_file_content)?
+        );
+
+        println!("new\n{}", serde_json::to_string_pretty(&new_file_content)?);
+
+        let diff_biased_prev = compare_hashed_content(prev_file_content, new_file_content);
+        println!("diff\n{}", serde_json::to_string_pretty(&diff_biased_prev)?);
+
+        Ok(())
+    }
 }
