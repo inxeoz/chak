@@ -134,6 +134,20 @@ pub struct HashedContent {
     pub hash_lines: IndexSet<String>,
     pub hash_to_content: HashMap<String, String>,
 }
+pub fn hashed_content_from_string_lines(lines: Vec<String>) -> HashedContent {
+    let mut hash_lines = IndexSet::<String>::new();
+    let mut hash_to_content = HashMap::<String, String>::new();
+    for line in lines {
+        let hash_line = hash_from_content(&line).get_one_hash();
+        hash_lines.insert(hash_line.clone());
+        hash_to_content.insert(hash_line, line);
+    }
+    HashedContent {
+        pointer_to_previous_version : None,
+        hash_lines,
+        hash_to_content,
+    }
+}
 
 
 
