@@ -17,20 +17,20 @@ pub struct TreeObject {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct TreeNode {
-    pub blob_type: TreeObjectType,
-    pub pointer_to_blob: HashPointer,
-    pub pointer_to_diff: Option<HashPointer>,
+    pub node_type: TreeObjectType,
+    pub hash_pointer_to_this_node: HashPointer,
+    pub hash_pointer_to_diff: Option<HashPointer>,
 }
 
 impl PartialEq for TreeNode {
     fn eq(&self, other: &Self) -> bool {
-        self.pointer_to_blob == other.pointer_to_blob
+        self.hash_pointer_to_this_node == other.hash_pointer_to_this_node
     }
 }
 
 impl Ord for TreeNode {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.pointer_to_blob.cmp(&other.pointer_to_blob)
+        self.hash_pointer_to_this_node.cmp(&other.hash_pointer_to_this_node)
     }
 }
 

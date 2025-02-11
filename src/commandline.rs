@@ -5,7 +5,7 @@ use crate::commit::{ create_commit, save_commit, clear_commit_stage};
 use crate::init::init;
 use crate::config::{get_project_dir, history_fold, staging_area_fold};
 use crate::hashing::get_latest_pointer_from_file;
-use crate::macros::save_or_create_file;
+use crate::util::save_or_create_file;
 use crate::util::check_vcs_presence;
 
 /// A simple version control system built with Rust

@@ -1,7 +1,6 @@
 
 mod init;
 mod add;
-mod macros;
 mod util;
 mod config;
 mod commandline;

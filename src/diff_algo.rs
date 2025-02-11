@@ -115,7 +115,7 @@ mod tests {
         serialize_struct,deserialize_file_content
 
     };
-    use crate::macros::save_or_create_file;
+    use crate::util::save_or_create_file;
     use std::fs::File;
     use std::{env, io};
     use crate::hashing::{HashPointer, _hash_pointer_from_hash_string};

@@ -11,7 +11,7 @@ use std::io::{BufRead, BufReader, Error, Read, Write};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 use clap::builder::Str;
-use crate::macros::{file_to_string, save_or_create_file};
+use crate::util::{file_to_string, save_or_create_file};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct HashPointer {

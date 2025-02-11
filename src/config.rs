@@ -22,22 +22,28 @@ pub fn get_project_dir() -> &'static PathBuf {
 pub fn get_vcs_fold() -> PathBuf {
     get_project_dir().join(VCS_FOLDER)
 }
-pub fn get_vcs_store() -> PathBuf {
-    get_vcs_fold() //.join("store")
-}
 
 pub fn blob_fold() -> PathBuf {
-    get_vcs_store().join("blobs")
+    get_vcs_fold().join("blobs")
 }
 
+pub fn versions_fold() -> PathBuf {get_vcs_fold().join("versions")}
+
+pub fn trees_fold() -> PathBuf {get_vcs_fold().join("trees") }
+
 pub fn staging_area_fold() -> PathBuf {
-    get_vcs_store().join("staging_area")
+    get_vcs_fold().join("staging_area")
 }
 
 pub fn commits_fold() -> PathBuf {
-    get_vcs_store().join("commits")
+    get_vcs_fold().join("commits")
 }
 
 pub fn history_fold() -> PathBuf {
-    get_vcs_store().join("history")
+    get_vcs_fold().join("history")
+}
+
+
+pub fn essentials_folds() -> Vec<PathBuf> {
+   vec![blob_fold(), versions_fold(), trees_fold(), staging_area_fold(), commits_fold(), history_fold()]
 }
