@@ -67,7 +67,7 @@ impl HashPointer {
     }
 }
 
-fn _hash_pointer_from_hash_string(hash: String) -> HashPointer {
+pub fn _hash_pointer_from_hash_string(hash: String) -> HashPointer {
     HashPointer {
         fold_name: hash[..2].to_string(),
         file_name: hash[2..].to_string(),

@@ -153,13 +153,13 @@ pub fn to_hashed_content(file: &File) -> HashedContent {
 
 //biased toward previous content
 pub fn compare_hashed_content(
-    pre_content: HashedContent,
-    new_content: HashedContent,
+    pre_content: &HashedContent,
+    new_content: &HashedContent,
 ) -> HashedContent {
     //content has to be unquie in prev content to add hash -> content map for diff because diff going to biased toward prev content
-    let prev_hash_lines = pre_content.hash_lines;
-    let prev_line_contents = pre_content.hash_to_content;
-    let new_hash_lines = new_content.hash_lines;
+    let prev_hash_lines = &pre_content.hash_lines;
+    let prev_line_contents = &pre_content.hash_to_content;
+    let new_hash_lines = &new_content.hash_lines;
     let unique_hash_lines_in_prev_lines = prev_hash_lines.sub(&new_hash_lines);
 
     let mut unique_line_contents = HashMap::<String, String>::new();
@@ -172,7 +172,7 @@ pub fn compare_hashed_content(
 
     HashedContent {
         pointer_to_previous_version: None,
-        hash_lines: prev_hash_lines,
+        hash_lines: prev_hash_lines.clone(),
         hash_to_content: unique_line_contents,
     }
 }
@@ -214,54 +214,59 @@ mod tests {
     use crate::macros::save_or_create_file;
     use std::fs::File;
     use std::{env, io};
+    use crate::hashing::{HashPointer, _hash_pointer_from_hash_string};
 
     #[test]
     fn test_diff_algo() -> io::Result<()> {
-        let prev_file = File::open(env::current_dir()?.join("file1.txt"))?;
-        let new_file = File::open(env::current_dir()?.join("file2.txt"))?;
-
+        let file1 = File::open(env::current_dir()?.join("file1.txt"))?;
+        let file2 = File::open(env::current_dir()?.join("file2.txt"))?;
+        let file3 = File::open(env::current_dir()?.join("file3.txt"))?;
         // Generate mappings
-        let prev_file_content = to_hashed_content(&prev_file);
-        let new_file_content = to_hashed_content(&new_file);
+        let file1_content = to_hashed_content(&file1);
+        let file2_content = to_hashed_content(&file2);
+        let file3_content = to_hashed_content(&file3);
 
-        println!(
-            "prev\n{}",
-            serde_json::to_string_pretty(&prev_file_content)?
-        );
 
-        println!("new\n{}", serde_json::to_string_pretty(&new_file_content)?);
-
-        let diff_biased_prev = compare_hashed_content(prev_file_content, new_file_content);
-        println!("diff\n{}", serde_json::to_string_pretty(&diff_biased_prev)?);
-
-        let serialzed = serialize_struct(&diff_biased_prev);
+        let diff_base_1 = compare_hashed_content(&file1_content, &file2_content);
+        let serialized_1 = serialize_struct(&diff_base_1);
         save_or_create_file(
-            &get_project_dir().join("restore").join("diff.json"),
-            Some(&serialzed),
+            &get_project_dir().join("restore").join("diff1.json"),
+            Some(&serialized_1),
             false,
         )?;
+
+        let mut diff_base_2 = compare_hashed_content(&file2_content, &file3_content);
+        diff_base_2.pointer_to_previous_version = Some(_hash_pointer_from_hash_string("restore".to_string()));
+        let serialized_2 = serialize_struct(&diff_base_2);
+        save_or_create_file(
+            &get_project_dir().join("restore").join("diff2.json"),
+            Some(&serialized_2),
+            false,
+        )?;
+
         Ok(())
     }
 
     #[test]
     fn restore_previous_version_test() -> io::Result<()> {
-        //let diff_file = File::open(get_project_dir().join("restore").join("diff.json"))?;
-        let new_file = File::open(env::current_dir()?.join("file2.txt"))?;
+        let file3 = File::open(env::current_dir()?.join("file3.txt"))?;
+        let file3_content = to_hashed_content(&file3);
 
         // Generate mappings
-        let diff_file_content = deserialize_file_content::<HashedContent>(
-            &get_project_dir().join("restore").join("diff.json"),
+        let diff2 = deserialize_file_content::<HashedContent>(
+            &get_project_dir().join("restore").join("diff2.json"),
         )
         .ok()
         .expect("restore failed");
-        let new_file_content = to_hashed_content(&new_file);
 
-        if let Ok(diff_biased_prev) =
-            restore_previous_version(&new_file_content, &diff_file_content)
+
+
+        if let Ok(file2_content_vec) =
+            restore_previous_version(&file3_content, &diff2)
         {
-            println!("diff\n{}", serde_json::to_string_pretty(&diff_biased_prev)?);
+            println!("diff\n{}", serde_json::to_string_pretty(&file2_content_vec)?);
 
-            let serialzed = serialize_struct(&diff_biased_prev);
+            let serialzed = serialize_struct(&file2_content_vec);
             save_or_create_file(
                 &get_project_dir().join("restore").join("restored.json"),
                 Some(&serialzed),

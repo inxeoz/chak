@@ -1,10 +1,7 @@
 use crate::hashing::HashPointer;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::collections::HashMap;
-use std::ffi::OsString;
 use indexmap::IndexMap;
-use itertools::Itertools;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum TreeObjectType {
@@ -27,13 +24,13 @@ pub struct TreeNode {
 
 impl PartialEq for TreeNode {
     fn eq(&self, other: &Self) -> bool {
-        self.pointer_to_blob.get_one_hash() == other.pointer_to_blob.get_one_hash()
+        self.pointer_to_blob == other.pointer_to_blob
     }
 }
 
 impl Ord for TreeNode {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.pointer_to_blob.get_one_hash().cmp(&other.pointer_to_blob.get_one_hash())
+        self.pointer_to_blob.cmp(&other.pointer_to_blob)
     }
 }
 

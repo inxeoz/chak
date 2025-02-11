@@ -53,7 +53,7 @@ fn test() -> io::Result<()>{
     println!("Hash to Content:");
     println!("{}", serde_json::to_string_pretty(&second.hash_to_content)?);
 
-    let new = compare_hashed_content(first, second);
+    let new = compare_hashed_content(&first, &second);
 
     // Serialize and print mappings
     println!("hash lines:");

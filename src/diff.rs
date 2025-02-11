@@ -36,7 +36,7 @@ pub fn serialize_struct<T: Serialize>(data: &T) -> String {
 pub fn get_diff(prev_file: &File, new_file: &File) ->HashedContent {
     let first = to_hashed_content(&prev_file);
     let second = to_hashed_content(&new_file);
-    let diff = compare_hashed_content(first, second);
+    let diff = compare_hashed_content(&first, &second);
     diff
 
 }
