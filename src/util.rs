@@ -5,6 +5,22 @@ use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{self, ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
+
+pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
+    let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
+    let content = serde_json::from_str(&content_string)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?; // Converts serde error into io::Error
+    Ok(content)
+}
+
+pub fn serialize_struct<T: Serialize>(data: &T) -> String {
+    let serialized = serde_json::to_string_pretty(&data).expect("Failed to serialize");
+    println!("{}", serialized);
+    serialized
+}
+
 
 pub fn check_vcs_presence(fold: &Path) -> bool {
         if fold.join(".chak").exists() {

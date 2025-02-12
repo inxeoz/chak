@@ -14,18 +14,7 @@ use std::ops::Sub;
 use std::path::Path;
 use std::{fs, io};
 
-pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
-    let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
-    let content = serde_json::from_str(&content_string)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?; // Converts serde error into io::Error
-    Ok(content)
-}
 
-pub fn serialize_struct<T: Serialize>(data: &T) -> String {
-    let serialized = serde_json::to_string_pretty(&data).expect("Failed to serialize");
-    println!("{}", serialized);
-    serialized
-}
 
 pub fn get_diff(prev_file: &File, new_file: &File) -> HashedContent {
     let first = hashed_content_from_file(&prev_file);
@@ -91,32 +80,17 @@ pub fn file_to_lines(file: &File) -> Vec<String> {
         .collect()
 }
 
-pub fn restore_previous_version(
-    fixed_next_content: &HashedContent,
-    diff_content: &HashedContent,
-) -> Result<Vec<String>, io::Error> {
-    let mut previous_lines = Vec::new();
 
-    for line_hash in &diff_content.hash_lines {
-        if let Some(content) = fixed_next_content
-            .hash_to_content
-            .get(line_hash)
-            .or_else(|| diff_content.hash_to_content.get(line_hash))
-        {
-            previous_lines.push(content.clone());
-        }
-    }
-
-    Ok(previous_lines)
-}
 
 #[cfg(test)]
 mod tests {
     use crate::config::get_project_dir;
     use crate::diff::hashed_content_from_string_lines;
-    use crate::diff_algo::{compare_hashed_content, deserialize_file_content, hashed_content_from_file, restore_previous_version, serialize_struct, HashedContent};
+    use crate::util::{deserialize_file_content, serialize_struct};
+    use crate::diff_algo::{compare_hashed_content, hashed_content_from_file, HashedContent};
     use crate::hashing::{HashPointer, _hash_pointer_from_hash_string};
     use crate::util::save_or_create_file;
+    use crate::restore::restore_previous_version;
     use std::fs::File;
     use std::{env, io};
 
@@ -153,7 +127,7 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
+     #[test]
     fn restore_previous_version_test() -> io::Result<()> {
         let file3 = File::open(env::current_dir()?.join("file3.txt"))?;
         let file3_content = hashed_content_from_file(&file3);

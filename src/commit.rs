@@ -1,6 +1,6 @@
 use crate::config::{commits_fold, history_fold, staging_area_fold};
-use crate::diff_algo::serialize_struct;
-use crate::hashing::{get_latest_pointer_from_file, hash_from_content, hash_from_save_content, HashPointer};
+use crate::util::serialize_struct;
+use crate::hashing::{ hash_from_content, hash_from_save_content, HashPointer};
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io;

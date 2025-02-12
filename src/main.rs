@@ -9,11 +9,13 @@ mod hashing;
 mod init;
 mod tree_object;
 mod util;
+mod restore;
+mod temporary;
 
 use crate::commandline::parse_commandline;
 use crate::config::{blob_fold, get_project_dir};
 use crate::diff_algo::{
-    compare_hashed_content, hashed_content_from_file, restore_previous_version,
+    compare_hashed_content, hashed_content_from_file,
 };
 use clap::{Parser, Subcommand};
 use std::fs::File;
@@ -23,7 +25,7 @@ use std::path::PathBuf;
 fn main() {
     parse_commandline();
 
-    util::tests::test_save_or_create();
+   // util::tests::test_save_or_create();
     //test();
     // restore_test()
 }

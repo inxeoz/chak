@@ -1,6 +1,6 @@
 use crate::config::MIN_HASH_LENGTH;
 use crate::custom_error::ChakError;
-use crate::diff_algo::serialize_struct;
+use crate::util::serialize_struct;
 use crate::diff_algo::file_to_lines;
 use crate::tree_object::{TreeNode, TreeObject};
 use indexmap::IndexMap;
@@ -147,7 +147,7 @@ pub fn hash_from_save_tree(
     hash_from_save_content(&content, save_dir)
 }
 
-pub fn get_latest_pointer_from_file(file: &File, from_bottom: bool) -> Option<HashPointer> {
+pub fn get_latest_pointer_line_from_file(file: &File, from_bottom: bool) -> Option<HashPointer> {
     let lines = file_to_lines(file);
 
     let line = if from_bottom {

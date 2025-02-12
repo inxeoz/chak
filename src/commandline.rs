@@ -3,7 +3,7 @@ use crate::commit::{
     append_commit_hash_pointer_to_commit_log, clear_commit_stage, create_commit, save_commit,
 };
 use crate::config::{get_project_dir, history_fold, staging_area_fold};
-use crate::hashing::get_latest_pointer_from_file;
+use crate::hashing::get_latest_pointer_line_from_file;
 use crate::init::init;
 use crate::util::check_vcs_presence;
 use crate::util::save_or_create_file;
@@ -49,8 +49,8 @@ enum Commands {
     },
 
     Restore {
-        file: String,
-        diff: String,
+        file: Option<String>,
+        diff: Option<String>,
     },
 }
 
@@ -60,14 +60,13 @@ pub fn parse_commandline() {
     match args.command {
         Some(Commands::Init {}) => {
             // Add logic for repository initialization
-            init();
+            init().expect("cant init the system");
         }
 
         Some(Commands::Add { files }) => {
             if check_vcs_presence(get_project_dir()) {
-                if files.contains(&".".to_string()) {
-                    // println!(". seen");
-                    start_snapshot();
+                if files.contains(&".".to_string()) { //i have to fix this in future check for . in first string
+                    start_snapshot().expect("cant start the snapshot");
                 }
             } else {
                 println!("No vcs_presence configured. could not applied add operations.");
@@ -77,7 +76,7 @@ pub fn parse_commandline() {
         Some(Commands::Commit { m }) => {
             let staging_file =
                 File::open(&staging_area_fold().join("stage")).expect("failed to open stage file");
-            if let Some(latest_tree_pointer) = get_latest_pointer_from_file(&staging_file, false) {
+            if let Some(latest_tree_pointer) = get_latest_pointer_line_from_file(&staging_file, false) {
                 let commit_pointer = save_commit(create_commit(
                     m,
                     Some("inxeoz".to_string()),
@@ -91,7 +90,12 @@ pub fn parse_commandline() {
                 println!("No commit configured");
             }
         }
-        Some(Commands::Restore { file, diff }) => {}
+        Some(Commands::Restore { file, diff }) => {
+            if file.is_none() && diff.is_none() {
+                // get latest stage pointer
+                //
+            }
+        }
         Some(Commands::Status) => {
             if check_vcs_presence(get_project_dir()) {
                 // println!("\n{:?}",get_status(get_project_dir()) );
