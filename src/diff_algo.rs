@@ -136,6 +136,7 @@ mod tests {
             &get_project_dir().join("restore").join("diff1.json"),
             Some(&serialized_1),
             false,
+            None
         )?;
 
         let mut diff_base_2 = compare_hashed_content(&file2_content, &file3_content);
@@ -146,6 +147,7 @@ mod tests {
             &get_project_dir().join("restore").join("diff2.json"),
             Some(&serialized_2),
             false,
+            None
         )?;
 
         Ok(())
@@ -178,6 +180,7 @@ mod tests {
                 &get_project_dir().join("restore").join("restored2.json"),
                 Some(&serialzed),
                 false,
+                None
             )?;
 
             if let Ok(file1_content_vec) = restore_previous_version(&file2_content, &diff1) {
@@ -189,6 +192,7 @@ mod tests {
                     &get_project_dir().join("restore").join("restored1.json"),
                     Some(&serialzed),
                     false,
+                    None
                 )?;
             }
         }

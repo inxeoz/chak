@@ -161,6 +161,16 @@ fn process_file(
 ) -> io::Result<()>{
     let (new_file_hash,new_file_content ) = hash_and_content_from_file_path_ref(&entry)?;
 
+    if ! blob_fold().join(new_file_hash.get_path()).exists() {
+        save_or_create_file(
+            &blob_fold().join(&new_file_hash.get_path()),
+            Some(&new_file_content),
+            false,
+            None,
+        )
+            .expect("Could not save file");
+    }
+
     if let Some(mut existing_version) =
         tree_node_from_tree_object(tree_hie.as_ref(), entry_name.to_string())
     {
@@ -172,12 +182,7 @@ fn process_file(
             children,
         )?;
     } else {
-        save_or_create_file(
-            &blob_fold().join(&new_file_hash.get_path()),
-            Some(&new_file_content),
-            false,
-        )
-            .expect("Could not save file");
+
         children.insert(
             entry_name.to_string(),
             TreeNode {

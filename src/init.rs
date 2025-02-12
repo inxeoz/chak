@@ -29,8 +29,8 @@ pub fn init() -> Result<(), io::Error> {
         create_dir_all(essentials_fold)?
     }
 
-    save_or_create_file(&staging_area_fold().join("stage"), None, false)?;
-    save_or_create_file(&history_fold().join("commit_log"), None, false)?;
+    save_or_create_file(&staging_area_fold().join("stage"), None, false, None)?;
+    save_or_create_file(&history_fold().join("commit_log"), None, false, Some("\n"))?;
 
     Ok(())
 }

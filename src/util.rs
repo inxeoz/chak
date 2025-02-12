@@ -39,7 +39,8 @@ pub fn read_directory_entries(path: &Path) -> io::Result<Vec<PathBuf>> {
 pub fn save_or_create_file(
     file_path: &Path,
     content: Option<&str>,
-    append: bool
+    append: bool,
+    append_with_separator: Option<&str>,
 ) -> io::Result<File> {
     if file_path.is_dir() {
         return Err(io::Error::new(
@@ -59,9 +60,13 @@ pub fn save_or_create_file(
         .open(file_path)?;
 
     if let Some(content) = content {
+        if let Some(sep_string) = append_with_separator {
+            file.write_all(sep_string.as_bytes())?;
+        }
         file.write_all(content.as_bytes())?;
     }
 
+    file.sync_all()?;//lets see
     Ok(file) // Return Ok even if content is None
 }
 
@@ -89,4 +94,17 @@ pub fn string_content_to_string_vec(content: &str) -> Vec<String> {
         .lines()
         .map(|s| s.trim().to_string())
         .collect()
+}
+
+
+#[cfg(test)]
+pub mod tests {
+    use crate::config::get_project_dir;
+    use crate::util::save_or_create_file;
+
+    #[test]
+    pub fn test_save_or_create() {
+        save_or_create_file(&get_project_dir().join("test.txt"), Some("i am"), false, None).unwrap();
+        save_or_create_file(&get_project_dir().join("test.txt"), Some("i am"), true, Some("\n")).unwrap();
+    }
 }

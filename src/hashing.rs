@@ -103,7 +103,7 @@ pub fn hash_from_file(file: &File) -> HashPointer {
 
 pub fn hash_from_save_content(content: &str, save_dir: &Path) -> io::Result<HashPointer> {
     let hash_pointer = hash_from_content(content);
-    save_or_create_file(&save_dir.join(hash_pointer.get_path()),  Some(&content), false)?;
+    save_or_create_file(&save_dir.join(hash_pointer.get_path()),  Some(&content), false, None)?;
     Ok(hash_pointer)
 }
 

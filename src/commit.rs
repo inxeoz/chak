@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io;
 use std::io::Write;
+use crate::util::save_or_create_file;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Commit {
@@ -29,6 +30,11 @@ pub fn save_commit(commit: Commit) -> io::Result<HashPointer> {
     hash_from_save_content( &serialized_commit, &commits_fold())
 }
 
+pub fn append_commit_hash_pointer_to_commit_log(commit_hash_pointer: HashPointer ) {
+    save_or_create_file(
+        &history_fold().join("commit_log"), Some(&commit_hash_pointer.get_one_hash()), true, Some("\n")
+    ).expect("cant save commit to commit log");
+}
 pub fn attach_latest_root_pointer_to_stage(root_pointer: HashPointer) {
     let stage_file_path = &staging_area_fold().join("stage");
     let mut file = OpenOptions::new()
