@@ -1,36 +1,49 @@
-use crate::config::{blob_fold, commits_fold, essentials_folds, get_project_dir, get_vcs_fold, history_fold, staging_area_fold};
-use crate::util::{ input_from_commandline, save_or_create_file};
+use crate::config::{essentials_files, essentials_folds, get_config_file, save_config, vcs_fold, Config};
+use crate::util::{input_from_commandline, save_or_create_file};
 use std::fs::create_dir_all;
 use std::{fs, io};
+use crate::global_config::get_global_config;
 
 pub fn init() -> Result<(), io::Error> {
-    if get_vcs_fold().exists() {
+    if vcs_fold().exists() {
+        // checking .chak/ folder exist or not
+
         let choice = input_from_commandline(
             "A '.chak' folder already exists in this directory. Do you want to override it? (y/n) ",
-        ).unwrap_or("n".to_string());
+        )
+        .unwrap_or("n".to_string());
 
-        if choice == "y" {
-            fs::remove_dir_all(&get_vcs_fold())?;
-            create_dir_all(&get_vcs_fold())?;
-            println!("The '.chak' folder has been reinitialized.");
-        } else {
+        if choice.to_lowercase() != "y" {
             println!("Operation canceled. The '.chak' folder remains unchanged.");
+            return Ok(());
+        } else {
+            fs::remove_dir_all(vcs_fold())?; // removing previously exist .chak/ folder
+            println!("Initializing The '.chak' folder");
         }
     } else {
-        // Create the .chak folder
-        create_dir_all(&get_vcs_fold())?;
         println!(
-            "Initialized empty Chak repository in '{}'",
-            get_vcs_fold().display()
+            "Initializing empty Chak repository in '{}'",
+            vcs_fold().display()
         );
     }
 
-    for essentials_fold in essentials_folds() {
-        create_dir_all(essentials_fold)?
-    }
-
-    save_or_create_file(&staging_area_fold().join("stage"), None, false, None)?;
-    save_or_create_file(&history_fold().join("commit_log"), None, false, Some("\n"))?;
+    initialize_vcs();
+    println!("done! vcs exist now");
 
     Ok(())
+}
+
+pub fn initialize_vcs() {
+    for essentials_fold in essentials_folds() {
+        create_dir_all(essentials_fold).expect("Failed to create VCS folders");
+    }
+    for essentials_file in essentials_files() {
+        save_or_create_file(&essentials_file, None, false, None)
+            .expect("Failed to create vcs files");
+    }
+
+    let global_config = get_global_config();
+    let new_config = Config::new(&global_config);
+    save_config(&new_config)
+
 }

@@ -1,4 +1,4 @@
-
+use std::any::{type_name, Any};
 use std::fs::read_dir;
 
 use std::fs;
@@ -10,13 +10,14 @@ use serde::Serialize;
 
 pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
     let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
-    let content = serde_json::from_str(&content_string)
+    let content = toml::from_str(&content_string)
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?; // Converts serde error into io::Error
     Ok(content)
 }
 
 pub fn serialize_struct<T: Serialize>(data: &T) -> String {
-    let serialized = serde_json::to_string_pretty(&data).expect("Failed to serialize");
+    let serialized = toml::to_string(data).expect(format!("serialization failed for {}", type_name::<T>()).as_str());
+   // let serialized = serde_json::to_string_pretty(&data).expect("Failed to serialize");
     println!("{}", serialized);
     serialized
 }
@@ -48,7 +49,6 @@ pub fn read_directory_entries(path: &Path) -> io::Result<Vec<PathBuf>> {
     }
     Ok(detected_entries)
 }
-
 
 
 /// Saves content to a file, creating it if it doesn't exist.

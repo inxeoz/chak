@@ -1,14 +1,19 @@
-use crate::add::start_snapshot;
+use crate::add::{command_add, start_snapshot};
 use crate::commit::{
-    append_commit_hash_pointer_to_commit_log, clear_commit_stage, create_commit, save_commit,
+    append_commit_hash_pointer_to_commit_log, clear_commit_stage, command_commit, create_commit,
+    save_commit,
 };
-use crate::config::{get_project_dir, history_fold, staging_area_fold};
+use crate::config::{get_project_dir, history_fold, staging_area_fold, Config};
+use crate::global_config::GlobalConfig;
 use crate::hashing::get_latest_pointer_line_from_file;
 use crate::init::init;
+use crate::restore::command_restore;
+use crate::status::command_status;
 use crate::util::check_vcs_presence;
 use crate::util::save_or_create_file;
 use clap::{Parser, Subcommand};
 use std::fs::File;
+use crate::remote::{command_remote, RemoteCommand};
 
 /// A simple version control system built with Rust
 #[derive(Parser)]
@@ -49,13 +54,21 @@ enum Commands {
     },
 
     Restore {
-        file: Option<String>,
-        diff: Option<String>,
+        files: Vec<String>,
     },
+
+    Remote {
+        command: RemoteCommand,
+    },
+    // #[arg(required = true)]
+    // alias: String,
 }
 
 pub fn parse_commandline() {
     let args = Args::parse();
+
+
+
     // Match against the commands
     match args.command {
         Some(Commands::Init {}) => {
@@ -64,47 +77,16 @@ pub fn parse_commandline() {
         }
 
         Some(Commands::Add { files }) => {
-            if check_vcs_presence(get_project_dir()) {
-                if files.contains(&".".to_string()) { //i have to fix this in future check for . in first string
-                    start_snapshot().expect("cant start the snapshot");
-                }
-            } else {
-                println!("No vcs_presence configured. could not applied add operations.");
-            }
+            command_add(files);
         }
-
         Some(Commands::Commit { m }) => {
-            let staging_file =
-                File::open(&staging_area_fold().join("stage")).expect("failed to open stage file");
-            if let Some(latest_tree_pointer) = get_latest_pointer_line_from_file(&staging_file, false) {
-                let commit_pointer = save_commit(create_commit(
-                    m,
-                    Some("inxeoz".to_string()),
-                    latest_tree_pointer,
-                ))
-                .expect("cant save commit ");
-                append_commit_hash_pointer_to_commit_log(commit_pointer);
-
-                clear_commit_stage();
-            } else {
-                println!("No commit configured");
-            }
+            command_commit(m);
         }
-        Some(Commands::Restore { file, diff }) => {
-            if file.is_none() && diff.is_none() {
-                // get latest stage pointer
-                //
-            }
-        }
+        Some(Commands::Restore { files }) => command_restore(files),
         Some(Commands::Status) => {
-            if check_vcs_presence(get_project_dir()) {
-                // println!("\n{:?}",get_status(get_project_dir()) );
-            } else {
-                println!("No vcs_presence configured. could not applied add operations.");
-            }
-            // Add logic to display repository status
-            //show_status(&CURRENT_PATH);
+            command_status();
         }
+        Some(Commands::Remote {command})  => command_remote(&command),
         Some(Commands::Log) => {
             println!("Fetching commit log...");
             // Add logic to show the commit history

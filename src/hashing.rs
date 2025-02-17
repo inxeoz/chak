@@ -1,4 +1,4 @@
-use crate::config::MIN_HASH_LENGTH;
+use crate::global_config::MIN_HASH_LENGTH;
 use crate::custom_error::ChakError;
 use crate::util::serialize_struct;
 use crate::diff_algo::file_to_lines;
@@ -142,7 +142,10 @@ pub fn hash_from_save_tree(
     children: IndexMap<String, TreeNode>,
 ) -> io::Result<HashPointer> {
     let mut tree_object = TreeObject { children };
+
+    //sort the object so that it always produce same hash for same content or object no matter what their position
     tree_object.sort_children();
+
     let content = serialize_struct(&tree_object);
     hash_from_save_content(&content, save_dir)
 }

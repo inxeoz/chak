@@ -1,8 +1,8 @@
-use crate::config::{commits_fold, history_fold, staging_area_fold};
+use crate::config::{commits_fold, get_stage, history_fold, staging_area_fold};
 use crate::util::serialize_struct;
-use crate::hashing::{ hash_from_content, hash_from_save_content, HashPointer};
+use crate::hashing::{get_latest_pointer_line_from_file, hash_from_content, hash_from_save_content, HashPointer};
 use serde::{Deserialize, Serialize};
-use std::fs::OpenOptions;
+use std::fs::{File, OpenOptions};
 use std::io;
 use std::io::Write;
 use crate::util::save_or_create_file;
@@ -51,4 +51,24 @@ pub fn attach_latest_root_pointer_to_stage(root_pointer: HashPointer) {
 pub fn clear_commit_stage() {
     let stage_file_path = &staging_area_fold().join("stage");
     std::fs::write(stage_file_path, "").expect("Couldn't write to stage file");
+}
+
+
+
+pub fn command_commit(m:String) {
+
+    let staging_file =File::open(&get_stage()).expect("failed to open stage file");
+    if let Some(latest_tree_pointer) = get_latest_pointer_line_from_file(&staging_file, false) {
+        let commit_pointer = save_commit(create_commit(
+            m,
+            Some("inxeoz".to_string()),
+            latest_tree_pointer,
+        ))
+            .expect("cant save commit ");
+        append_commit_hash_pointer_to_commit_log(commit_pointer);
+
+        clear_commit_stage();
+    } else {
+        println!("No commit configured");
+    }
 }

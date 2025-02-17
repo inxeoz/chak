@@ -69,3 +69,7 @@ fn restore_previous_versiono() -> io::Result<()> {
 
     Ok(())
 }
+
+pub fn command_restore(files: Vec<String>) {
+
+}
