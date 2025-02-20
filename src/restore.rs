@@ -1,12 +1,14 @@
-use crate::config::get_project_dir;
+use crate::config::{get_project_dir, trees_fold};
 use crate::diff::{hashed_content_from_string_lines, HashedContent};
 use crate::diff_algo::hashed_content_from_file;
-use crate::hashing::HashPointer;
+use crate::hashing::{HashPointer, HashPointerTraits, TreeHashPointer};
+use crate::tree_object::TreeObject;
 use crate::util::{
-    deserialize_file_content, get_latest_tree_root_pointer,
+    deserialize_file_content, get_latest_tree_root_pointer, read_directory_entries,
     save_or_create_file, serialize_struct,
 };
 use std::fs::File;
+use std::path::PathBuf;
 use std::{env, io};
 
 pub fn restore_previous_version(
@@ -74,14 +76,26 @@ fn restore_previous_version_main() -> io::Result<()> {
     Ok(())
 }
 
-fn start_restoring(tree_root_pointer: HashPointer) {
+fn start_restoring(tree_root_pointer: TreeHashPointer, dir_path: &PathBuf) -> io::Result<()> {
+
+    //it is simple have to complete TODO
+    let detected_entries = read_directory_entries(dir_path)?
+        .iter()
+        .map(|path| return path.file_name().unwrap().to_str().unwrap().to_string())
+        .collect::<Vec<String>>();
+    let entity_tree =
+        deserialize_file_content::<TreeObject>(&trees_fold().join(&tree_root_pointer.get_path()))
+            .unwrap_or_default()
+            .children
+            .clone();
 
 
+    Ok(())
 }
 pub fn command_restore(files: Vec<String>) {
     if files.contains(&".".to_string()) {
         let latest_tree_pointer = get_latest_tree_root_pointer(true); // i have decide in future from where to get latest tree root pointer
-        // like from stage or commit_log
-        start_restoring(latest_tree_pointer);
+                                                                      // like from stage or commit_log
+        start_restoring(latest_tree_pointer, get_project_dir());
     }
 }

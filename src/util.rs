@@ -9,7 +9,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use crate::commit::Commit;
 use crate::config::{commits_fold, get_commit_log, get_stage, staging_area_fold, trees_fold, VCS_FOLDER};
-use crate::hashing::{get_latest_pointer_line_from_file, CommitHashPointer, HashPointer, HashPointerTraits};
+use crate::hashing::{get_latest_pointer_line_from_file, CommitHashPointer, HashPointer, HashPointerTraits, TreeHashPointer};
 use crate::tree_object::TreeObject;
 
 pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
@@ -27,7 +27,7 @@ pub fn serialize_struct<T: Serialize>(data: &T) -> String {
 }
 
 
-pub fn get_latest_tree_root_pointer(from_stage: bool) -> HashPointer{
+pub fn get_latest_tree_root_pointer(from_stage: bool) -> TreeHashPointer{
 
     if from_stage && get_stage().exists(){
         let stage_file = File::open(get_stage()).expect("failed to open stage file");
@@ -60,7 +60,6 @@ pub fn check_vcs_presence_in_dir(fold: &Path) -> bool {
 pub fn read_directory_entries(path: &Path) -> io::Result<Vec<PathBuf>> {
     let entries = read_dir(path)?;
     let mut detected_entries = Vec::new();
-
     for entry in entries {
         let entry = entry?.path();
         detected_entries.push(entry.clone());

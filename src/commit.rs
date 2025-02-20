@@ -11,13 +11,13 @@ use crate::util::save_or_create_file;
 pub struct Commit {
     pub author: String,
     pub message: String,
-    pub root_tree_pointer: HashPointer,
+    pub root_tree_pointer: TreeHashPointer,
 }
 
 pub fn create_commit(
     msg: String,
     author: Option<String>,
-    root_tree_pointer: HashPointer,
+    root_tree_pointer: TreeHashPointer,
 ) -> Commit {
      Commit {
         message: msg,

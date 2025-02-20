@@ -25,11 +25,6 @@ pub struct TreeNode {
     pub hash_pointer_to_previous_version: Option<VersionHashPointer>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TreeObject {
-    pub children: IndexMap<String, TreeNode>,
-}
-
 // PartialEq: Compare based on hash_pointer_to_this_node
 impl PartialEq for TreeNode
 {
@@ -59,6 +54,17 @@ impl Ord for TreeNode
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TreeObject {
+    pub children: IndexMap<String, TreeNode>,
+}
+impl std::default for TreeObject {
+    fn default() -> Self {
+        Self {
+            children: IndexMap::new(),
+        }
+    }
+}
 // TreeObject methods
 impl TreeObject {
     pub fn sort_children(&mut self) {
