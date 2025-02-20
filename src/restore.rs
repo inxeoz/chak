@@ -1,9 +1,13 @@
-use std::fs::File;
-use std::{env, io};
 use crate::config::get_project_dir;
 use crate::diff::{hashed_content_from_string_lines, HashedContent};
-use crate::diff_algo::{ hashed_content_from_file};
-use crate::util::{ deserialize_file_content, serialize_struct,save_or_create_file};
+use crate::diff_algo::hashed_content_from_file;
+use crate::hashing::HashPointer;
+use crate::util::{
+    deserialize_file_content, get_latest_tree_root_pointer,
+    save_or_create_file, serialize_struct,
+};
+use std::fs::File;
+use std::{env, io};
 
 pub fn restore_previous_version(
     fixed_next_content: &HashedContent,
@@ -24,7 +28,7 @@ pub fn restore_previous_version(
     Ok(previous_lines)
 }
 
-fn restore_previous_versiono() -> io::Result<()> {
+fn restore_previous_version_main() -> io::Result<()> {
     let file3 = File::open(env::current_dir()?.join("file3.txt"))?;
     let file3_content = hashed_content_from_file(&file3);
 
@@ -32,14 +36,14 @@ fn restore_previous_versiono() -> io::Result<()> {
     let diff2 = deserialize_file_content::<HashedContent>(
         &get_project_dir().join("restore").join("diff2.json"),
     )
-        .ok()
-        .expect("restore failed");
+    .ok()
+    .expect("restore failed");
 
     let diff1 = deserialize_file_content::<HashedContent>(
         &get_project_dir().join("restore").join("diff1.json"),
     )
-        .ok()
-        .expect("restore failed");
+    .ok()
+    .expect("restore failed");
 
     if let Ok(file2_content_vec) = restore_previous_version(&file3_content, &diff2) {
         let file2_content = hashed_content_from_string_lines(file2_content_vec.clone());
@@ -50,7 +54,7 @@ fn restore_previous_versiono() -> io::Result<()> {
             &get_project_dir().join("restore").join("restored2.json"),
             Some(&serialzed),
             false,
-            None
+            None,
         )?;
 
         if let Ok(file1_content_vec) = restore_previous_version(&file2_content, &diff1) {
@@ -62,7 +66,7 @@ fn restore_previous_versiono() -> io::Result<()> {
                 &get_project_dir().join("restore").join("restored1.json"),
                 Some(&serialzed),
                 false,
-                None
+                None,
             )?;
         }
     }
@@ -70,6 +74,14 @@ fn restore_previous_versiono() -> io::Result<()> {
     Ok(())
 }
 
-pub fn command_restore(files: Vec<String>) {
+fn start_restoring(tree_root_pointer: HashPointer) {
 
+
+}
+pub fn command_restore(files: Vec<String>) {
+    if files.contains(&".".to_string()) {
+        let latest_tree_pointer = get_latest_tree_root_pointer(true); // i have decide in future from where to get latest tree root pointer
+        // like from stage or commit_log
+        start_restoring(latest_tree_pointer);
+    }
 }

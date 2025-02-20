@@ -7,7 +7,10 @@ use std::io::{self, ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use crate::config::VCS_FOLDER;
+use crate::commit::Commit;
+use crate::config::{commits_fold, get_commit_log, get_stage, staging_area_fold, trees_fold, VCS_FOLDER};
+use crate::hashing::{get_latest_pointer_line_from_file, CommitHashPointer, HashPointer, HashPointerTraits};
+use crate::tree_object::TreeObject;
 
 pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
     let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
@@ -23,6 +26,20 @@ pub fn serialize_struct<T: Serialize>(data: &T) -> String {
     serialized
 }
 
+
+pub fn get_latest_tree_root_pointer(from_stage: bool) -> HashPointer{
+
+    if from_stage && get_stage().exists(){
+        let stage_file = File::open(get_stage()).expect("failed to open stage file");
+        let latest_tree_pointer = get_latest_pointer_line_from_file(&stage_file, true).expect("failed to get latest pointer");
+         latest_tree_pointer
+    }else {
+        let commit_log = File::open(get_commit_log()).expect("failed to open commit log  file");
+        let latest_commit_pointer = get_latest_pointer_line_from_file::<CommitHashPointer>(&commit_log, true).expect("failed to get latest pointer");
+        let latest_commit = deserialize_file_content::<Commit>(&commits_fold().join(latest_commit_pointer.get_path())).expect("failed to deserialize commit");
+         latest_commit.root_tree_pointer
+    }
+}
 
 pub fn check_vcs_presence_in_dir(fold: &Path) -> bool {
         if fold.join(VCS_FOLDER).exists() {

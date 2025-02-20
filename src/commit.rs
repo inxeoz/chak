@@ -1,6 +1,6 @@
-use crate::config::{commits_fold, get_stage, history_fold, staging_area_fold};
+use crate::config::{commits_fold, get_commit_log, get_stage, history_fold, staging_area_fold};
 use crate::util::serialize_struct;
-use crate::hashing::{get_latest_pointer_line_from_file, hash_from_content, hash_from_save_content, HashPointer};
+use crate::hashing::{get_latest_pointer_line_from_file, hash_from_content, hash_from_save_content, HashPointer, HashPointerTraits, TreeHashPointer};
 use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io;
@@ -32,10 +32,10 @@ pub fn save_commit(commit: Commit) -> io::Result<HashPointer> {
 
 pub fn append_commit_hash_pointer_to_commit_log(commit_hash_pointer: HashPointer ) {
     save_or_create_file(
-        &history_fold().join("commit_log"), Some(&commit_hash_pointer.get_one_hash()), true, Some("\n")
+        &get_commit_log(), Some(&commit_hash_pointer.get_one_hash()), true, Some("\n")
     ).expect("cant save commit to commit log");
 }
-pub fn attach_latest_root_pointer_to_stage(root_pointer: HashPointer) {
+pub fn attach_latest_tree_root_pointer_to_stage(root_pointer: TreeHashPointer) {
     let stage_file_path = &staging_area_fold().join("stage");
     let mut file = OpenOptions::new()
         .create(true) // Create the file if it doesn't exist

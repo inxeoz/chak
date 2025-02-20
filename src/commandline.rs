@@ -3,9 +3,6 @@ use crate::commit::{
     append_commit_hash_pointer_to_commit_log, clear_commit_stage, command_commit, create_commit,
     save_commit,
 };
-use crate::config::{get_project_dir, history_fold, staging_area_fold, Config};
-use crate::global_config::GlobalConfig;
-use crate::hashing::get_latest_pointer_line_from_file;
 use crate::init::init;
 use crate::restore::command_restore;
 use crate::status::command_status;
