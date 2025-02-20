@@ -7,6 +7,7 @@ use std::io::{self, ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use crate::config::VCS_FOLDER;
 
 pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
     let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
@@ -23,8 +24,8 @@ pub fn serialize_struct<T: Serialize>(data: &T) -> String {
 }
 
 
-pub fn check_vcs_presence(fold: &Path) -> bool {
-        if fold.join(".chak").exists() {
+pub fn check_vcs_presence_in_dir(fold: &Path) -> bool {
+        if fold.join(VCS_FOLDER).exists() {
             return true;
         }
         // Read the directory and check subdirectories recursively
@@ -32,7 +33,7 @@ pub fn check_vcs_presence(fold: &Path) -> bool {
             for entry in entries {
                 if let Ok(entry) = entry {
                     // Recursively check each subdirectory
-                    return check_vcs_presence(&entry.path())
+                    return check_vcs_presence_in_dir(&entry.path())
                 }
             }
         }

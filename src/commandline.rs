@@ -9,11 +9,10 @@ use crate::hashing::get_latest_pointer_line_from_file;
 use crate::init::init;
 use crate::restore::command_restore;
 use crate::status::command_status;
-use crate::util::check_vcs_presence;
 use crate::util::save_or_create_file;
 use clap::{Parser, Subcommand};
 use std::fs::File;
-use crate::remote::{command_remote, RemoteCommand};
+use crate::remote::{command_remote};
 
 /// A simple version control system built with Rust
 #[derive(Parser)]
@@ -24,6 +23,26 @@ struct Args {
     #[command(subcommand)]
     command: Option<Commands>,
 }
+
+#[derive(Debug, Subcommand, Clone)]
+pub enum RemoteCommand {
+    Add {
+        remote: String,
+        alias: String,
+    },
+    Remove {
+        // #[arg(required = true)]
+        // remote: String,
+        alias: String,
+    },
+    Update {
+        alias: String,
+        remote: String,
+    },
+    // #[arg(required = true)]
+    // remote: String,
+}
+
 #[derive(Debug, Subcommand)]
 enum Commands {
     /// Initializes a new repository
@@ -58,6 +77,7 @@ enum Commands {
     },
 
     Remote {
+        #[command(subcommand)]
         command: RemoteCommand,
     },
     // #[arg(required = true)]

@@ -1,10 +1,10 @@
-use crate::config::get_project_dir;
-use crate::util::check_vcs_presence;
+use crate::config::{get_project_dir, vcs_fold};
+
 
 pub fn command_status() {
 
 
-    if check_vcs_presence(get_project_dir()) {
+    if vcs_fold().exists() {
         // println!("\n{:?}",get_status(get_project_dir()) );
     } else {
         println!("No vcs_presence configured. could not applied add operations.");

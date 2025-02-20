@@ -10,6 +10,7 @@ pub static CURRENT_DIR: OnceCell<PathBuf> = OnceCell::new();
 
 pub static VCS_FOLDER: &str = ".chak/";
 pub static  VCS_CONFIG: &str = "config.toml";
+pub static VCS_IGNORE_FILE: &str = ".ignore";
 pub fn get_project_dir() -> &'static PathBuf {
     CURRENT_DIR.get_or_init(|| {
         env::current_dir()
@@ -20,7 +21,6 @@ pub fn get_project_dir() -> &'static PathBuf {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Config {
-    pub vcs_ignore_file: String,
     pub vcs_work_with_nested_ignore_file: bool,
     pub vcs_command_alias: HashMap<String, String>,
     pub vcs_remotes: HashMap<String, String>,
@@ -29,7 +29,6 @@ pub struct Config {
 impl Config {
     pub fn new(global_config: &GlobalConfig) -> Self {
         Config {
-            vcs_ignore_file: global_config.global_vcs_ignore_file.clone(),
             vcs_work_with_nested_ignore_file: global_config.global_vcs_work_with_nested_ignore_file,
             vcs_command_alias: global_config.global_vcs_alias.clone(),
             vcs_remotes: HashMap::new(),
@@ -39,9 +38,9 @@ impl Config {
         self.vcs_remotes.insert(remote, alias);
     }
 
-    pub fn remove_remote(&mut self, no_need_remote: String) {
+    pub fn remove_remote(&mut self, no_need_alias: String) {
         self.vcs_remotes
-            .retain(|current_remote| current_remote != &no_need_remote);
+            .retain(|alias, current_remote| alias != &no_need_alias);
     }
     pub fn create_alias(&mut self, command: String, alias: String) {
         self.vcs_command_alias.insert(command, alias);
@@ -49,7 +48,7 @@ impl Config {
 
     pub fn remove_alias(&mut self, no_need_alias: String) {
         self.vcs_command_alias
-            .retain(|current_alias| current_alias != &no_need_alias);
+            .retain(|current_alias, command| current_alias != &no_need_alias);
     }
     pub fn set_work_with_nested_ignore_file(&mut self, value: bool) {
         self.vcs_work_with_nested_ignore_file = value;

@@ -128,12 +128,15 @@ impl ContentBlock {
     }
 }
 
+
+
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct HashedContent {
-    pub pointer_to_previous_version: Option<HashPointer>,
     pub hash_lines: IndexSet<String>,
     pub hash_to_content: HashMap<String, String>,
 }
+
+
 pub fn hashed_content_from_string_lines(lines: Vec<String>) -> HashedContent {
     let mut hash_lines = IndexSet::<String>::new();
     let mut hash_to_content = HashMap::<String, String>::new();
@@ -143,9 +146,23 @@ pub fn hashed_content_from_string_lines(lines: Vec<String>) -> HashedContent {
         hash_to_content.insert(hash_line, line);
     }
     HashedContent {
-        pointer_to_previous_version : None,
         hash_lines,
         hash_to_content,
+    }
+}
+
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub struct HashedContentForVersion {
+    pub pointer_to_previous_version: Option<HashPointer>,
+    pub hashed_content: HashedContent,
+}
+impl HashedContentForVersion {
+    pub fn new(content: HashedContent, pointer_to_previous_version: Option<HashPointer>) -> Self {
+        Self {
+            pointer_to_previous_version,
+            hashed_content: content,
+        }
     }
 }
 

@@ -1,23 +1,5 @@
-use clap::Subcommand;
-
-#[derive(Debug, Subcommand)]
-pub enum RemoteCommand {
-    Add {
-        remote: String,
-        alias: String,
-    },
-    Remove {
-        // #[arg(required = true)]
-        // remote: String,
-        alias: String,
-    },
-    Update {
-        alias: String,
-        remote: String,
-    },
-    // #[arg(required = true)]
-    // remote: String,
-}
+use clap::{Parser, Subcommand};
+use crate::commandline::RemoteCommand;
 
 pub fn command_remote(remote_command: &RemoteCommand) {
 
@@ -29,3 +11,4 @@ pub fn command_remote(remote_command: &RemoteCommand) {
     }
 
 }
+

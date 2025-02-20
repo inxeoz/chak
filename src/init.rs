@@ -28,7 +28,7 @@ pub fn init() -> Result<(), io::Error> {
     }
 
     initialize_vcs();
-    println!("done! vcs exist now");
+    println!("done! .chak/ exist now");
 
     Ok(())
 }

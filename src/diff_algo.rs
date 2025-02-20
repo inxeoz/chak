@@ -25,17 +25,14 @@ pub fn get_diff(prev_file: &File, new_file: &File) -> HashedContent {
 pub fn hashed_content_from_file(file: &File) -> HashedContent {
     let mut hash_lines = IndexSet::new();
     let mut hash_to_content = HashMap::<String, String>::new();
-    for res_line in BufReader::new(file).lines() {
-        if let Ok(line) = res_line {
+
+    for line in file_to_lines(file) {
             let hash_string = hash_from_content(&line).get_one_hash();
             hash_lines.insert(hash_string.clone());
-
             // Map hash string to actual line content (only if not already mapped)
             hash_to_content.entry(hash_string).or_insert(line);
-        }
     }
     HashedContent {
-        pointer_to_previous_version: None,
         hash_lines,
         hash_to_content,
     }
@@ -66,7 +63,6 @@ pub fn compare_hashed_content(
     }
 
     HashedContent {
-        pointer_to_previous_version: None,
         hash_lines: prev_hash_lines.clone(),
         hash_to_content: unique_line_contents,
     }
@@ -114,8 +110,8 @@ mod tests {
         )?;
 
         let mut diff_base_2 = compare_hashed_content(&file2_content, &file3_content);
-        diff_base_2.pointer_to_previous_version =
-            Some(_hash_pointer_from_hash_string("restore".to_string()));
+        // diff_base_2.pointer_to_previous_version =
+        //     Some(_hash_pointer_from_hash_string("restore".to_string()));
         let serialized_2 = serialize_struct(&diff_base_2);
         save_or_create_file(
             &get_project_dir().join("restore").join("diff2.json"),
