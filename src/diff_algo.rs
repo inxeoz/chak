@@ -1,11 +1,8 @@
-use crate::config::blob_fold;
-use crate::handle_blob::BlobHashPointer;
+
 use crate::handle_version::VersionHashPointer;
-use crate::hash_pointer::HashPointer;
-use crate::hash_pointer_algo::{hash_from_content, HashPointerTraits};
-use indexmap::{IndexMap, IndexSet};
-use itertools::{EitherOrBoth, Itertools};
-use serde::de::DeserializeOwned;
+use crate::hash_pointer_algo::{hash_from_content};
+use indexmap::{ IndexSet};
+use itertools::{ Itertools};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
@@ -14,7 +11,8 @@ use std::hash::Hash;
 use std::io::{BufRead, BufReader, Write};
 use std::ops::Sub;
 use std::path::Path;
-use std::{fs, io};
+use crate::hash_pointer::HashPointerTraits;
+
 
 pub struct CompareOrderStructure {
     pub previous_content: HashedContent,

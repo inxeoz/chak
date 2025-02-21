@@ -1,13 +1,9 @@
 
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
-use indexmap::IndexMap;
 use std::default::Default;
-use crate::handle_blob::BlobHashPointer;
 use crate::handle_tree::TreeHashPointer;
-use crate::handle_version::VersionHashPointer;
 use crate::handle_version_head::VersionHeadHashPointer;
-use crate::hash_pointer_algo::HashPointerTraits;
+use crate::hash_pointer::HashPointerTraits;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum ObjectPointer {

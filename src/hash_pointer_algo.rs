@@ -31,7 +31,7 @@ pub fn hash_pointer_from_hash_string(hash: String) -> Result<HashPointer, ChakEr
     )
 }
 
-pub fn hash_combine<T: HashPointerTraits>(first: &T, second: &T) -> T {
+pub fn hash_combine(first: &HashPointer, second: &HashPointer) ->HashPointer {
     hash_from_content(&(first.get_one_hash() + &second.get_one_hash()))
 }
 

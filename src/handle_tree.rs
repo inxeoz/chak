@@ -11,6 +11,10 @@ use crate::hash_pointer::{HashPointer, HashPointerTraits};
 use crate::hash_pointer_algo::{
     get_latest_pointer_line_from_file, hash_from_content,
 };
+use std::path::PathBuf;
+use std::cmp::Ordering;
+
+
 use crate::impl_hash_pointer_traits;
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};
 
@@ -29,7 +33,7 @@ impl TreeHashPointer {
     }
     pub fn save_tree(tree: &mut TreeObject) -> TreeHashPointer {
         tree.sort_children();
-        save_entity::<Self, TreeObject>(tree, &trees_fold())
+        Self::own(&save_entity::<TreeObject>(tree, &trees_fold()))
     }
     pub fn load_tree(&self) -> TreeObject {
         load_entity::<Self, TreeObject>(self, &trees_fold())

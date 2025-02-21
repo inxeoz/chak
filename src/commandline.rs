@@ -95,7 +95,9 @@ pub fn parse_commandline() {
         Some(Commands::Commit { m }) => {
             command_commit(m);
         }
-        Some(Commands::Restore { files }) => command_restore(files),
+        Some(Commands::Restore { files }) => {
+            // command_restore(files)
+        } ,
         Some(Commands::Status) => {
             command_status();
         }

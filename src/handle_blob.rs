@@ -1,12 +1,16 @@
+use crate::hash_pointer::HashPointer;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
-use crate::config::{blob_fold, get_project_dir, trees_fold};
+use crate::config::{blob_fold};
 use crate::diff_algo::{ HashedContent};
 use crate::handle_common::{load_entity, save_entity};
-use crate::handle_tree::TreeObject;
-use crate::hash_pointer_algo::{hash_and_content_from_file_path_ref, HashPointer, HashPointerTraits};
 use crate::impl_hash_pointer_traits;
-use crate::util::{deserialize_file_content, save_or_create_file};
+use std::path::PathBuf;
+use std::cmp::Ordering;
+use crate::handle_tree::TreeHashPointer;
+use crate::hash_pointer_algo::hash_from_content;
+use crate::hash_pointer::HashPointerTraits;
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct BlobHashPointer {
@@ -15,8 +19,15 @@ pub struct BlobHashPointer {
 }
 impl_hash_pointer_traits!(BlobHashPointer);
 impl BlobHashPointer {
+
+    fn own(hash_pointer: &HashPointer) -> BlobHashPointer {
+        BlobHashPointer {
+            fold_name: hash_pointer.get_fold_name(),
+            file_name: hash_pointer.get_file_name(),
+        }
+    }
     pub fn save_blob(hashed_content: HashedContent) -> BlobHashPointer {
-        save_entity::<Self, HashedContent>(&hashed_content, &blob_fold())
+        Self::own(&save_entity::< HashedContent>(&hashed_content, &blob_fold()))
     }
 
     pub fn save_blob_from_file(path_to_file: &Path) -> BlobHashPointer {

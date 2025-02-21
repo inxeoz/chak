@@ -1,9 +1,12 @@
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use crate::hash_pointer_algo::hash_from_content;
+
 
 pub trait HashPointerTraits {
     fn replace(&mut self, pointer: &Self);
-    fn update_hash(&mut self, content: String);
+    // fn update_hash(&mut self, content: String);
     fn get_fold_name(&self) -> String;
     fn get_file_name(&self) -> String;
     fn get_one_hash(&self) -> String;
@@ -14,6 +17,7 @@ pub trait HashPointerTraits {
 
 #[macro_export] macro_rules! impl_hash_pointer_traits {
     ($t:ty) => {
+
         impl PartialEq for $t {
             fn eq(&self, other: &Self) -> bool {
                 self.get_one_hash() == other.get_one_hash()
@@ -40,10 +44,10 @@ pub trait HashPointerTraits {
                 self.set_file_name(pointer.get_file_name());
             }
 
-            fn update_hash(&mut self, content: String) {
-                let has_p = Self::new(self.get_fold_name(), hash_from_content::<Self>(&content).get_file_name());
-                self.replace(&has_p);
-            }
+            // fn update_hash(&mut self, content: String) {
+            //     let hash_content:HashPointer  = hash_from_content(&content + &self.get_one_hash().as_str());
+            //     self.replace(&hash_content);
+            // }
 
             fn get_fold_name(&self) -> String {
                 self.fold_name.clone()

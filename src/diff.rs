@@ -1,11 +1,8 @@
 
-use std::collections::HashMap;
-use indexmap::IndexSet;
-use crate::hash_pointer_algo::{hash_from_content, HashPointerTraits};
+use crate::hash_pointer_algo::{hash_from_content};
 use serde::{Deserialize, Serialize};
-use crate::handle_blob::BlobHashPointer;
-use crate::handle_version::VersionHashPointer;
 use crate::hash_pointer::HashPointer;
+use crate::hash_pointer::HashPointerTraits;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Version {
@@ -75,26 +72,26 @@ pub struct Block {
     pub block_hash: HashPointer,
 }
 
-impl Block {
-    pub fn from(diff_line: DiffLine) -> Self {
-        Self {
-            block_content: vec![diff_line.clone()],
-            block_type: diff_line.diff_line_type,
-            block_hash: diff_line.copy_from_live.line_hash,
-        }
-    }
-
-    pub fn add(&mut self, diff_line: DiffLine) -> Result<(), String> {
-        if diff_line.diff_line_type == self.block_type {
-            self.block_hash
-                .update_hash(diff_line.copy_from_live.line_hash.get_one_hash());
-            self.block_content.push(diff_line);
-            Ok(())
-        } else {
-            Err("DiffLine type mismatch".into())
-        }
-    }
-}
+// impl Block {
+//     pub fn from(diff_line: DiffLine) -> Self {
+//         Self {
+//             block_content: vec![diff_line.clone()],
+//             block_type: diff_line.diff_line_type,
+//             block_hash: diff_line.copy_from_live.line_hash,
+//         }
+//     }
+//
+//     pub fn add(&mut self, diff_line: DiffLine) -> Result<(), String> {
+//         if diff_line.diff_line_type == self.block_type {
+//             self.block_hash
+//                 .update_hash(diff_line.copy_from_live.line_hash.get_one_hash());
+//             self.block_content.push(diff_line);
+//             Ok(())
+//         } else {
+//             Err("DiffLine type mismatch".into())
+//         }
+//     }
+// }
 
 #[derive(Serialize, Clone, Debug)]
 pub struct ContentBlock {
@@ -102,34 +99,34 @@ pub struct ContentBlock {
     pub content_hash: HashPointer,
 }
 
-impl ContentBlock {
-    pub fn new() -> Self {
-        Self {
-            content_hash: hash_from_content(&String::new()),
-            content: vec![],
-        }
-    }
-    pub fn from(block: Block) -> Self {
-        Self {
-            content_hash: block.block_hash.clone(),
-            content: vec![block],
-        }
-    }
-
-    pub fn add(&mut self, diff_line: DiffLine) {
-        if let Some(last_block) = self.content.last_mut() {
-            if last_block.block_type == diff_line.diff_line_type {
-                last_block.add(diff_line).unwrap();
-            } else {
-                self.content.push(Block::from(diff_line));
-            }
-        } else {
-            let block = Block::from(diff_line);
-            self.content_hash = block.block_hash.clone();
-            self.content.push(block);
-        }
-    }
-}
+// impl ContentBlock {
+//     pub fn new() -> Self {
+//         Self {
+//             content_hash: hash_from_content(&String::new()),
+//             content: vec![],
+//         }
+//     }
+//     pub fn from(block: Block) -> Self {
+//         Self {
+//             content_hash: block.block_hash.clone(),
+//             content: vec![block],
+//         }
+//     }
+//
+//     pub fn add(&mut self, diff_line: DiffLine) {
+//         if let Some(last_block) = self.content.last_mut() {
+//             if last_block.block_type == diff_line.diff_line_type {
+//                 last_block.add(diff_line).unwrap();
+//             } else {
+//                 self.content.push(Block::from(diff_line));
+//             }
+//         } else {
+//             let block = Block::from(diff_line);
+//             self.content_hash = block.block_hash.clone();
+//             self.content.push(block);
+//         }
+//     }
+// }
 
 
 

@@ -7,7 +7,7 @@ use crate::handle_version::VersionHashPointer;
 use crate::impl_hash_pointer_traits;
 use serde::{Deserialize, Serialize};
 use crate::handle_version_head::VersionHeadHashPointer;
-use crate::hash_pointer_algo::HashPointerTraits;
+use crate::hash_pointer::HashPointerTraits;
 
 
 #[derive(Debug, Serialize, Deserialize)]

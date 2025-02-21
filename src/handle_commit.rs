@@ -3,9 +3,13 @@ use serde::{Deserialize, Serialize};
 use crate::config::{commits_fold, get_commit_log_file, get_stage_file, trees_fold};
 use crate::handle_common::{load_entity, save_entity};
 use crate::handle_tree::{clear_stage, TreeHashPointer, TreeObject};
-use crate::hash_pointer_algo::{get_latest_pointer_line_from_file, hash_from_content, HashPointer, HashPointerTraits};
+use crate::hash_pointer_algo::{get_latest_pointer_line_from_file, hash_from_content};
 use crate::impl_hash_pointer_traits;
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};
+use std::path::PathBuf;
+use std::cmp::Ordering;
+use crate::hash_pointer::{HashPointer, HashPointerTraits};
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Commit {
@@ -30,7 +34,7 @@ impl CommitHashPointer {
         }
     }
     pub fn save_commit(commit: &Commit) -> Self {
-        save_entity::<Self, Commit>(commit, &commits_fold())
+        Self::own(save_entity::<Commit>(commit, &commits_fold()))
     }
 
     pub fn load_commit(&self) -> Commit {
