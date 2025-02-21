@@ -5,8 +5,6 @@ use crate::versioning::VersionHead;
 use std::path::PathBuf;
 use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
-use crate::handle_blob::BlobHashPointer;
-use crate::hash_pointer_algo::hash_from_content;
 use crate::hash_pointer::{HashPointer, HashPointerTraits};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
