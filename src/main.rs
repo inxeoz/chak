@@ -1,11 +1,10 @@
 mod add;
 mod commandline;
-mod commit;
 mod config;
 mod custom_error;
 mod diff;
 mod diff_algo;
-mod hashing;
+mod hash_pointer_algo;
 mod init;
 mod handle_object_pointer;
 mod util;
@@ -20,10 +19,11 @@ mod handle_blob;
 mod handle_version;
 mod handle_commit;
 mod handle_common;
+mod versioning;
+mod handle_version_head;
+mod hash_pointer;
 
-use crate::diff_algo::{
-    compare_hashed_content, hashed_content_from_file,
-};
+
 use clap::{Parser, Subcommand};
 use std::fs::File;
 use std::io;

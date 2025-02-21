@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use crate::config::versions_fold;
 use crate::diff_algo::HashedContentForVersion;
-use crate::handle_common::save_entity;
+use crate::handle_common::{load_entity, save_entity};
 use crate::impl_hash_pointer_traits;
 use crate::util::{deserialize_file_content, serialize_struct};
 
@@ -18,7 +18,6 @@ impl VersionHashPointer {
     }
 
     pub fn load_version(&self) -> HashedContentForVersion {
-        let deserialized_content = deserialize_file_content::<HashedContentForVersion>(&versions_fold().join(self.get_path()) ).expect("Failed to load version file");
-        deserialized_content
+        load_entity::<Self, HashedContentForVersion>(self, &versions_fold())
     }
 }

@@ -1,10 +1,5 @@
 use crate::add::{command_add, start_snapshot};
-use crate::commit::{
-    append_commit_hash_pointer_to_commit_log, clear_commit_stage, command_commit, create_commit,
-    save_commit,
-};
 use crate::init::init;
-use crate::restore::command_restore;
 use crate::status::command_status;
 use crate::util::save_or_create_file;
 use clap::{Parser, Subcommand};

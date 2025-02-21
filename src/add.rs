@@ -1,9 +1,8 @@
-use crate::commit::{ attach_latest_tree_root_pointer_to_stage, Commit};
-use crate::config::{blob_fold, commits_fold, get_commit_log, get_commit_log_file, get_config, get_project_dir, trees_fold, vcs_fold, versions_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
-use crate::diff::{hashed_content_from_string_lines, HashedContent, HashedContentForVersion};
-use crate::diff_algo::{compare_hashed_content, hashed_content_from_path, HashedContent, HashedContentForVersion};
-use crate::hashing::{get_latest_pointer_line_from_file, hash_and_content_from_file_path_ref, hash_from_save_content, hash_from_save_tree, BlobHashPointer, CommitHashPointer, HashPointer, HashPointerTraits, TreeHashPointer};
-use crate::handle_object_pointer::{ObjectPointer, TreeObject};
+
+use crate::config::{blob_fold, commits_fold,get_commit_log_file, get_config, get_project_dir, trees_fold, vcs_fold, versions_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
+
+
+use crate::handle_object_pointer::{ObjectPointer};
 use crate::util::save_or_create_file;
 use crate::util::{deserialize_file_content, serialize_struct};
 use crate::util::{read_directory_entries, string_content_to_string_vec};
@@ -20,6 +19,9 @@ use crate::handle_blob::BlobHashPointer;
 use crate::handle_commit::{Commit, CommitHashPointer};
 use crate::handle_tree::{attach_latest_tree_root_pointer_to_stage, TreeHashPointer, TreeObject};
 use crate::handle_version::VersionHashPointer;
+use crate::handle_version_head::VersionHeadHashPointer;
+use crate::hash_pointer::HashPointerTraits;
+use crate::versioning::VersionHead;
 
 pub fn start_snapshot(vcs_config: &Config) -> io::Result<()> {
     //all in one ignore vec that handles multiple ignore file present in nested folder
@@ -30,31 +32,7 @@ pub fn start_snapshot(vcs_config: &Config) -> io::Result<()> {
 
     //implement the tree pointer with traversing fold/file and checking hash from tree pointer and so on .. TODO
     //get latest tree pointer from history_log
-    let mut tree_object: Option<TreeObject> = None;
-
-    // as commit log file created at initialization
-    let commit_file = File::open(get_commit_log_file()).expect("Unable to open commit_log file");
-
-    if let Some(commit_pointer) = get_latest_pointer_line_from_file::<CommitHashPointer>(&commit_file, true) {
-        if let Ok(latest_commit) =
-            deserialize_file_content::<Commit>(&commits_fold().join(commit_pointer.get_path()))
-        //getting previous commit that was saved in commit fold
-        {
-            // from commit ,getting pointer to previous tree structure that represent the file/folder hierarchy
-            let root_tree_pointer = latest_commit.root_tree_pointer.get_path();
-
-            //fetching latest tree from trees fold and converting it to TreeObject so that we can use in our program
-            match deserialize_file_content::<TreeObject>(&trees_fold().join(root_tree_pointer)) {
-                Ok(tree_object_s) => {
-                    tree_object = Some(tree_object_s);
-                    println!("We got tree_object");
-                }
-                Err(e) => {
-                    eprintln!("there is no root tree from commit  {}", e);
-                }
-            }
-        }
-    }
+    let tree_object = TreeObject::get_top_most_tree_object();
 
     //here we start taking new updated snapshot of our directory from project root dir, and it gives as the latest updated tree pointer
     let new_root_tree_pointer = dir_snapshot(
@@ -62,7 +40,7 @@ pub fn start_snapshot(vcs_config: &Config) -> io::Result<()> {
         get_project_dir(),
         &mut main_ignore_builder,
         tree_object,
-    )?;
+    );
 
     //attaching the updated new tree pointer to stage temporarily because tree pointer can be changed util its commited
     attach_latest_tree_root_pointer_to_stage(new_root_tree_pointer);
@@ -123,157 +101,61 @@ pub fn dir_snapshot(
             .expect("Could not convert to str")
             .to_string();
 
-        if let Ok(child) = if allowed_entry.is_file() {
-            process_file(&allowed_entry, &entry_name, tree_hie.clone())
-        } else {
-            process_directory(
-                &allowed_entry,
-                &entry_name,
-                tree_hie.clone(),
-                main_ignore_builder,
-                vcs_config,
-            )
-        } {
+        let child = process_entry(&allowed_entry, &entry_name,tree_hie.clone(), main_ignore_builder, vcs_config );
             children.add_child(entry_name, child);
-        } else {
-            println!("Could not process entry: {}", allowed_entry.display());
-        };
+
     }
 
     //need to save tree temporary for other process , it has to be saved only when commited with message
     TreeHashPointer::save_tree(&mut children)
 }
 
-/// Processes a directory entry and updates the `children` map
-fn process_directory(
+fn process_entry(
     entry: &Path,
     entry_name: &str,
     tree_hie: Option<TreeObject>,
     main_ignore_builder: &mut GitignoreBuilder,
     vcs_config: &Config,
 ) -> ObjectPointer {
-    let existing_child_tree =
-        child_tree_node_from_tree_object(tree_hie.as_ref(), entry_name.to_string()).and_then(
-            |obj| {
-                match &obj {
-                    ObjectPointer::VersionFile(_) => {
-                        None
-                    }
-                    ObjectPointer::BlobFile(_) => {
-                        None
-                    }
-                    ObjectPointer::TreeFIle(tree_pointer) => {
-                        deserialize_file_content::<TreeObject>(
-                            &trees_fold().join(tree_pointer.get_path()),
-                        )
-                            .ok()
-                    }
-                }
-            },
-        );
-
-    let new_child_tree_pointer = dir_snapshot(vcs_config, entry, main_ignore_builder, existing_child_tree);
-
-
-        ObjectPointer::TreeFIle(new_child_tree_pointer)
-
-}
-
-fn process_file(
-    entry: &Path,
-    entry_name: &str,
-    tree_hie: Option<TreeObject>,
-) -> ObjectPointer {
 
     let blob_hash_pointer = BlobHashPointer::save_blob_from_file(&entry);
 
     match child_tree_node_from_tree_object(tree_hie.as_ref(), entry_name.to_string()) {
         None => {
-            //save new blob
-            return ObjectPointer::BlobFile(blob_hash_pointer)
+            if entry.is_file() {
+                ObjectPointer::VersionHeadFile(VersionHeadHashPointer::save_version_head(&VersionHead::new(blob_hash_pointer, None)))
+            }else {
+                let new_child_tree_pointer = dir_snapshot(vcs_config, entry, main_ignore_builder, None);
+                ObjectPointer::TreeFIle(new_child_tree_pointer)
+            }
         }
         Some(existing_version) => {
             match existing_version {
-                ObjectPointer::VersionFile(v) => {
-
-                    let previous_hashed_version = v.load_version();
-
-                    if previous_hashed_version.pointer_to_blob != blob_hash_pointer {
-                        // take diff from new blob and previous blob and save diff as version
-
-                        let new_blob_hashed_content = blob_hash_pointer.load_blob();
-
-                        let new_version_pointer = create_new_version(&new_blob_hashed_content, &previous_hashed_version);
-
-
-                        // if new_file_hash != existing_version.hash_pointer_to_this_node , this hash checking was done blob_fold().join(new_file_hash.get_path()).exists() up there
-                        process_file_when_previous_version_exist(
-                            &hashed_content_from_string_lines(string_content_to_string_vec(&new_file_content)),
-                            &mut existing_version,
-                        ).expect("failed to process existing version "); // this will change some parameter of existing version because i send it &mut ref but it will not consume it,and current scope has ownership
-
-
-                        let hashed_content_for_version = HashedContentForVersion::new(new_file_blob_hash_pointer, )
-                        existing_version.hash_pointer_to_this_node = ObjectPointer::BlobFile(new_file_blob_hash_pointer);
-                        Ok(existing_version)
-
-
-                    }
+                ObjectPointer::VersionHeadFile(vh) => {
+                    let mut version_head = vh.load_version_head();
+                    let new_version_head_hash_pointer = version_head.create_version(blob_hash_pointer);
+                    ObjectPointer::VersionHeadFile(new_version_head_hash_pointer)
 
                 }
-                ObjectPointer::BlobFile(B) => {
+                ObjectPointer::TreeFIle(tree_pointer) => {
+                    let existing_child_tree = deserialize_file_content::<TreeObject>(
+                        &trees_fold().join(tree_pointer.get_path()),
+                    )
+                        .expect("Could not deserialize tree");
 
-                    if B != blob_hash_pointer {
-                        //start version
-                    }
+                    let new_child_tree_pointer = dir_snapshot(vcs_config, entry, main_ignore_builder, Some(existing_child_tree));
+                    ObjectPointer::TreeFIle(new_child_tree_pointer)
+
                 }
-                ObjectPointer::TreeFIle(T) => {}
             }
         }
     }
 
-
-
-
 }
+
+
 /// Processes a file entry and updates the `children` map
-fn create_new_version(
-    new_blob_hashed_content: &HashedContent,
-    previous_hashed_version: &HashedContentForVersion,
-) -> VersionHashPointer{
 
-    let previous_blob_hashed_content = &previous_hashed_version.pointer_to_blob.load_blob();
-
-    let diff =
-
-    let previous_blob_path = blob_fold().join(match &existing_version.hash_pointer_to_this_node {
-        ObjectPointer::BlobFile(blob_hash) => blob_hash.get_path(),
-        ObjectPointer::TreeFIle(tree_hash) => {
-            eprintln!("existing version is tree instead of blob");
-            tree_hash.get_path()
-        } ,
-        ObjectPointer::VersionFile(version_file) => {
-            eprintln!("existing version is version file instead of blob");
-            version_file.get_path()
-        } ,
-    });
-
-    let prev_blob_hashed_content = hashed_content_from_path(&previous_blob_path);
-
-    let mut diff = compare_hashed_content(&prev_blob_hashed_content, new_file_hashed_content);
-
-    let mut diff_content = HashedContentForVersion::new(diff, None);
-    if let Some(prev_version) = existing_version.hash_pointer_to_previous_version.clone() {
-        diff_content.pointer_to_previous_version = Some(prev_version);
-    }
-
-    let diff_hash = hash_from_save_content(&serialize_struct(&diff_content), &versions_fold())?; // diff has to be saved in version fold
-    existing_version.hash_pointer_to_previous_version = Some(diff_hash);
-
-    // Remove old blob
-    fs::remove_file(previous_blob_path)?;
-    Ok(())
-}
 
 pub fn child_tree_node_from_tree_object(
     tree_hie: Option<&TreeObject>,

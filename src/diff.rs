@@ -1,10 +1,11 @@
 
 use std::collections::HashMap;
 use indexmap::IndexSet;
-use crate::hashing::{hash_from_content, HashPointer, HashPointerTraits};
+use crate::hash_pointer_algo::{hash_from_content, HashPointerTraits};
 use serde::{Deserialize, Serialize};
 use crate::handle_blob::BlobHashPointer;
 use crate::handle_version::VersionHashPointer;
+use crate::hash_pointer::HashPointer;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Version {

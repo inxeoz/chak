@@ -75,6 +75,9 @@ impl Config {
     pub fn history_fold() -> PathBuf {
         vcs_fold().join("history")
     }
+    pub fn version_head_fold() -> PathBuf {
+        vcs_fold().join("version_heads")
+    }
     pub fn essentials_folds() -> Vec<PathBuf> {
         vec![
             vcs_fold(),
@@ -84,6 +87,7 @@ impl Config {
             trees_fold(),
             staging_area_fold(),
             commits_fold(),
+            version_head_fold()
         ]
     }
     pub fn get_commit_log_file() -> PathBuf { history_fold().join("commit.log")

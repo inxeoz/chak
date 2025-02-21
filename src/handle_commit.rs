@@ -1,9 +1,9 @@
 use std::fs::File;
 use serde::{Deserialize, Serialize};
 use crate::config::{commits_fold, get_commit_log_file, get_stage_file, trees_fold};
-use crate::handle_common::save_entity;
+use crate::handle_common::{load_entity, save_entity};
 use crate::handle_tree::{clear_stage, TreeHashPointer, TreeObject};
-use crate::hashing::{get_latest_pointer_line_from_file, hash_from_content, HashPointer, HashPointerTraits};
+use crate::hash_pointer_algo::{get_latest_pointer_line_from_file, hash_from_content, HashPointer, HashPointerTraits};
 use crate::impl_hash_pointer_traits;
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};
 
@@ -22,13 +22,31 @@ pub struct CommitHashPointer {
 
 impl_hash_pointer_traits!(CommitHashPointer);
 impl CommitHashPointer {
+
+    fn own(hash_pointer: HashPointer) -> CommitHashPointer {
+        CommitHashPointer {
+            fold_name: hash_pointer.get_fold_name(),
+            file_name: hash_pointer.get_file_name(),
+        }
+    }
     pub fn save_commit(commit: &Commit) -> Self {
         save_entity::<Self, Commit>(commit, &commits_fold())
     }
 
-    pub fn load_commit(self) -> Commit {
-        let deserialized_content = deserialize_file_content::<Commit>(&commits_fold().join(self.get_path()) ).expect("Failed to load commit file");
-        deserialized_content
+    pub fn load_commit(&self) -> Commit {
+        load_entity::<Self, Commit>(self, &commits_fold())
+    }
+
+    pub fn get_latest_commit_hash_pointer() -> Option<CommitHashPointer> {
+
+        // as commit log file created at initialization
+        let commit_file = File::open(get_commit_log_file()).expect("Unable to open commit_log file");
+        if let Some(commit_pointer) = get_latest_pointer_line_from_file(&commit_file, true) {
+            Some(Self::own(commit_pointer))
+        }else {
+            None
+        }
+
     }
 }
 
@@ -51,9 +69,9 @@ pub fn append_commit_hash_pointer_to_commit_log_file(commit_hash_pointer: Commit
 }
 
 pub fn command_commit(m:String) {
-    let staging_file =File::open(&get_stage_file()).expect("failed to open stage file");
-    if let Some(latest_tree_pointer) = get_latest_pointer_line_from_file(&staging_file, false) {
-        let commit_pointer = CommitHashPointer::save_commit(create_commit(
+
+    if let Some(latest_tree_pointer) = TreeHashPointer::get_latest_tree_root_pointer(true){
+        let commit_pointer = CommitHashPointer::save_commit(&create_commit(
             m,
             Some("inxeoz".to_string()),
             latest_tree_pointer,
