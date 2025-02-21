@@ -9,6 +9,7 @@ use crate::status::command_status;
 use crate::util::save_or_create_file;
 use clap::{Parser, Subcommand};
 use std::fs::File;
+use crate::handle_commit::command_commit;
 use crate::remote::{command_remote};
 
 /// A simple version control system built with Rust

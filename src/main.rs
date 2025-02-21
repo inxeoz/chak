@@ -7,7 +7,7 @@ mod diff;
 mod diff_algo;
 mod hashing;
 mod init;
-mod tree_object;
+mod handle_object_pointer;
 mod util;
 mod restore;
 mod temporary;
@@ -15,6 +15,11 @@ mod test;
 mod global_config;
 mod status;
 mod remote;
+mod handle_tree;
+mod handle_blob;
+mod handle_version;
+mod handle_commit;
+mod handle_common;
 
 use crate::diff_algo::{
     compare_hashed_content, hashed_content_from_file,

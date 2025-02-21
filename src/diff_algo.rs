@@ -1,5 +1,4 @@
 use crate::config::blob_fold;
-use crate::diff::HashedContent;
 use crate::hashing::{hash_from_content, HashPointer, HashPointerTraits};
 use indexmap::{IndexMap, IndexSet};
 use itertools::{EitherOrBoth, Itertools};
@@ -13,6 +12,46 @@ use std::io::{BufRead, BufReader, Write};
 use std::ops::Sub;
 use std::path::Path;
 use std::{fs, io};
+use crate::handle_blob::BlobHashPointer;
+use crate::handle_version::VersionHashPointer;
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub struct HashedContent {
+    pub hash_lines: IndexSet<String>,
+    pub hash_to_content: HashMap<String, String>,
+}
+
+
+pub fn hashed_content_from_string_lines(lines: Vec<String>) -> HashedContent {
+    let mut hash_lines = IndexSet::<String>::new();
+    let mut hash_to_content = HashMap::<String, String>::new();
+    for line in lines {
+        let hash_line = hash_from_content::<HashPointer>(&line).get_one_hash();
+        hash_lines.insert(hash_line.clone());
+        hash_to_content.insert(hash_line, line);
+    }
+    HashedContent {
+        hash_lines,
+        hash_to_content,
+    }
+}
+
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub struct HashedContentForVersion {
+    pub pointer_to_blob: BlobHashPointer,
+    pub pointer_to_previous_version: Option<VersionHashPointer>,
+    pub hashed_content: HashedContent,
+}
+impl HashedContentForVersion {
+    pub fn new(pointer_to_blob: BlobHashPointer, content: HashedContent, pointer_to_previous_version: Option<VersionHashPointer>) -> Self {
+        Self {
+            pointer_to_blob,
+            pointer_to_previous_version,
+            hashed_content: content,
+        }
+    }
+}
 
 
 
@@ -81,7 +120,6 @@ pub fn file_to_lines(file: &File) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use crate::config::get_project_dir;
-    use crate::diff::hashed_content_from_string_lines;
     use crate::util::{deserialize_file_content, serialize_struct};
     use crate::diff_algo::{compare_hashed_content, hashed_content_from_file, HashedContent};
     use crate::hashing::{HashPointer, _hash_pointer_from_hash_string};

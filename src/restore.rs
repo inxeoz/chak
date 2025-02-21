@@ -2,7 +2,7 @@ use crate::config::{get_project_dir, trees_fold};
 use crate::diff::{hashed_content_from_string_lines, HashedContent};
 use crate::diff_algo::hashed_content_from_file;
 use crate::hashing::{HashPointer, HashPointerTraits, TreeHashPointer};
-use crate::tree_object::TreeObject;
+use crate::handle_object_pointer::TreeObject;
 use crate::util::{
     deserialize_file_content, get_latest_tree_root_pointer, read_directory_entries,
     save_or_create_file, serialize_struct,
@@ -88,6 +88,7 @@ fn start_restoring(tree_root_pointer: TreeHashPointer, dir_path: &PathBuf) -> io
             .unwrap_or_default()
             .children
             .clone();
+
 
 
     Ok(())

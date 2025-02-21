@@ -10,11 +10,10 @@ use std::path::{Path, PathBuf};
 use std::cmp::Ordering;
 use std::io;
 use crate::diff_algo::file_to_lines;
-use crate::tree_object::{TreeNode, TreeObject};
-
-
+use crate::handle_tree::TreeObject;
 
 pub trait HashPointerTraits {
+    fn new(fold_name: String, file_name: String) -> Self; // Added for construction
     fn replace(&mut self, pointer: &Self);
     fn update_hash(&mut self, content: String);
     fn get_fold_name(&self) -> String;
@@ -23,10 +22,10 @@ pub trait HashPointerTraits {
     fn get_path(&self) -> PathBuf;
     fn set_fold_name(&mut self, fold_name: String);
     fn set_file_name(&mut self, file_name: String);
-    fn new(fold_name: String, file_name: String) -> Self; // Added for construction
-
 }
 
+
+#[macro_export]
 macro_rules! impl_hash_pointer_traits {
     ($t:ty) => {
         impl PartialEq for $t {
@@ -50,6 +49,10 @@ macro_rules! impl_hash_pointer_traits {
         }
 
         impl HashPointerTraits for $t {
+            
+             fn new(fold_name: String, file_name: String) -> Self {
+                Self { fold_name, file_name }
+            }
             fn replace(&mut self, pointer: &Self) {
                 self.set_fold_name(pointer.get_fold_name());
                 self.set_file_name(pointer.get_file_name());
@@ -91,6 +94,13 @@ macro_rules! impl_hash_pointer_traits {
     };
 }
 
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq)]
+pub struct HashPointer {
+    fold_name: String,
+    file_name: String,
+}
+impl_hash_pointer_traits!(HashPointer);
 
 pub fn _hash_pointer_from_hash_string<T: HashPointerTraits>(hash: String) -> T {
     T::new(
@@ -159,8 +169,8 @@ pub fn hash_from_content<T: HashPointerTraits>(content: &str) -> T {
     _hash_pointer_from_hash_string::<T>(format!("{:x}", hasher.finalize()))
 }
 
-// Rest of your functions remain unchanged...
 
+// Rest of your functions remain unchanged...
 
 pub fn hash_from_string_vec<T: HashPointerTraits>(strings: &[String]) -> T {
     let mut hasher = Sha256::new();
@@ -170,18 +180,15 @@ pub fn hash_from_string_vec<T: HashPointerTraits>(strings: &[String]) -> T {
     _hash_pointer_from_hash_string::<T>(format!("{:x}", hasher.finalize()))
 }
 
-pub fn hash_from_save_tree<T: HashPointerTraits>(
-    save_dir: &Path,
-    children: IndexMap<String, TreeNode>,
-) -> io::Result<T> {
-    let mut tree_object = TreeObject { children };
-
-    //sort the object so that it always produce same hash for same content or object no matter what their position
-    tree_object.sort_children();
-
-    let content = serialize_struct(&tree_object);
-    hash_from_save_content(&content, save_dir)
-}
+// pub fn hash_from_save_tree<T: HashPointerTraits>(
+//     save_dir: &Path,
+//     tree_object: &mut TreeObject,
+// ) -> io::Result<T> {
+//     //sort the object so that it always produce same hash for same content or object no matter what their position
+//     tree_object.sort_children();
+//     let content = serialize_struct(&tree_object);
+//     hash_from_save_content(&content, save_dir)
+// }
 
 pub fn get_latest_pointer_line_from_file<T: HashPointerTraits>(file: &File, from_bottom: bool) -> Option<T> {
     let lines = file_to_lines(file);
@@ -195,6 +202,8 @@ pub fn get_latest_pointer_line_from_file<T: HashPointerTraits>(file: &File, from
     line.and_then(|l| hash_pointer_from_hash_string(l.to_string()).ok())
 }
 
+
+
 pub fn hash_and_content_from_file_path_ref<T: HashPointerTraits>(file_path: &Path) -> io::Result<(T, String)> {
     let mut file = File::open(file_path)?;
     let content = file_to_string(&mut file)?;
@@ -204,40 +213,3 @@ pub fn hash_and_content_from_file_path_ref<T: HashPointerTraits>(file_path: &Pat
 
 
 
-#[derive(Serialize, Deserialize, Debug, Clone, Eq)]
-pub struct HashPointer {
-    fold_name: String,
-    file_name: String,
-}
-impl_hash_pointer_traits!(HashPointer);
-
-#[derive(Serialize, Deserialize, Debug, Clone, Eq)]
-pub struct TreeHashPointer {
-    fold_name: String,
-    file_name: String,
-}
-impl_hash_pointer_traits!(TreeHashPointer);
-
-
-#[derive(Serialize, Deserialize, Debug, Clone, Eq)]
-pub struct BlobHashPointer {
-    fold_name: String,
-    file_name: String,
-}
-impl_hash_pointer_traits!(BlobHashPointer);
-
-//these custom hash pointer would have other field in future
-#[derive(Serialize, Deserialize, Debug, Clone, Eq)]
-pub struct CommitHashPointer {
-    fold_name: String,
-    file_name: String,
-}
-impl_hash_pointer_traits!(CommitHashPointer);
-
-
-#[derive(Serialize, Deserialize, Debug, Clone, Eq)]
-pub struct VersionHashPointer {
-    fold_name: String,
-    file_name: String,
-}
-impl_hash_pointer_traits!(VersionHashPointer);

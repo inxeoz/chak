@@ -1,8 +1,10 @@
 
 use std::collections::HashMap;
 use indexmap::IndexSet;
-use crate::hashing::{hash_from_content, HashPointer, HashPointerTraits, VersionHashPointer};
+use crate::hashing::{hash_from_content, HashPointer, HashPointerTraits};
 use serde::{Deserialize, Serialize};
+use crate::handle_blob::BlobHashPointer;
+use crate::handle_version::VersionHashPointer;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Version {
@@ -130,41 +132,6 @@ impl ContentBlock {
 
 
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub struct HashedContent {
-    pub hash_lines: IndexSet<String>,
-    pub hash_to_content: HashMap<String, String>,
-}
-
-
-pub fn hashed_content_from_string_lines(lines: Vec<String>) -> HashedContent {
-    let mut hash_lines = IndexSet::<String>::new();
-    let mut hash_to_content = HashMap::<String, String>::new();
-    for line in lines {
-        let hash_line = hash_from_content::<HashPointer>(&line).get_one_hash();
-        hash_lines.insert(hash_line.clone());
-        hash_to_content.insert(hash_line, line);
-    }
-    HashedContent {
-        hash_lines,
-        hash_to_content,
-    }
-}
-
-
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub struct HashedContentForVersion {
-    pub pointer_to_previous_version: Option<VersionHashPointer>,
-    pub hashed_content: HashedContent,
-}
-impl HashedContentForVersion {
-    pub fn new(content: HashedContent, pointer_to_previous_version: Option<VersionHashPointer>) -> Self {
-        Self {
-            pointer_to_previous_version,
-            hashed_content: content,
-        }
-    }
-}
 
 
 

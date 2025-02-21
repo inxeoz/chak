@@ -1,0 +1,5 @@
+vcs_work_with_nested_ignore_file = false
+
+[vcs_command_alias]
+
+[vcs_remotes]

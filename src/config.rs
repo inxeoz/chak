@@ -86,10 +86,10 @@ impl Config {
             commits_fold(),
         ]
     }
-    pub fn get_commit_log() -> PathBuf { history_fold().join("commit.log")
+    pub fn get_commit_log_file() -> PathBuf { history_fold().join("commit.log")
     }
 
-    pub fn get_stage() -> PathBuf {
+    pub fn get_stage_file() -> PathBuf {
        staging_area_fold().join("stage")
     }
 
@@ -98,9 +98,9 @@ impl Config {
 
     pub fn essentials_files() -> Vec<PathBuf> {
         vec![
-          get_stage(),
+          get_stage_file(),
            get_config_file(),
-           get_commit_log(),
+           get_commit_log_file(),
         ]
     }
 
