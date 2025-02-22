@@ -23,6 +23,7 @@ mod versioning;
 mod version_head;
 mod hash_pointer;
 mod true_blob;
+mod renaming;
 //test
 
 
