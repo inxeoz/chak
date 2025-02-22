@@ -2,14 +2,23 @@ use crate::hash_pointer::HashPointer;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::config::{blob_fold};
-use crate::diff_algo::{ HashedContent};
 use crate::handle_common::{load_entity, save_entity};
 use crate::impl_hash_pointer_traits;
 use std::path::PathBuf;
 use std::cmp::Ordering;
-use crate::handle_tree::TreeHashPointer;
-use crate::hash_pointer_algo::hash_from_content;
+use std::collections::HashMap;
+use indexmap::IndexSet;
+
 use crate::hash_pointer::HashPointerTraits;
+pub struct CompareOrderStructure {
+    pub previous_content: HashedContent,
+    pub new_content: HashedContent,
+}
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub struct HashedContent {
+    pub hash_lines: IndexSet<String>,
+    pub hash_to_content: HashMap<String, String>,
+}
 
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
@@ -37,4 +46,5 @@ impl BlobHashPointer {
     pub fn load_blob(&self) -> HashedContent {
         load_entity::<Self, HashedContent>(self, &blob_fold())
     }
+
 }

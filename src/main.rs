@@ -3,7 +3,7 @@ mod commandline;
 mod config;
 mod custom_error;
 mod diff;
-mod diff_algo;
+mod hashed_content_algo;
 mod hash_pointer_algo;
 mod init;
 mod handle_object_pointer;

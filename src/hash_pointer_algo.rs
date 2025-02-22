@@ -9,7 +9,7 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::cmp::Ordering;
 use std::io;
-use crate::diff_algo::file_to_lines;
+use crate::hashed_content_algo::file_to_lines;
 use crate::hash_pointer::{HashPointer, HashPointerTraits};
 
 pub fn _hash_pointer_from_hash_string(hash: String) -> HashPointer {

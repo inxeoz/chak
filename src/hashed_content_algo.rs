@@ -11,19 +11,20 @@ use std::hash::Hash;
 use std::io::{BufRead, BufReader, Write};
 use std::ops::Sub;
 use std::path::Path;
+use crate::handle_blob::{CompareOrderStructure, HashedContent};
 use crate::hash_pointer::HashPointerTraits;
+use crate::util::file_to_lines;
 
-
-pub struct CompareOrderStructure {
-    pub previous_content: HashedContent,
-    pub new_content: HashedContent,
-}
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub struct HashedContent {
-    pub hash_lines: IndexSet<String>,
-    pub hash_to_content: HashMap<String, String>,
-}
 impl HashedContent {
+
+    //need to test this method
+    pub fn to_string_content(&self) -> String {
+        let mut string_lines = Vec::<String>::new();
+        for Hash_line in &self.hash_lines {
+            string_lines.push(self.hash_to_content.get(Hash_line).unwrap_or_default().to_string());
+        }
+        string_lines.join("\n")
+    }
     //biased toward previous content
     //it is important as it tell the ordering of paramter like which hashedContent is previos content or new content
     pub fn compare_hashed_content_biased_previous(
@@ -55,7 +56,7 @@ impl HashedContent {
         }
     }
 
-    pub fn hashed_content_from_string_lines(lines: Vec<String>) -> HashedContent {
+    pub fn from_string_lines(lines: Vec<String>) -> HashedContent {
         let mut hash_lines = IndexSet::<String>::new();
         let mut hash_to_content = HashMap::<String, String>::new();
         for line in lines {
@@ -69,7 +70,7 @@ impl HashedContent {
         }
     }
 
-    pub fn hashed_content_from_file(file: &File) -> HashedContent {
+    pub fn from_file(file: &File) -> HashedContent {
         let mut hash_lines = IndexSet::new();
         let mut hash_to_content = HashMap::<String, String>::new();
 
@@ -85,8 +86,8 @@ impl HashedContent {
         }
     }
     pub fn get_diff(prev_file: &File, new_file: &File) -> HashedContent {
-        let first = Self::hashed_content_from_file(&prev_file);
-        let second = Self::hashed_content_from_file(&new_file);
+        let first = Self::from_file(&prev_file);
+        let second = Self::from_file(&new_file);
         let diff = Self::compare_hashed_content_biased_previous(&CompareOrderStructure {
             previous_content: first,
             new_content: second,
@@ -96,34 +97,12 @@ impl HashedContent {
 
     pub fn hashed_content_from_path(path: &Path) -> HashedContent {
         let file = File::open(&path).expect("Failed to open file");
-        Self::hashed_content_from_file(&file)
+        Self::from_file(&file)
     }
 }
 
-pub fn file_to_lines(file: &File) -> Vec<String> {
-    let reader = BufReader::new(file);
-    reader
-        .lines()
-        .map(|line| line.unwrap_or_default())
-        .collect()
-}
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub struct HashedContentForVersion {
-    pub pointer_to_previous_version: Option<VersionHashPointer>,
-    pub hashed_content: HashedContent,
-}
-impl HashedContentForVersion {
-    pub fn new(
-        diff_content: HashedContent,
-        pointer_to_previous_version: Option<VersionHashPointer>,
-    ) -> Self {
-        Self {
-            pointer_to_previous_version,
-            hashed_content: diff_content,
-        }
-    }
-}
+
 
 //
 // #[cfg(test)]

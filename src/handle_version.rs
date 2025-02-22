@@ -1,13 +1,28 @@
 use serde::{Deserialize, Serialize};
 use crate::config::versions_fold;
-use crate::diff_algo::HashedContentForVersion;
 use crate::handle_common::{load_entity, save_entity};
 use crate::impl_hash_pointer_traits;
 use std::path::PathBuf;
 use std::cmp::Ordering;
-use crate::handle_blob::BlobHashPointer;
-use crate::hash_pointer_algo::hash_from_content;
+use crate::handle_blob::{BlobHashPointer, HashedContent};
 use crate::hash_pointer::{HashPointer, HashPointerTraits};
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub struct VersionHashedContent {
+    pub pointer_to_previous_version: Option<VersionHashPointer>,
+    pub hashed_content: HashedContent,
+}
+impl VersionHashedContent {
+    pub fn new(
+        diff_content: HashedContent,
+        pointer_to_previous_version: Option<VersionHashPointer>,
+    ) -> Self {
+        Self {
+            pointer_to_previous_version,
+            hashed_content: diff_content,
+        }
+    }
+}
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct VersionHashPointer {
     fold_name: String,
@@ -25,11 +40,11 @@ impl VersionHashPointer {
     }
 
 
-    pub fn save_version(hashed_version: &HashedContentForVersion ) -> Self {
+    pub fn save_version(hashed_version: &VersionHashedContent ) -> Self {
         Self::own(&save_entity(hashed_version, &versions_fold()))
     }
 
-    pub fn load_version(&self) -> HashedContentForVersion {
-        load_entity::<Self, HashedContentForVersion>(self, &versions_fold())
+    pub fn load_version(&self) -> VersionHashedContent {
+        load_entity::<Self, VersionHashedContent>(self, &versions_fold())
     }
 }

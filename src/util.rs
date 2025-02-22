@@ -3,7 +3,7 @@ use std::fs::read_dir;
 
 use std::fs;
 use std::fs::{File, OpenOptions};
-use std::io::{self, ErrorKind, Read, Write};
+use std::io::{self, BufRead, BufReader, ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -103,6 +103,15 @@ pub fn file_to_string(file: &mut File) -> io::Result<String> {
     file.read_to_string(&mut content)?;
     Ok(content)
 }
+
+pub fn file_to_lines(file: &File) -> Vec<String> {
+    let reader = BufReader::new(file);
+    reader
+        .lines()
+        .map(|line| line.unwrap_or_default())
+        .collect()
+}
+
 
 pub fn string_content_to_string_vec(content: &str) -> Vec<String> {
     content

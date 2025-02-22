@@ -1,9 +1,9 @@
 use std::fs;
 use crate::config::{blob_fold, version_head_fold};
-use crate::diff_algo::{CompareOrderStructure, HashedContent, HashedContentForVersion};
+use crate::hashed_content_algo::{CompareOrderStructure, HashedContent};
 use crate::handle_blob::BlobHashPointer;
 use crate::handle_common::{load_entity, save_entity};
-use crate::handle_version::VersionHashPointer;
+use crate::handle_version::{VersionHashPointer, VersionHashedContent};
 use crate::impl_hash_pointer_traits;
 use serde::{Deserialize, Serialize};
 use crate::handle_version_head::VersionHeadHashPointer;
@@ -24,6 +24,12 @@ impl VersionHead {
             pointer_to_blob,
             pointer_to_version,
         }
+    }
+    pub fn get_pointer_to_blob(&self) -> &BlobHashPointer {
+        &self.pointer_to_blob
+    }
+    pub fn get_pointer_to_version(&self) -> Option<&VersionHashPointer> {
+        self.pointer_to_version.as_ref()
     }
 
     fn change_blob(&mut self, new_blob_hash: BlobHashPointer) {
@@ -46,7 +52,7 @@ impl VersionHead {
             new_content: blob_hashed_content,
         });
 
-        let new_version_hashed = HashedContentForVersion::new(diff_biased_previous, self.pointer_to_version.clone());
+        let new_version_hashed = VersionHashedContent::new(diff_biased_previous, self.pointer_to_version.clone());
         let latest_version_hash_pointer = VersionHashPointer::save_version(&new_version_hashed);
         self.change_version(latest_version_hash_pointer);
 
