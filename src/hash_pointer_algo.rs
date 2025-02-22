@@ -1,5 +1,5 @@
 use crate::custom_error::ChakError;
-use crate::global_config::MIN_HASH_LENGTH;
+use crate::config_global::MIN_HASH_LENGTH;
 use crate::util::{file_to_string, save_or_create_file, serialize_struct};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::cmp::Ordering;
 use std::io;
-use crate::hashed_content_algo::file_to_lines;
+use crate::hashed_algo::file_to_lines;
 use crate::hash_pointer::{HashPointer, HashPointerTraits};
 
 pub fn _hash_pointer_from_hash_string(hash: String) -> HashPointer {

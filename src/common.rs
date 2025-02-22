@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
-use crate::handle_tree::TreeHashPointer;
+use crate::tree_object::TreeHashPointer;
 use crate::hash_pointer::{HashPointer, HashPointerTraits};
 use crate::hash_pointer_algo::{hash_from_content};
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};

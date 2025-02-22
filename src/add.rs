@@ -2,7 +2,7 @@
 use crate::config::{blob_fold, commits_fold,get_commit_log_file, get_config, get_project_dir, trees_fold, vcs_fold, versions_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
 
 
-use crate::handle_object_pointer::{ObjectPointer};
+use crate::object_pointer::{ObjectPointer};
 use crate::util::save_or_create_file;
 use crate::util::{deserialize_file_content, serialize_struct};
 use crate::util::{read_directory_entries, string_content_to_string_vec};
@@ -15,11 +15,11 @@ use std::fs::File;
 use std::hash::Hash;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
-use crate::handle_blob::BlobHashPointer;
-use crate::handle_commit::{Commit, CommitHashPointer};
-use crate::handle_tree::{attach_latest_tree_root_pointer_to_stage, TreeHashPointer, TreeObject};
-use crate::handle_version::VersionHashPointer;
-use crate::handle_version_head::VersionHeadHashPointer;
+use crate::hashed_blob::BlobHashPointer;
+use crate::commit::{Commit, CommitHashPointer};
+use crate::tree_object::{attach_latest_tree_root_pointer_to_stage, TreeHashPointer, TreeObject};
+use crate::version_hashed::VersionHashPointer;
+use crate::version_head::VersionHeadHashPointer;
 use crate::hash_pointer::HashPointerTraits;
 use crate::versioning::VersionHead;
 

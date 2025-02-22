@@ -2,7 +2,7 @@ use crate::config::{essentials_files, essentials_folds, get_config_file, save_co
 use crate::util::{input_from_commandline, save_or_create_file};
 use std::fs::create_dir_all;
 use std::{fs, io};
-use crate::global_config::get_global_config;
+use crate::config_global::get_global_config;
 
 pub fn init() -> Result<(), io::Error> {
     if vcs_fold().exists() {

@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 
-use crate::handle_commit::{Commit, CommitHashPointer};
-use crate::handle_common::{load_entity, save_entity};
-use crate::handle_object_pointer::ObjectPointer;
+use crate::commit::{Commit, CommitHashPointer};
+use crate::common::{load_entity, save_entity};
+use crate::object_pointer::ObjectPointer;
 use crate::hash_pointer::{HashPointer, HashPointerTraits};
 use crate::hash_pointer_algo::{
     get_latest_pointer_line_from_file, hash_from_content,

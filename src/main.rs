@@ -3,25 +3,26 @@ mod commandline;
 mod config;
 mod custom_error;
 mod diff;
-mod hashed_content_algo;
+mod hashed_algo;
 mod hash_pointer_algo;
 mod init;
-mod handle_object_pointer;
+mod object_pointer;
 mod util;
 mod restore;
 mod temporary;
 mod test;
-mod global_config;
+mod config_global;
 mod status;
 mod remote;
-mod handle_tree;
-mod handle_blob;
-mod handle_version;
-mod handle_commit;
-mod handle_common;
+mod tree_object;
+mod hashed_blob;
+mod version_hashed;
+mod commit;
+mod common;
 mod versioning;
-mod handle_version_head;
+mod version_head;
 mod hash_pointer;
+mod true_blob;
 //test
 
 
@@ -31,7 +32,7 @@ use std::io;
 use std::path::PathBuf;
 use crate::commandline::parse_commandline;
 use crate::config::Config;
-use crate::global_config::GlobalConfig;
+use crate::config_global::GlobalConfig;
 
 fn main() {
     

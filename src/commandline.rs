@@ -4,8 +4,9 @@ use crate::status::command_status;
 use crate::util::save_or_create_file;
 use clap::{Parser, Subcommand};
 use std::fs::File;
-use crate::handle_commit::command_commit;
+use crate::commit::command_commit;
 use crate::remote::{command_remote};
+use crate::restore::command_restore;
 
 /// A simple version control system built with Rust
 #[derive(Parser)]
@@ -96,7 +97,7 @@ pub fn parse_commandline() {
             command_commit(m);
         }
         Some(Commands::Restore { files }) => {
-            // command_restore(files)
+            command_restore(files)
         } ,
         Some(Commands::Status) => {
             command_status();

@@ -2,7 +2,7 @@ use crate::hash_pointer::HashPointer;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::config::{blob_fold};
-use crate::handle_common::{load_entity, save_entity};
+use crate::common::{load_entity, save_entity};
 use crate::impl_hash_pointer_traits;
 use std::path::PathBuf;
 use std::cmp::Ordering;

@@ -1,8 +1,8 @@
 
 use serde::{Deserialize, Serialize};
 use std::default::Default;
-use crate::handle_tree::TreeHashPointer;
-use crate::handle_version_head::VersionHeadHashPointer;
+use crate::tree_object::TreeHashPointer;
+use crate::version_head::VersionHeadHashPointer;
 use crate::hash_pointer::HashPointerTraits;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]

@@ -1,8 +1,8 @@
 use std::fs::File;
 use serde::{Deserialize, Serialize};
 use crate::config::{commits_fold, get_commit_log_file, get_stage_file, trees_fold};
-use crate::handle_common::{load_entity, save_entity};
-use crate::handle_tree::{clear_stage, TreeHashPointer, TreeObject};
+use crate::common::{load_entity, save_entity};
+use crate::tree_object::{clear_stage, TreeHashPointer, TreeObject};
 use crate::hash_pointer_algo::{get_latest_pointer_line_from_file, hash_from_content};
 use crate::impl_hash_pointer_traits;
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};

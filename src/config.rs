@@ -1,4 +1,4 @@
-use crate::global_config::GlobalConfig;
+use crate::config_global::GlobalConfig;
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};

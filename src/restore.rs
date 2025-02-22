@@ -9,9 +9,9 @@ use crate::util::{
 use std::fs::{create_dir_all, File};
 use std::path::PathBuf;
 use std::{env, io};
-use crate::hashed_content_algo::HashedContent;
-use crate::handle_object_pointer::ObjectPointer;
-use crate::handle_tree::{TreeHashPointer, TreeObject};
+use crate::hashed_algo::HashedContent;
+use crate::object_pointer::ObjectPointer;
+use crate::tree_object::{TreeHashPointer, TreeObject};
 
 fn start_restoring(tree_root_pointer: TreeHashPointer, dir_path: &PathBuf) -> io::Result<()> {
     let tree_object = tree_root_pointer.load_tree();

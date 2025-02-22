@@ -1,5 +1,5 @@
 
-use crate::handle_version::VersionHashPointer;
+use crate::version_hashed::VersionHashPointer;
 use crate::hash_pointer_algo::{hash_from_content};
 use indexmap::{ IndexSet};
 use itertools::{ Itertools};
@@ -11,7 +11,7 @@ use std::hash::Hash;
 use std::io::{BufRead, BufReader, Write};
 use std::ops::Sub;
 use std::path::Path;
-use crate::handle_blob::{CompareOrderStructure, HashedContent};
+use crate::hashed_blob::{CompareOrderStructure, HashedContent};
 use crate::hash_pointer::HashPointerTraits;
 use crate::util::file_to_lines;
 

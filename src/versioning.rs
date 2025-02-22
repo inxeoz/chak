@@ -1,12 +1,12 @@
 use std::fs;
 use crate::config::{blob_fold, version_head_fold};
-use crate::hashed_content_algo::{CompareOrderStructure, HashedContent};
-use crate::handle_blob::BlobHashPointer;
-use crate::handle_common::{load_entity, save_entity};
-use crate::handle_version::{VersionHashPointer, VersionHashedContent};
+use crate::hashed_algo::{CompareOrderStructure, HashedContent};
+use crate::hashed_blob::BlobHashPointer;
+use crate::common::{load_entity, save_entity};
+use crate::version_hashed::{VersionHashPointer, VersionHashedContent};
 use crate::impl_hash_pointer_traits;
 use serde::{Deserialize, Serialize};
-use crate::handle_version_head::VersionHeadHashPointer;
+use crate::version_head::VersionHeadHashPointer;
 use crate::hash_pointer::HashPointerTraits;
 
 

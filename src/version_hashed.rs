@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use crate::config::versions_fold;
-use crate::handle_common::{load_entity, save_entity};
+use crate::common::{load_entity, save_entity};
 use crate::impl_hash_pointer_traits;
 use std::path::PathBuf;
 use std::cmp::Ordering;
-use crate::handle_blob::{BlobHashPointer, HashedContent};
+use crate::hashed_blob::{BlobHashPointer, HashedContent};
 use crate::hash_pointer::{HashPointer, HashPointerTraits};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]

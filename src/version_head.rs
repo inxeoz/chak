@@ -1,5 +1,5 @@
 use crate::config::version_head_fold;
-use crate::handle_common::{load_entity, save_entity};
+use crate::common::{load_entity, save_entity};
 use crate::impl_hash_pointer_traits;
 use crate::versioning::VersionHead;
 use std::path::PathBuf;
