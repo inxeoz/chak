@@ -1,14 +1,10 @@
 
-use crate::version_hashed::VersionHashPointer;
 use crate::hash_pointer_algo::{hash_from_content};
 use indexmap::{ IndexSet};
 use itertools::{ Itertools};
-use serde::{Deserialize, Serialize};
-use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::fs::File;
 use std::hash::Hash;
-use std::io::{BufRead, BufReader, Write};
 use std::ops::Sub;
 use std::path::Path;
 use crate::hashed_blob::{CompareOrderStructure, HashedContent};
@@ -21,7 +17,7 @@ impl HashedContent {
     pub fn to_string_content(&self) -> String {
         let mut string_lines = Vec::<String>::new();
         for Hash_line in &self.hash_lines {
-            string_lines.push(self.hash_to_content.get(Hash_line).unwrap_or_default().to_string());
+            string_lines.push(self.hash_to_content.get(Hash_line).unwrap_or(&"".to_string()).to_string());
         }
         string_lines.join("\n")
     }

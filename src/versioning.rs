@@ -1,13 +1,15 @@
 use std::fs;
-use crate::config::{blob_fold, version_head_fold};
-use crate::hashed_algo::{CompareOrderStructure, HashedContent};
-use crate::hashed_blob::BlobHashPointer;
-use crate::common::{load_entity, save_entity};
+use crate::config::{blob_fold};
+use crate::hashed_blob::{BlobHashPointer, CompareOrderStructure, HashedContent};
 use crate::version_hashed::{VersionHashPointer, VersionHashedContent};
-use crate::impl_hash_pointer_traits;
 use serde::{Deserialize, Serialize};
 use crate::version_head::VersionHeadHashPointer;
 use crate::hash_pointer::HashPointerTraits;
+
+// enum BlobType {
+//     ReadableBlob(BlobHashPointer),
+//     UnreadableBlob()
+// }
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,10 +40,6 @@ impl VersionHead {
     fn change_version(&mut self, new_version_hash: VersionHashPointer) {
         self.pointer_to_version = Some(new_version_hash);
     }
-
-    // fn save_version_head(&self) -> VersionHeadHashPointer {
-    //     VersionHeadHashPointer::save_version_head(self.clone())
-    // }
 
     pub fn create_version(&mut self, new_blob_hash: BlobHashPointer) -> VersionHeadHashPointer {
         let blob_hashed_content = new_blob_hash.load_blob();

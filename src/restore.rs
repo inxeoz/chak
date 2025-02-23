@@ -1,17 +1,12 @@
-use crate::config::{get_project_dir, trees_fold};
-
-use crate::hash_pointer_algo::{HashPointer, HashPointerTraits};
-
+use crate::config::{get_project_dir};
 use crate::util::{
-    deserialize_file_content, read_directory_entries,
-    save_or_create_file, serialize_struct,
+    save_or_create_file,
 };
-use std::fs::{create_dir_all, File};
+use std::fs::{create_dir_all,};
 use std::path::PathBuf;
-use std::{env, io};
-use crate::hashed_algo::HashedContent;
+use std::{ io};
 use crate::object_pointer::ObjectPointer;
-use crate::tree_object::{TreeHashPointer, TreeObject};
+use crate::tree_object::{TreeHashPointer};
 
 fn start_restoring(tree_root_pointer: TreeHashPointer, dir_path: &PathBuf) -> io::Result<()> {
     let tree_object = tree_root_pointer.load_tree();
