@@ -71,37 +71,31 @@ pub fn versions_fold() -> PathBuf {
 pub fn trees_fold() -> PathBuf {
     vcs_fold().join("trees")
 }
-pub fn staging_area_fold() -> PathBuf {
-    vcs_fold().join("staging_area")
-}
+
 pub fn commits_fold() -> PathBuf {
     vcs_fold().join("commits")
 }
-pub fn history_fold() -> PathBuf {
-    vcs_fold().join("history")
-}
+
 pub fn version_head_fold() -> PathBuf {
     vcs_fold().join("version_heads")
 }
+
 pub fn essentials_folds_to_create() -> Vec<PathBuf> {
     vec![
         vcs_fold(),
         blob_fold(),
-        history_fold(),
         versions_fold(),
         trees_fold(),
-        staging_area_fold(),
         commits_fold(),
-        version_head_fold(),
     ]
 }
 
 pub fn commit_log_file_path() -> PathBuf {
-    history_fold().join("commit.log")
+    vcs_fold().join("commit.log")
 }
 
 pub fn stage_file_path() -> PathBuf {
-    staging_area_fold().join("stage")
+    vcs_fold().join("stage")
 }
 
 pub fn config_file_path() -> PathBuf {

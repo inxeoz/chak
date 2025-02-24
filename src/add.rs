@@ -5,7 +5,7 @@ use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use crate::config::{get_config, get_project_dir, vcs_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
 use crate::hashed_blob::BlobHashPointer;
-use crate::tree_hash_pointer::{attach_latest_tree_root_pointer_to_stage, TreeHashPointer};
+use crate::tree_hash_pointer::{ TreeHashPointer};
 use crate::tree_object::TreeObject;
 use crate::util::read_directory_entries;
 use crate::version_head::VersionHeadHashPointer;
@@ -32,7 +32,7 @@ pub fn start_snapshot(vcs_config: &Config) -> io::Result<()> {
 
     let new_root_tree_pointer = TreeHashPointer::save_tree(&mut tree_object);
     //attaching the updated new tree pointer to stage temporarily because tree pointer can be changed util its commited
-    attach_latest_tree_root_pointer_to_stage(new_root_tree_pointer);
+    new_root_tree_pointer.attach_tree_to_stage();
     Ok(())
 }
 
@@ -58,31 +58,21 @@ pub fn dir_snapshot(
     main_ignore_builder: &mut GitignoreBuilder,
     tree_ref: &mut TreeObject,
 ) {
-    // we cant take dir snapshot if path is file.
     assert!(dir_path.is_dir(), "Path is not a directory");
-
-    // children of this dir maps to their update or TreeNode
-    //
-    // let ignore_file = path.join(VCS_IGNORE_FILE);
-    // main_ignore_builder.add(ignore_file);
-    // Handle .ignore file
 
     if vcs_config.vcs_work_with_nested_ignore_file {
         main_ignore_builder.add(dir_path.join(VCS_IGNORE_FILE));
     } else {
-        // if future dont do this
         handle_ignore_file(
             main_ignore_builder,
             vec![(Some(dir_path.to_path_buf()), VCS_IGNORE_FILE)],
         );
     }
 
-    //ignore file would be handled through this functions
     let allowed_entries = parse_ignore(dir_path, main_ignore_builder).unwrap_or_default();
 
     for entry in allowed_entries
     {
-        //like file name or folder name not their path addr
         let entry_name = entry
             .file_name()
             .expect("Could not get file name")
@@ -110,6 +100,7 @@ pub fn dir_snapshot(
 
 fn process_file_entry(file_entry: &Path, entry_name: &str, tree_ref: &mut TreeObject) {
     let blob_hash_pointer = BlobHashPointer::save_blob_from_file(&file_entry);
+    //create list to add this tempo
     if let Some(existing_version) = tree_ref.file_children.get(&entry_name.to_string()) {
         let mut version_head = existing_version.load_version_head();
         let updated_version_head_hash_pointer =

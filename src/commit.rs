@@ -1,15 +1,14 @@
 use std::fs::File;
 use serde::{Deserialize, Serialize};
-use crate::config::{commit_log_file_path, commits_fold, get_commit_log_file, get_stage_file, trees_fold};
+use crate::config::{commit_log_file_path, commits_fold, get_commit_log_file, get_stage_file, stage_file_path, trees_fold};
 use crate::common::{load_entity, save_entity};
-use crate::tree_hash_pointer::{clear_stage, TreeHashPointer};
+use crate::tree_hash_pointer::{ TreeHashPointer};
 use crate::impl_hash_pointer_traits;
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};
 use std::path::PathBuf;
 use std::cmp::Ordering;
 use crate::custom_error::ChakError;
 use crate::hash_pointer::{HashPointer, HashPointerTraits};
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Commit {
@@ -75,7 +74,7 @@ pub fn append_commit_hash_pointer_to_commit_log_file(commit_hash_pointer: Commit
 
 pub fn command_commit(m:String) {
 
-    if let Ok(latest_tree_pointer) = TreeHashPointer::get_latest_tree_root_pointer(true){
+    if let Ok(latest_tree_pointer) = TreeHashPointer::get_latest_tree_root_pointer(false){
         let commit_pointer = CommitHashPointer::save_commit(&create_commit(
             m,
             Some("inxeoz".to_string()),
@@ -83,8 +82,7 @@ pub fn command_commit(m:String) {
         ));
 
         append_commit_hash_pointer_to_commit_log_file(commit_pointer);
-
-        clear_stage(); //we can clear stage
+        std::fs::write(stage_file_path(), "").expect("Couldn't write to stage file");
     } else {
         println!("No commit configured");
     }

@@ -37,7 +37,7 @@ impl TreeObject {
 
     pub fn get_top_most_tree_object() -> Result<TreeObject, ChakError> {
         // from commit ,getting pointer to previous tree structure that represent the file/folder hierarchy
-        match TreeHashPointer::get_latest_tree_root_pointer(false)  {
+        match TreeHashPointer::get_latest_tree_root_pointer(true)  {
             Ok(latest_tree_pointer) => {
 
                 //fetching latest tree from trees fold and converting it to TreeObject so that we can use in our program
