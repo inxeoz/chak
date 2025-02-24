@@ -82,10 +82,10 @@ pub fn save_or_create_file(
         .open(file_path)?;
 
     if let Some(content) = content {
+        file.write_all(content.as_bytes())?;
         if let Some(sep_string) = append_with_separator {
             file.write_all(sep_string.as_bytes())?;
         }
-        file.write_all(content.as_bytes())?;
     }
 
     Ok(file) // Return Ok even if content is None

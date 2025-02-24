@@ -89,15 +89,11 @@ pub fn command_commit(m:String) {
 
                 append_commit_hash_pointer_to_commit_log_file(commit_pointer);
             }else {
+                //
 
             }
 
         }
-
-
-
-
-
         std::fs::write(stage_file_path(), "").expect("Couldn't write to stage file");
     } else {
         println!("No commit configured");

@@ -80,6 +80,10 @@ pub fn version_head_fold() -> PathBuf {
     vcs_fold().join("version_heads")
 }
 
+pub fn nested_trees_fold() -> PathBuf {
+    vcs_fold().join("nested_trees")
+}
+
 pub fn essentials_folds_to_create() -> Vec<PathBuf> {
     vec![
         vcs_fold(),
@@ -87,6 +91,7 @@ pub fn essentials_folds_to_create() -> Vec<PathBuf> {
         versions_fold(),
         trees_fold(),
         commits_fold(),
+        nested_trees_fold()
     ]
 }
 

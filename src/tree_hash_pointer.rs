@@ -50,7 +50,7 @@ impl TreeHashPointer {
     }
 
     pub fn attach_tree_to_stage(&self) {
-        save_or_create_file(&stage_file_path(), Some(&self.get_one_hash()), true, None)
+        save_or_create_file(&stage_file_path(), Some(&self.get_one_hash()), true, Some("\n"))
             .expect("failed to attach root pointer to stage");
     }
 

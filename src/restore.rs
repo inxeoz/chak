@@ -25,7 +25,7 @@ fn start_restoring(tree_object: TreeObject, dir_path: &PathBuf) -> Result<(), Ch
         if ! actual_child_fold_path.exists() {
             create_dir_all(actual_child_fold_path.clone())?;
         }
-        start_restoring(existing_tree_object.clone(), &actual_child_fold_path)?;
+        start_restoring(existing_tree_object.load_tree().clone(), &actual_child_fold_path)?;
     }
 
     Ok(())

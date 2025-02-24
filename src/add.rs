@@ -85,14 +85,14 @@ pub fn dir_snapshot(
             process_file_entry(&entry, &entry_name, tree_ref);
         } else {
             if ! tree_ref.dir_children.contains_key(&entry_name) {
-                tree_ref.add_dir_child(entry_name.clone(), TreeObject::new());
+                tree_ref.add_dir_child(entry_name.clone(), &mut TreeObject::new());
             }
             if let Some( existing_child_tree) =tree_ref.dir_children.get_mut(&entry_name) {
                 dir_snapshot(
                     vcs_config,
                     &entry,
                     main_ignore_builder,
-                    existing_child_tree,
+                    &mut existing_child_tree.load_tree(),
                 );
             }
         }

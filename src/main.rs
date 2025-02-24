@@ -21,6 +21,7 @@ mod version_head;
 mod hash_pointer;
 mod renaming;
 mod trait_extension;
+mod nested_tree_hash_pointer;
 //test
 
 
