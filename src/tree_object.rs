@@ -4,50 +4,39 @@ use std::default::Default;
 use indexmap::IndexMap;
 use crate::config::trees_fold;
 use crate::custom_error::ChakError;
-use crate::tree_object::TreeHashPointer;
+use crate::tree_hash_pointer::TreeHashPointer;
 use crate::version_head::VersionHeadHashPointer;
 use crate::hash_pointer::HashPointerTraits;
 use crate::util::deserialize_file_content;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub enum ObjectPointer {
-    VersionHeadFile(VersionHeadHashPointer),
-    // BlobFile(BlobHashPointer),
-    TreeFIle(TreeHashPointer),
-}
-
-impl ObjectPointer {
-    fn get_hash_string(&self) -> String {
-        match self {
-            ObjectPointer::VersionHeadFile(hash) => {hash.get_one_hash()}
-            // ObjectPointer::BlobFile(hash) =>  {hash.get_one_hash()}
-            ObjectPointer::TreeFIle(hash) => {hash.get_one_hash()}
-        }
-    }
-}
-
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TreeObject {
-    pub children: IndexMap<String, ObjectPointer>,
+    pub file_children: IndexMap<String, VersionHeadHashPointer>,
+    pub dir_children: IndexMap<String, TreeObject>,
 }
 // TreeObject methods
 impl TreeObject {
     pub fn new() -> TreeObject {
         TreeObject {
-            children: IndexMap::new(),
+            file_children: IndexMap::new(),
+            dir_children: IndexMap::new(),
+            // file_children: Default::default(),
+            // dir_children: Default::default(),
         }
     }
-    pub fn add_child(&mut self, key: String, value: ObjectPointer) {
-        self.children.insert(key, value);
+    pub fn add_dir_child(&mut self, dir_name: String, dir_object: TreeObject) {
+        self.dir_children.insert(dir_name, dir_object);
+    }
+    pub fn add_file_child(&mut self, key: String, value: VersionHeadHashPointer) {
+        self.file_children.insert(key, value);
     }
     pub fn sort_children(&mut self) {
-        self.children.sort_keys();
+        self.file_children.sort_keys();
+        self.dir_children.sort_keys();
     }
 
     pub fn get_top_most_tree_object() -> Result<TreeObject, ChakError> {
         // from commit ,getting pointer to previous tree structure that represent the file/folder hierarchy
-
         match TreeHashPointer::get_latest_tree_root_pointer(true)  {
             Ok(latest_tree_pointer) => {
 

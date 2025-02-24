@@ -1,5 +1,4 @@
 
-use crate::hash_pointer_algo::{hash_from_content};
 use indexmap::{ IndexSet};
 use itertools::{ Itertools};
 use std::collections::HashMap;
@@ -8,7 +7,7 @@ use std::hash::Hash;
 use std::ops::Sub;
 use std::path::Path;
 use crate::hashed_blob::{CompareOrderStructure, HashedContent};
-use crate::hash_pointer::HashPointerTraits;
+use crate::hash_pointer::{HashPointer, HashPointerTraits};
 use crate::util::file_to_lines;
 
 impl HashedContent {
@@ -56,7 +55,7 @@ impl HashedContent {
         let mut hash_lines = IndexSet::<String>::new();
         let mut hash_to_content = HashMap::<String, String>::new();
         for line in lines {
-            let hash_line = hash_from_content(&line).get_one_hash();
+            let hash_line = HashPointer::from_string(&line).get_one_hash();
             hash_lines.insert(hash_line.clone());
             hash_to_content.insert(hash_line, line);
         }
@@ -71,7 +70,7 @@ impl HashedContent {
         let mut hash_to_content = HashMap::<String, String>::new();
 
         for line in file_to_lines(file) {
-            let hash_string = hash_from_content(&line).get_one_hash();
+            let hash_string = HashPointer::from_string(&line).get_one_hash();
             hash_lines.insert(hash_string.clone());
             // Map hash string to actual line content (only if not already mapped)
             hash_to_content.entry(hash_string).or_insert(line);

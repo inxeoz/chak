@@ -2,11 +2,10 @@ mod add;
 mod commandline;
 mod config;
 mod custom_error;
-mod diff;
 mod hashed_algo;
 mod hash_pointer_algo;
 mod init;
-mod object_pointer;
+mod tree_object;
 mod util;
 mod restore;
 mod temporary;
@@ -14,7 +13,7 @@ mod test;
 mod config_global;
 mod status;
 mod remote;
-mod tree_object;
+mod tree_hash_pointer;
 mod hashed_blob;
 mod version_hashed;
 mod commit;
@@ -24,6 +23,7 @@ mod version_head;
 mod hash_pointer;
 mod true_blob;
 mod renaming;
+mod trait_extension;
 //test
 
 

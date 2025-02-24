@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use crate::hash_pointer_algo::hash_from_content;
 
 
 pub trait HashPointerTraits {

@@ -1,4 +1,4 @@
-use crate::config::{essentials_files, essentials_folds, get_config_file, save_config, vcs_fold, Config};
+use crate::config::{essentials_files_to_create, essentials_folds_to_create, save_config, vcs_fold, Config};
 use crate::util::{input_from_commandline, save_or_create_file};
 use std::fs::create_dir_all;
 use std::{fs, io};
@@ -34,10 +34,10 @@ pub fn init() -> Result<(), io::Error> {
 }
 
 pub fn initialize_vcs() {
-    for essentials_fold in essentials_folds() {
+    for essentials_fold in essentials_folds_to_create() {
         create_dir_all(essentials_fold).expect("Failed to create VCS folders");
     }
-    for essentials_file in essentials_files() {
+    for essentials_file in essentials_files_to_create() {
         save_or_create_file(&essentials_file, None, false, None)
             .expect("Failed to create vcs files");
     }

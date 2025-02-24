@@ -39,14 +39,19 @@ pub fn check_vcs_presence_in_dir(fold: &Path) -> bool {
     false
 }
 
-pub fn read_directory_entries(path: &Path) -> io::Result<Vec<PathBuf>> {
+pub fn read_directory_entries(path: &Path) -> io::Result<(Vec<PathBuf>, Vec<PathBuf>)> {
     let entries = read_dir(path)?;
-    let mut detected_entries = Vec::new();
+    let mut detected_dir_entries = Vec::new();
+    let mut detected_file_entries = Vec::new();
     for entry in entries {
         let entry = entry?.path();
-        detected_entries.push(entry.clone());
+        if entry.is_dir() {
+            detected_dir_entries.push(entry);
+        }else {
+            detected_file_entries.push(entry);
+        }
     }
-    Ok(detected_entries)
+    Ok((detected_dir_entries, detected_file_entries))
 }
 
 

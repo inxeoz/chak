@@ -6,13 +6,13 @@ use std::io::Write;
 
 use crate::commit::{Commit, CommitHashPointer};
 use crate::common::{load_entity, save_entity};
-use crate::object_pointer::ObjectPointer;
 use crate::hash_pointer::{HashPointer, HashPointerTraits};
 
 use std::path::PathBuf;
 use std::cmp::Ordering;
 use crate::custom_error::ChakError;
 use crate::impl_hash_pointer_traits;
+use crate::tree_object::TreeObject;
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]

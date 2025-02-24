@@ -1,15 +1,20 @@
 use crate::config_global::GlobalConfig;
+use crate::custom_error::ChakError;
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};
+use libc::FILE;
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
-use std::path::PathBuf;
+use std::ffi::{OsStr, OsString};
+use std::fs::File;
+use std::path::{Path, PathBuf};
 use std::process::Command;
+
 pub static CURRENT_DIR: OnceCell<PathBuf> = OnceCell::new();
 
 pub static VCS_FOLDER: &str = ".chak/";
-pub static  VCS_CONFIG: &str = "config.toml";
+pub static VCS_CONFIG: &str = "config.toml";
 pub static VCS_IGNORE_FILE: &str = ".ignore";
 pub fn get_project_dir() -> &'static PathBuf {
     CURRENT_DIR.get_or_init(|| {
@@ -54,81 +59,93 @@ impl Config {
         self.vcs_work_with_nested_ignore_file = value;
     }
 }
-    pub fn vcs_fold() -> PathBuf {
-        get_project_dir().join(VCS_FOLDER)
-    }
-    pub fn blob_fold() -> PathBuf {
-        vcs_fold().join("blobs")
-    }
-    pub fn versions_fold() -> PathBuf {
-        vcs_fold().join("versions")
-    }
-    pub fn trees_fold() -> PathBuf {
-        vcs_fold().join("trees")
-    }
-    pub fn staging_area_fold() -> PathBuf {
-        vcs_fold().join("staging_area")
-    }
-    pub fn commits_fold() -> PathBuf {
-        vcs_fold().join("commits")
-    }
-    pub fn history_fold() -> PathBuf {
-        vcs_fold().join("history")
-    }
-    pub fn version_head_fold() -> PathBuf {
-        vcs_fold().join("version_heads")
-    }
-    pub fn essentials_folds() -> Vec<PathBuf> {
-        vec![
-            vcs_fold(),
-            blob_fold(),
-            history_fold(),
-            versions_fold(),
-            trees_fold(),
-            staging_area_fold(),
-            commits_fold(),
-            version_head_fold()
-        ]
-    }
-    pub fn get_commit_log_file() -> PathBuf { history_fold().join("commit.log")
-    }
+pub fn vcs_fold() -> PathBuf {
+    get_project_dir().join(VCS_FOLDER)
+}
+pub fn blob_fold() -> PathBuf {
+    vcs_fold().join("blobs")
+}
+pub fn versions_fold() -> PathBuf {
+    vcs_fold().join("versions")
+}
+pub fn trees_fold() -> PathBuf {
+    vcs_fold().join("trees")
+}
+pub fn staging_area_fold() -> PathBuf {
+    vcs_fold().join("staging_area")
+}
+pub fn commits_fold() -> PathBuf {
+    vcs_fold().join("commits")
+}
+pub fn history_fold() -> PathBuf {
+    vcs_fold().join("history")
+}
+pub fn version_head_fold() -> PathBuf {
+    vcs_fold().join("version_heads")
+}
+pub fn essentials_folds_to_create() -> Vec<PathBuf> {
+    vec![
+        vcs_fold(),
+        blob_fold(),
+        history_fold(),
+        versions_fold(),
+        trees_fold(),
+        staging_area_fold(),
+        commits_fold(),
+        version_head_fold(),
+    ]
+}
 
-    pub fn get_stage_file() -> PathBuf {
-       staging_area_fold().join("stage")
-    }
+pub fn commit_log_file_path() -> PathBuf {
+    history_fold().join("commit.log")
+}
 
-    pub fn get_config_file() -> PathBuf{ vcs_fold().join("config.toml")
-    }
+pub fn stage_file_path() -> PathBuf {
+    staging_area_fold().join("stage")
+}
 
-    pub fn essentials_files() -> Vec<PathBuf> {
-        vec![
-          get_stage_file(),
-           get_config_file(),
-           get_commit_log_file(),
-        ]
+pub fn config_file_path() -> PathBuf {
+    vcs_fold().join(VCS_CONFIG)
+}
+
+pub fn essentials_files_to_create() -> Vec<PathBuf> {
+    vec![
+        stage_file_path(),
+        config_file_path(),
+        commit_log_file_path(),
+    ]
+}
+
+fn _get_file(file_path: &Path) -> Result<File, ChakError> {
+    match File::open(file_path) {
+        Ok(file) => Ok(file),
+        Err(e) => Err(ChakError::CustomError(format!(
+            "Could not open file {}",
+            file_path.file_name().unwrap().to_string_lossy()
+        ))),
     }
+}
+
+//get FILE
+pub fn get_commit_log_file() -> Result<File, ChakError> {
+    _get_file(&commit_log_file_path())
+}
+
+pub fn get_stage_file() -> Result<File, ChakError> {
+    _get_file(&stage_file_path())
+}
+
+pub fn get_config_file() -> Result<File, ChakError> {
+    _get_file(&config_file_path())
+}
 
 pub fn get_config() -> Config {
-
-    let config = deserialize_file_content::<Config>(
-        &get_project_dir()
-            .join(VCS_FOLDER)
-            .join(VCS_CONFIG),
-    )
-    .expect("Could not read config");
-    config
+    deserialize_file_content::<Config>(&config_file_path())
+        .unwrap_or(Config::new(&GlobalConfig::new()))
 }
 
 pub fn save_config(config: &Config) {
-
     let serialized_config = serialize_struct(config);
-    save_or_create_file(
-        &get_project_dir()
-            .join(VCS_FOLDER)
-            .join(VCS_CONFIG),
-        Some(&serialized_config),
-        false,
-        None
-    ).expect("Could not save config");
-
+    save_or_create_file(&config_file_path(), Some(&serialized_config), false, None)
+        .expect("Could not save config");
 }

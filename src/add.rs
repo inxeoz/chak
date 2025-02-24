@@ -1,26 +1,14 @@
-
-use crate::config::{blob_fold, commits_fold,get_commit_log_file, get_config, get_project_dir, trees_fold, vcs_fold, versions_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
-
-
-use crate::object_pointer::{ObjectPointer};
-use crate::util::save_or_create_file;
-use crate::util::{deserialize_file_content, serialize_struct};
-use crate::util::{read_directory_entries, string_content_to_string_vec};
+use std::collections::HashSet;
+use std::io;
+use std::path::{Path, PathBuf};
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
-use indexmap::{IndexMap, IndexSet};
-use itertools::{all, Itertools};
-use std::collections::HashSet;
-use std::fs::File;
-use std::hash::Hash;
-use std::path::{Path, PathBuf};
-use std::{fs, io};
+use crate::config::{get_config, get_project_dir, vcs_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
 use crate::hashed_blob::BlobHashPointer;
-use crate::commit::{Commit, CommitHashPointer};
-use crate::tree_object::{attach_latest_tree_root_pointer_to_stage, TreeHashPointer, TreeObject};
-use crate::version_hashed::VersionHashPointer;
+use crate::tree_hash_pointer::{attach_latest_tree_root_pointer_to_stage, TreeHashPointer};
+use crate::tree_object::TreeObject;
+use crate::util::read_directory_entries;
 use crate::version_head::VersionHeadHashPointer;
-use crate::hash_pointer::HashPointerTraits;
 use crate::versioning::VersionHead;
 
 pub fn start_snapshot(vcs_config: &Config) -> io::Result<()> {
@@ -32,16 +20,17 @@ pub fn start_snapshot(vcs_config: &Config) -> io::Result<()> {
 
     //implement the tree pointer with traversing fold/file and checking hash from tree pointer and so on .. TODO
     //get latest tree pointer from history_log
-    let tree_object = TreeObject::get_top_most_tree_object();
+    let mut tree_object = TreeObject::get_top_most_tree_object().unwrap_or(TreeObject::new());
 
     //here we start taking new updated snapshot of our directory from project root dir, and it gives as the latest updated tree pointer
-    let new_root_tree_pointer = dir_snapshot(
+    dir_snapshot(
         vcs_config,
         get_project_dir(),
         &mut main_ignore_builder,
-        tree_object,
+        &mut tree_object,
     );
 
+    let new_root_tree_pointer = TreeHashPointer::save_tree(&mut tree_object);
     //attaching the updated new tree pointer to stage temporarily because tree pointer can be changed util its commited
     attach_latest_tree_root_pointer_to_stage(new_root_tree_pointer);
     Ok(())
@@ -67,13 +56,12 @@ pub fn dir_snapshot(
     vcs_config: &Config,
     dir_path: &Path,
     main_ignore_builder: &mut GitignoreBuilder,
-    tree_hie: Option<TreeObject>,
-) -> TreeHashPointer{
+    tree_ref: &mut TreeObject,
+) {
     // we cant take dir snapshot if path is file.
     assert!(dir_path.is_dir(), "Path is not a directory");
 
     // children of this dir maps to their update or TreeNode
-    let mut children = TreeObject::new();
     //
     // let ignore_file = path.join(VCS_IGNORE_FILE);
     // main_ignore_builder.add(ignore_file);
@@ -82,6 +70,7 @@ pub fn dir_snapshot(
     if vcs_config.vcs_work_with_nested_ignore_file {
         main_ignore_builder.add(dir_path.join(VCS_IGNORE_FILE));
     } else {
+        // if future dont do this
         handle_ignore_file(
             main_ignore_builder,
             vec![(Some(dir_path.to_path_buf()), VCS_IGNORE_FILE)],
@@ -89,122 +78,94 @@ pub fn dir_snapshot(
     }
 
     //ignore file would be handled through this functions
-    let allowed_entries =
-        parse_ignore_local_level(dir_path, main_ignore_builder).unwrap_or_default();
+    let allowed_entries = parse_ignore(dir_path, main_ignore_builder).unwrap_or_default();
 
-    for allowed_entry in allowed_entries {
+    for entry in allowed_entries
+    {
         //like file name or folder name not their path addr
-        let entry_name = allowed_entry
+        let entry_name = entry
             .file_name()
             .expect("Could not get file name")
             .to_str()
             .expect("Could not convert to str")
             .to_string();
 
-        let child = process_entry(&allowed_entry, &entry_name,tree_hie.clone(), main_ignore_builder, vcs_config );
-            children.add_child(entry_name, child);
-
-    }
-
-    //need to save tree temporary for other process , it has to be saved only when commited with message
-    TreeHashPointer::save_tree(&mut children)
-}
-
-fn process_entry(
-    entry: &Path,
-    entry_name: &str,
-    tree_hie: Option<TreeObject>,
-    main_ignore_builder: &mut GitignoreBuilder,
-    vcs_config: &Config,
-) -> ObjectPointer {
-
-    let blob_hash_pointer = BlobHashPointer::save_blob_from_file(&entry);
-
-    match child_tree_node_from_tree_object(tree_hie.as_ref(), entry_name.to_string()) {
-        None => {
-            if entry.is_file() {
-                ObjectPointer::VersionHeadFile(VersionHeadHashPointer::save_version_head(&VersionHead::new(blob_hash_pointer, None)))
-            }else {
-                let new_child_tree_pointer = dir_snapshot(vcs_config, entry, main_ignore_builder, None);
-                ObjectPointer::TreeFIle(new_child_tree_pointer)
+        if entry.is_file() {
+            process_file_entry(&entry, &entry_name, tree_ref);
+        } else {
+            if ! tree_ref.dir_children.contains_key(&entry_name) {
+                tree_ref.add_dir_child(entry_name.clone(), TreeObject::new());
             }
-        }
-        Some(existing_version) => {
-            match existing_version {
-                ObjectPointer::VersionHeadFile(vh) => {
-                    let mut version_head = vh.load_version_head();
-                    let new_version_head_hash_pointer = version_head.create_version(blob_hash_pointer);
-                    ObjectPointer::VersionHeadFile(new_version_head_hash_pointer)
-
-                }
-                ObjectPointer::TreeFIle(tree_pointer) => {
-                    let existing_child_tree = deserialize_file_content::<TreeObject>(
-                        &trees_fold().join(tree_pointer.get_path()),
-                    )
-                        .expect("Could not deserialize tree");
-
-                    let new_child_tree_pointer = dir_snapshot(vcs_config, entry, main_ignore_builder, Some(existing_child_tree));
-                    ObjectPointer::TreeFIle(new_child_tree_pointer)
-
-                }
+            if let Some(mut existing_child_tree) =tree_ref.dir_children.get_mut(&entry_name) {
+                dir_snapshot(
+                    vcs_config,
+                    &entry,
+                    main_ignore_builder,
+                    existing_child_tree,
+                );
             }
         }
     }
-
 }
 
-
-/// Processes a file entry and updates the `children` map
-
-
-pub fn child_tree_node_from_tree_object(
-    tree_hie: Option<&TreeObject>,
-    entry_name: String,
-) -> Option<ObjectPointer> {
-    if let Some(tree) = tree_hie {
-        // Borrow instead of moving
-        if let Some(child_tree_node) = tree.children.get(&entry_name) {
-            println!("entry name exists");
-            return Some(child_tree_node.clone()); // Clone if TreeNode needs to be owned
-        }
+fn process_file_entry(file_entry: &Path, entry_name: &str, tree_ref: &mut TreeObject) {
+    let blob_hash_pointer = BlobHashPointer::save_blob_from_file(&file_entry);
+    if let Some(existing_version) = tree_ref.file_children.get(&entry_name.to_string()) {
+        let mut version_head = existing_version.load_version_head();
+        let updated_version_head_hash_pointer =
+            version_head.create_version(blob_hash_pointer.clone());
+        tree_ref.add_file_child(entry_name.to_string(), updated_version_head_hash_pointer);
+    } else {
+        let new_version_head_hash_pointer =
+            VersionHeadHashPointer::save_version_head(&VersionHead::new(blob_hash_pointer, None));
+        tree_ref.add_file_child(entry_name.to_string(), new_version_head_hash_pointer);
     }
-
-    None
 }
-
-pub fn parse_ignore_local_level(
+pub fn parse_ignore(
     dir_path: &Path,
-    main_ignore_builder: &mut GitignoreBuilder,
-) -> io::Result<HashSet<PathBuf>> {
+    ignore_builder: &mut GitignoreBuilder,
+) -> io::Result< Vec<PathBuf> > {
     // Read and filter directory entries
-    let detected_entries = read_directory_entries(dir_path)?;
+    let (mut detected_dir_entries, mut detected_file_entries) = read_directory_entries(dir_path)?;
+
+    let mut allowed_dir_entries = Vec::new();
+    let mut allowed_file_entries = Vec::new();
+    if let Ok(build_ignore_rules) = ignore_builder.build() {
+        allowed_dir_entries =
+            parse_ignore_for_entries(&mut detected_dir_entries, &build_ignore_rules);
+        allowed_file_entries =
+            parse_ignore_for_entries(&mut detected_file_entries, &build_ignore_rules);
+    }
+
+    allowed_file_entries.extend(allowed_dir_entries);
+    Ok(allowed_file_entries)
+}
+
+pub fn parse_ignore_for_entries(
+    detected_entries: &mut Vec<PathBuf>,
+    ignore_build: &Gitignore,
+) -> Vec<PathBuf> {
     let mut allowed_entries = HashSet::new();
 
-    if let Ok(build_ignore_rules) = main_ignore_builder.build() {
-        // Check entries against ignore rules
-        for entry in detected_entries.clone() {
-            match build_ignore_rules.matched(entry.to_str().unwrap_or(""), entry.is_dir()) {
-                // can i use "#" for default
-                Match::None => {
-                    allowed_entries.insert(entry.clone());
+    for entry in detected_entries {
+        match ignore_build.matched(entry.to_str().unwrap_or(""), entry.is_dir()) {
+            // can i use "#" for default
+            Match::None => {
+                allowed_entries.insert(entry.clone());
+            }
+            Match::Ignore(_) => {
+                if allowed_entries.contains(entry.as_path()) {
+                    allowed_entries.remove(&entry.clone());
                 }
-                Match::Ignore(_) => {
-                    if allowed_entries.contains(&entry) {
-                        //remove the entry from allowed list
-                        allowed_entries.remove(&entry);
-                    }
-                    println!("Ignored: {}", entry.display());
-                }
-                Match::Whitelist(_) => {
-                    allowed_entries.insert(entry.clone());
-                }
+                println!("Ignored: {}", entry.display());
+            }
+            Match::Whitelist(_) => {
+                allowed_entries.insert(entry.clone());
             }
         }
-    };
-
-    Ok(allowed_entries)
+    }
+    allowed_entries.into_iter().collect()
 }
-
 pub fn command_add(files: Vec<String>) {
     let config = get_config();
 

@@ -47,4 +47,8 @@ impl BlobHashPointer {
         load_entity::<Self, HashedContent>(self, &blob_fold())
     }
 
+    pub fn exists(&self) -> bool {
+        blob_fold().join(self.get_path()).exists()
+    }
+
 }

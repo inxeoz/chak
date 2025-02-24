@@ -1,10 +1,10 @@
-use std::io::ErrorKind;
+use std::io::{Error, ErrorKind};
 
 #[derive(Debug)]
 pub enum ChakError {
-    StdIoError(ErrorKind), // Reuse std::io::ErrorKind
+    StdIoError(ErrorKind), // Using ErrorKind
     CustomError(String),   // Your custom error
-    NoEntiresFound,
+    NoEntriesFound,
 }
 
 use std::fmt;
@@ -13,16 +13,17 @@ impl fmt::Display for ChakError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ChakError::StdIoError(kind) => write!(f, "Standard I/O error: {:?}", kind),
-            ChakError::CustomError(msg) => write!(f, "chak error: {}", msg),
-            ChakError::NoEntiresFound => write!(f, "no entries found"),
+            ChakError::CustomError(msg) => write!(f, "Chak error: {}", msg),
+            ChakError::NoEntriesFound => write!(f, "No entries found"),
         }
     }
 }
 
 impl std::error::Error for ChakError {}
 
-impl From<ErrorKind> for ChakError {
-    fn from(kind: ErrorKind) -> Self {
-        ChakError::StdIoError(kind)
+// ✅ Fix: Implement From<std::io::Error>
+impl From<Error> for ChakError {
+    fn from(error: Error) -> Self {
+        ChakError::StdIoError(error.kind()) // Extract ErrorKind
     }
 }
