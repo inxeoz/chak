@@ -33,7 +33,7 @@ fn start_restoring(tree_object: TreeObject, dir_path: &PathBuf) -> Result<(), Ch
 
 pub fn command_restore(files: Vec<String>) {
     if files.contains(&".".to_string()) {
-        match TreeHashPointer::get_latest_tree_root_pointer(false) {
+        match TreeHashPointer::get_latest_pointer_from_stage() {
             Ok(latest_tree_pointer) => {
                 start_restoring(latest_tree_pointer.load_tree(), get_project_dir())
                     .expect("Failed to start restoring.");

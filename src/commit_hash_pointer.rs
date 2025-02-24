@@ -77,7 +77,7 @@ pub fn append_commit_hash_pointer_to_commit_log_file(commit_hash_pointer: Commit
 
 pub fn command_commit(m:String) {
 
-    if let Ok(all_tree_pointers) = TreeHashPointer::get_tree_root_pointers(false){
+    if let Ok(all_tree_pointers) = TreeHashPointer::get_pointers_from_stage(){
 
         for (index, tree_pointer) in all_tree_pointers.iter().rev().enumerate(){
             if index == 0 {
@@ -88,6 +88,8 @@ pub fn command_commit(m:String) {
                 ));
 
                 append_commit_hash_pointer_to_commit_log_file(commit_pointer);
+            }else {
+
             }
 
         }

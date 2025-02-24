@@ -15,7 +15,9 @@ use crate::custom_error::ChakError;
 use crate::impl_hash_pointer_common_traits;
 use crate::tree_object::TreeObject;
 use crate::util::{deserialize_file_content, file_to_lines, save_or_create_file, serialize_struct};
+use clap::error::ErrorKind;
 use std::cmp::Ordering;
+use std::io;
 use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
@@ -39,7 +41,6 @@ impl HashPointerOwn for TreeHashPointer {
     }
 }
 impl TreeHashPointer {
-
     pub fn save_tree(tree: &mut TreeObject) -> TreeHashPointer {
         tree.sort_children();
         Self::_own(&save_entity::<TreeObject>(tree, &trees_fold()))
@@ -53,27 +54,51 @@ impl TreeHashPointer {
             .expect("failed to attach root pointer to stage");
     }
 
-    pub fn get_latest_tree_root_pointer(
-        from_commit_log: bool,
-    ) -> Result<TreeHashPointer, ChakError> {
-        if from_commit_log && commit_log_file_path().exists() {
+    pub fn get_latest_pointer_from_commit_log() -> Result<TreeHashPointer, ChakError> {
+        if commit_log_file_path().exists() {
             Ok(CommitHashPointer::get_latest_commit_hash_pointer()?
                 .load_commit()
                 .root_tree_pointer)
         } else {
-            Ok(HashPointer::get_latest_pointer_line_from_file::<
-                TreeHashPointer,
-            >(&get_stage_file()?, true)?)
+            Err(ChakError::CustomError(
+                "commit_log_file path doesn't exist".to_string(),
+            ))
         }
     }
 
-    pub fn get_tree_root_pointers(from_commit_log: bool) -> Result<Vec<TreeHashPointer>, ChakError> {
-        if from_commit_log && commit_log_file_path().exists() {
+    pub fn get_pointers_from_commit_log() -> Result<Vec<TreeHashPointer>, ChakError> {
+        if commit_log_file_path().exists() {
             Ok(HashPointer::get_pointer_lines_from_file(
                 &get_commit_log_file()?,
             )?)
         } else {
-            Ok(HashPointer::get_pointer_lines_from_file(&get_stage_file()?)?)
+            Err(ChakError::CustomError(
+                "commit_log_file path doesn't exist".to_string(),
+            ))
+        }
+    }
+
+    pub fn get_latest_pointer_from_stage() -> Result<TreeHashPointer, ChakError> {
+        if stage_file_path().exists() {
+            Ok(HashPointer::get_latest_pointer_line_from_file::<
+                TreeHashPointer,
+            >(&get_stage_file()?, true)?)
+        } else {
+            Err(ChakError::CustomError(
+                "stage file path doesn't exist".to_string(),
+            ))
+        }
+    }
+
+    pub fn get_pointers_from_stage() -> Result<Vec<TreeHashPointer>, ChakError> {
+        if stage_file_path().exists() {
+            Ok(HashPointer::get_pointer_lines_from_file(
+                &get_stage_file()?,
+            )?)
+        } else {
+            Err(ChakError::CustomError(
+                "stage file path doesn't exist".to_string(),
+            ))
         }
     }
 }
