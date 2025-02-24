@@ -1,20 +1,21 @@
-use crate::custom_error::ChakError;
 use crate::config_global::MIN_HASH_LENGTH;
-use crate::util::{file_to_string, save_or_create_file};
+use crate::custom_error::ChakError;
+use crate::hash_pointer::{HashPointer, HashPointerTraits};
+use crate::util::file_to_lines;
+use crate::util::{
+    deserialize_file_content, file_to_string, save_or_create_file, serialize_struct,
+};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::fs::File;
+use std::io;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-use std::io;
-use crate::util::file_to_lines;
-use crate::hash_pointer::{HashPointer, HashPointerTraits};
 
 impl HashPointer {
-     fn _from_hash_string(hash: String) -> Self {
-        Self::new(
-            hash[..2].to_string(),
-            hash[2..].to_string(),
-        )
+    fn _from_hash_string(hash: String) -> Self {
+        Self::new(hash[..2].to_string(), hash[2..].to_string())
     }
 
     pub fn from_hash_pointer_string(hash: String) -> Result<Self, ChakError> {
@@ -23,15 +24,12 @@ impl HashPointer {
                 "Invalid hash string length".to_string(),
             ));
         }
-        Ok(
-            Self::_from_hash_string(hash)
-        )
+        Ok(Self::_from_hash_string(hash))
     }
 
     pub fn combine(first: &Self, second: &Self) -> Self {
         Self::from_string(&(first.get_one_hash() + &second.get_one_hash()))
     }
-
 
     pub fn from_file_path(file_path: &Path) -> io::Result<Self> {
         let mut file = File::open(file_path)?;
@@ -73,10 +71,7 @@ impl HashPointer {
         for pointer in pointers {
             hasher.update(pointer.get_one_hash().as_bytes());
         }
-        Ok(Self::_from_hash_string(format!(
-            "{:x}",
-            hasher.finalize()
-        )))
+        Ok(Self::_from_hash_string(format!("{:x}", hasher.finalize())))
     }
 
     pub fn from_string(content: &str) -> Self {
@@ -84,7 +79,6 @@ impl HashPointer {
         hasher.update(content.as_bytes());
         Self::_from_hash_string(format!("{:x}", hasher.finalize()))
     }
-
 
     // Rest of your functions remain unchanged...
 
@@ -106,7 +100,10 @@ impl HashPointer {
     //     hash_from_save_content(&content, save_dir)
     // }
 
-    pub fn get_latest_pointer_line_from_file(file: &File, from_bottom: bool) ->  Result<Self, ChakError> {
+    pub fn get_latest_pointer_line_from_file(
+        file: &File,
+        from_bottom: bool,
+    ) -> Result<Self, ChakError> {
         let lines = file_to_lines(file);
 
         let line = if from_bottom {
@@ -117,12 +114,12 @@ impl HashPointer {
 
         if let Some(line) = line {
             Self::from_hash_pointer_string(line.to_string())
-        }else {
-            Err(ChakError::CustomError("hash pointer line not found in file".to_string()))
+        } else {
+            Err(ChakError::CustomError(
+                "hash pointer line not found in file".to_string(),
+            ))
         }
     }
-
-
 
     pub fn and_string_from_file_path_ref(file_path: &Path) -> io::Result<(Self, String)> {
         let mut file = File::open(file_path)?;
@@ -130,6 +127,4 @@ impl HashPointer {
         let hash_pointer = Self::from_string(&content);
         Ok((hash_pointer, content))
     }
-
 }
-

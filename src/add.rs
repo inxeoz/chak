@@ -96,7 +96,7 @@ pub fn dir_snapshot(
             if ! tree_ref.dir_children.contains_key(&entry_name) {
                 tree_ref.add_dir_child(entry_name.clone(), TreeObject::new());
             }
-            if let Some(mut existing_child_tree) =tree_ref.dir_children.get_mut(&entry_name) {
+            if let Some( existing_child_tree) =tree_ref.dir_children.get_mut(&entry_name) {
                 dir_snapshot(
                     vcs_config,
                     &entry,

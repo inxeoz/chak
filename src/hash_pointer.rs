@@ -1,7 +1,7 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-
+use serde::de::DeserializeOwned;
 
 pub trait HashPointerTraits {
     fn replace(&mut self, pointer: &Self);
@@ -12,7 +12,7 @@ pub trait HashPointerTraits {
     fn get_path(&self) -> PathBuf;
     fn set_fold_name(&mut self, fold_name: String);
     fn set_file_name(&mut self, file_name: String);
-}
+  }
 
 #[macro_export] macro_rules! impl_hash_pointer_traits {
     ($t:ty) => {

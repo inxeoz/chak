@@ -7,7 +7,7 @@ use crate::impl_hash_pointer_traits;
 use std::path::PathBuf;
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use indexmap::IndexSet;
+use indexmap::{IndexMap, IndexSet};
 
 use crate::hash_pointer::HashPointerTraits;
 pub struct CompareOrderStructure {
@@ -17,7 +17,7 @@ pub struct CompareOrderStructure {
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct HashedContent {
     pub hash_lines: IndexSet<String>,
-    pub hash_to_content: HashMap<String, String>,
+    pub hash_to_content: IndexMap<String, String>,
 }
 
 

@@ -61,6 +61,7 @@ impl TreeHashPointer {
     }
 }
 pub fn attach_latest_tree_root_pointer_to_stage(root_pointer: TreeHashPointer) {
+
     let mut file = OpenOptions::new()
         .create(true) // Create the file if it doesn't exist
         .write(true) // Enable writing

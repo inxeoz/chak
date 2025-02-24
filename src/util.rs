@@ -72,6 +72,7 @@ pub fn save_or_create_file(
     if let Some(parent_path) = file_path.parent() {
         fs::create_dir_all(parent_path)?;
     }
+
     let mut file = OpenOptions::new()
         .write(true)
         .append(append)
@@ -86,7 +87,6 @@ pub fn save_or_create_file(
         file.write_all(content.as_bytes())?;
     }
 
-    file.sync_all()?;//lets see
     Ok(file) // Return Ok even if content is None
 }
 

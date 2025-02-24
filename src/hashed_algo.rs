@@ -1,9 +1,10 @@
 
-use indexmap::{ IndexSet};
+use indexmap::{IndexMap, IndexSet};
 use itertools::{ Itertools};
 use std::collections::HashMap;
 use std::fs::File;
 use std::hash::Hash;
+use std::io::BufRead;
 use std::ops::Sub;
 use std::path::Path;
 use crate::hashed_blob::{CompareOrderStructure, HashedContent};
@@ -12,6 +13,14 @@ use crate::util::file_to_lines;
 
 impl HashedContent {
 
+    fn new(hash_lines: &IndexSet<String>, hash_to_content: &mut IndexMap<String, String>) -> HashedContent {
+        hash_to_content.sort_keys();
+        HashedContent {
+            hash_lines: hash_lines.to_owned(),
+            hash_to_content: hash_to_content.to_owned(),
+        }
+
+    }
     //need to test this method
     pub fn to_string_content(&self) -> String {
         let mut string_lines = Vec::<String>::new();
@@ -36,7 +45,7 @@ impl HashedContent {
         let new_hash_lines = &new_content.hash_lines;
         let unique_hash_lines_in_prev_lines = prev_hash_lines.sub(&new_hash_lines);
 
-        let mut unique_line_contents = HashMap::<String, String>::new();
+        let mut unique_line_contents = IndexMap::<String, String>::new();
 
         for unique_prev_line_hash in unique_hash_lines_in_prev_lines {
             if let Some(unique_line_content) = prev_line_contents.get(&unique_prev_line_hash) {
@@ -45,40 +54,23 @@ impl HashedContent {
             }
         }
 
-        HashedContent {
-            hash_lines: prev_hash_lines.clone(),
-            hash_to_content: unique_line_contents,
-        }
+        HashedContent::new(&prev_hash_lines, &mut unique_line_contents)
     }
 
     pub fn from_string_lines(lines: Vec<String>) -> HashedContent {
         let mut hash_lines = IndexSet::<String>::new();
-        let mut hash_to_content = HashMap::<String, String>::new();
+        let mut hash_to_content = IndexMap::<String, String>::new();
         for line in lines {
             let hash_line = HashPointer::from_string(&line).get_one_hash();
             hash_lines.insert(hash_line.clone());
             hash_to_content.insert(hash_line, line);
         }
-        HashedContent {
-            hash_lines,
-            hash_to_content,
-        }
+
+        HashedContent::new(&hash_lines, &mut hash_to_content)
     }
 
     pub fn from_file(file: &File) -> HashedContent {
-        let mut hash_lines = IndexSet::new();
-        let mut hash_to_content = HashMap::<String, String>::new();
-
-        for line in file_to_lines(file) {
-            let hash_string = HashPointer::from_string(&line).get_one_hash();
-            hash_lines.insert(hash_string.clone());
-            // Map hash string to actual line content (only if not already mapped)
-            hash_to_content.entry(hash_string).or_insert(line);
-        }
-        HashedContent {
-            hash_lines,
-            hash_to_content,
-        }
+        HashedContent::from_string_lines(file_to_lines(file))
     }
     pub fn get_diff(prev_file: &File, new_file: &File) -> HashedContent {
         let first = Self::from_file(&prev_file);
