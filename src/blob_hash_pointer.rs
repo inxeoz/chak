@@ -3,7 +3,7 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::config::{blob_fold};
 use crate::common::{load_entity, save_entity};
-use crate::impl_hash_pointer_traits;
+use crate::impl_hash_pointer_common_traits;
 use std::path::PathBuf;
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -26,7 +26,7 @@ pub struct BlobHashPointer {
     fold_name: String,
     file_name: String,
 }
-impl_hash_pointer_traits!(BlobHashPointer);
+impl_hash_pointer_common_traits!(BlobHashPointer);
 impl BlobHashPointer {
 
     fn own(hash_pointer: &HashPointer) -> BlobHashPointer {

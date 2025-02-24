@@ -3,11 +3,11 @@ use crate::util::save_or_create_file;
 use std::fs::create_dir_all;
 use std::io;
 use std::path::PathBuf;
-
+use crate::custom_error::ChakError;
 use crate::tree_hash_pointer::TreeHashPointer;
 use crate::tree_object::TreeObject;
 
-fn start_restoring(tree_object: TreeObject, dir_path: &PathBuf) -> io::Result<()> {
+fn start_restoring(tree_object: TreeObject, dir_path: &PathBuf) -> Result<(), ChakError> {
     for (child_name, version_head_pointer) in tree_object.file_children {
         let actual_child_file_path = dir_path.join(PathBuf::from(child_name)); //in working folder
 

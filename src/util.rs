@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use crate::config::VCS_FOLDER;
+use crate::custom_error::ChakError;
 
 pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
     let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
@@ -39,7 +40,7 @@ pub fn check_vcs_presence_in_dir(fold: &Path) -> bool {
     false
 }
 
-pub fn read_directory_entries(path: &Path) -> io::Result<(Vec<PathBuf>, Vec<PathBuf>)> {
+pub fn read_directory_entries(path: &Path) -> Result<(Vec<PathBuf>, Vec<PathBuf>), ChakError> {
     let entries = read_dir(path)?;
     let mut detected_dir_entries = Vec::new();
     let mut detected_file_entries = Vec::new();
@@ -61,12 +62,12 @@ pub fn save_or_create_file(
     content: Option<&str>,
     append: bool,
     append_with_separator: Option<&str>,
-) -> io::Result<File> {
+) -> Result<File, ChakError> {
     if file_path.is_dir() {
-        return Err(io::Error::new(
+        return Err(ChakError::StdIoError(io::Error::new(
             ErrorKind::IsADirectory,
-            "file path is a directory",
-        ));
+            "path is a directory, not a file",
+        )));
     }
 
     if let Some(parent_path) = file_path.parent() {
@@ -91,7 +92,7 @@ pub fn save_or_create_file(
 }
 
 /// Function to get input from the command line.
-pub fn input_from_commandline(prompt: &str) -> io::Result<String> {
+pub fn input_from_commandline(prompt: &str) -> Result<String, ChakError> {
     let mut input = String::new();
 
     if prompt.len() > 0 {
@@ -103,7 +104,7 @@ pub fn input_from_commandline(prompt: &str) -> io::Result<String> {
     Ok(input.trim().to_lowercase())
 }
 
-pub fn file_to_string(file: &mut File) -> io::Result<String> {
+pub fn file_to_string(file: &mut File) -> Result<String, ChakError> {
     let mut content = String::new();
     file.read_to_string(&mut content)?;
     Ok(content)

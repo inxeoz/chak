@@ -1,6 +1,6 @@
 use crate::config::version_head_fold;
 use crate::common::{load_entity, save_entity};
-use crate::impl_hash_pointer_traits;
+use crate::impl_hash_pointer_common_traits;
 use crate::versioning::VersionHead;
 use std::path::PathBuf;
 use std::cmp::Ordering;
@@ -12,7 +12,7 @@ pub struct VersionHeadHashPointer {
     fold_name: String,
     file_name: String,
 }
-impl_hash_pointer_traits!(VersionHeadHashPointer);
+impl_hash_pointer_common_traits!(VersionHeadHashPointer);
 
 impl VersionHeadHashPointer {
     fn own(hash_pointer: &HashPointer) -> VersionHeadHashPointer {

@@ -1,6 +1,6 @@
 use std::fs;
 use crate::config::{blob_fold};
-use crate::hashed_blob::{BlobHashPointer, CompareOrderStructure, HashedContent};
+use crate::blob_hash_pointer::{BlobHashPointer, CompareOrderStructure, HashedContent};
 use crate::version_hashed::{VersionHashPointer, VersionHashedContent};
 use serde::{Deserialize, Serialize};
 use crate::version_head::VersionHeadHashPointer;

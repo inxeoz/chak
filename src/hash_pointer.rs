@@ -2,7 +2,12 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use serde::de::DeserializeOwned;
-
+use crate::config::trees_fold;
+use crate::custom_error::ChakError;
+pub trait HashPointerOwn {
+    type Output: HashPointerTraits; // Ensures the returned type implements the trait
+    fn own<T: HashPointerTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError>;
+}
 pub trait HashPointerTraits {
     fn replace(&mut self, pointer: &Self);
     // fn update_hash(&mut self, content: String);
@@ -14,8 +19,18 @@ pub trait HashPointerTraits {
     fn set_file_name(&mut self, file_name: String);
   }
 
-#[macro_export] macro_rules! impl_hash_pointer_traits {
+
+#[macro_export] macro_rules! impl_hash_pointer_common_traits {
     ($t:ty) => {
+        impl $t {
+             fn _own<T: HashPointerTraits>(hash_pointer: &T) -> Self {
+                Self {
+                        fold_name: hash_pointer.get_fold_name(),
+                        file_name: hash_pointer.get_file_name(),
+                     }
+            }
+
+        }
 
         impl PartialEq for $t {
             fn eq(&self, other: &Self) -> bool {
@@ -38,6 +53,8 @@ pub trait HashPointerTraits {
         }
 
         impl HashPointerTraits for $t {
+
+
             fn replace(&mut self, pointer: &Self) {
                 self.set_fold_name(pointer.get_fold_name());
                 self.set_file_name(pointer.get_file_name());
@@ -81,7 +98,7 @@ pub struct HashPointer {
     fold_name: String,
     file_name: String,
 }
-impl_hash_pointer_traits!(HashPointer);
+impl_hash_pointer_common_traits!(HashPointer);
 
 impl HashPointer {
     pub fn new(fold_name: String, file_name: String) -> Self {

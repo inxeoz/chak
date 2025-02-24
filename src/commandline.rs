@@ -2,7 +2,7 @@ use crate::add::{command_add};
 use crate::init::init;
 use crate::status::command_status;
 use clap::{Parser, Subcommand};
-use crate::commit::command_commit;
+use crate::commit_hash_pointer::command_commit;
 use crate::remote::{command_remote};
 use crate::restore::command_restore;
 

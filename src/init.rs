@@ -44,6 +44,7 @@ pub fn initialize_vcs() {
 
     let global_config = get_global_config();
     let new_config = Config::new(&global_config);
+
     save_config(&new_config)
 
 }

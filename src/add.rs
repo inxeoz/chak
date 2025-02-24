@@ -4,14 +4,15 @@ use std::path::{Path, PathBuf};
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use crate::config::{get_config, get_project_dir, vcs_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
-use crate::hashed_blob::BlobHashPointer;
+use crate::blob_hash_pointer::BlobHashPointer;
+use crate::custom_error::ChakError;
 use crate::tree_hash_pointer::{ TreeHashPointer};
 use crate::tree_object::TreeObject;
 use crate::util::read_directory_entries;
 use crate::version_head::VersionHeadHashPointer;
 use crate::versioning::VersionHead;
 
-pub fn start_snapshot(vcs_config: &Config) -> io::Result<()> {
+pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     //all in one ignore vec that handles multiple ignore file present in nested folder
     let mut main_ignore_builder = GitignoreBuilder::new(get_project_dir());
     let ignore_file = get_project_dir().join(VCS_IGNORE_FILE);
@@ -115,7 +116,7 @@ fn process_file_entry(file_entry: &Path, entry_name: &str, tree_ref: &mut TreeOb
 pub fn parse_ignore(
     dir_path: &Path,
     ignore_builder: &mut GitignoreBuilder,
-) -> io::Result< Vec<PathBuf> > {
+) -> Result< Vec<PathBuf>, ChakError > {
     // Read and filter directory entries
     let (mut detected_dir_entries, mut detected_file_entries) = read_directory_entries(dir_path)?;
 

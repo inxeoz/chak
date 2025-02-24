@@ -7,7 +7,7 @@ use std::hash::Hash;
 use std::io::BufRead;
 use std::ops::Sub;
 use std::path::Path;
-use crate::hashed_blob::{CompareOrderStructure, HashedContent};
+use crate::blob_hash_pointer::{CompareOrderStructure, HashedContent};
 use crate::hash_pointer::{HashPointer, HashPointerTraits};
 use crate::util::file_to_lines;
 
