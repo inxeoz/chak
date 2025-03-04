@@ -42,6 +42,8 @@ impl HashPointerOwn for CommitHashPointer {
 impl CommitHashPointer {
 
     pub fn save_commit(commit: &Commit) -> Self {
+
+
         Self::_own(&save_entity::<Commit>(commit, &commits_fold()))
     }
 

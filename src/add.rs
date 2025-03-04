@@ -84,6 +84,8 @@ pub fn dir_snapshot(
         if entry.is_file() {
             tree_ref.add_file_child(&entry, &entry_name);
         } else {
+
+            //making sure that nested tree object so that we can procede with nested dir
             if ! tree_ref.dir_children.contains_key(&entry_name) {
                 tree_ref.add_dir_child(entry_name.clone(), &mut NestedTreeObject::new());
             }
