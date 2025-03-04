@@ -20,17 +20,18 @@ pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
 
     //implement the tree pointer with traversing fold/file and checking hash from tree pointer and so on .. TODO
     //get latest tree pointer from history_log
-    let mut root_tree = RootTreeObject::get_root_object().unwrap_or(RootTreeObject::new());
+    let root_tree = RootTreeObject::get_root_object().unwrap_or(RootTreeObject::new());
+    let mut as_nested_tree = root_tree.as_nested_tree();
 
     //here we start taking new updated snapshot of our directory from project root dir, and it gives as the latest updated tree pointer
     dir_snapshot(
         vcs_config,
         get_project_dir(),
         &mut main_ignore_builder,
-        &mut root_tree.as_nested_tree(),
+        &mut as_nested_tree, // this as nested creating new clone of root disconnected one
     );
 
-    let new_root_tree_pointer = RootTreeHashPointer::save_tree(&mut root_tree);
+    let new_root_tree_pointer = RootTreeHashPointer::save_tree(&mut RootTreeObject::from(as_nested_tree));
     //attaching the updated new tree pointer to stage temporarily because tree pointer can be changed util its commited
     new_root_tree_pointer.attach_tree_to_stage();
     Ok(())

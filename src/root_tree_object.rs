@@ -24,8 +24,14 @@ impl RootTreeObject {
         RootTreeObject {
             file_children: IndexMap::new(),
             dir_children: IndexMap::new(),
-            // file_children: Default::default(),
-            // dir_children: Default::default(),
+        }
+    }
+
+    pub fn from(nested_tree_object: NestedTreeObject) -> RootTreeObject {
+        RootTreeObject {
+            file_children: nested_tree_object.file_children.clone(),
+            dir_children: nested_tree_object.dir_children.clone(),
+
         }
     }
     pub fn add_dir_child(&mut self, dir_name: String, nested_dir: &mut NestedTreeHashPointer) {

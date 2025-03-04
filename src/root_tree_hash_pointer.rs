@@ -10,7 +10,7 @@ use crate::hash_pointer::{HashPointer, HashPointerOwn, HashPointerTraits};
 
 use crate::custom_error::ChakError;
 use crate::impl_hash_pointer_common_traits;
-use crate::root_tree_object::{RootTreeObject};
+use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 use crate::util::{deserialize_file_content, file_to_lines, save_or_create_file, serialize_struct};
 use clap::error::ErrorKind;
 use std::cmp::Ordering;
@@ -38,6 +38,7 @@ impl HashPointerOwn for RootTreeHashPointer {
     }
 }
 impl RootTreeHashPointer {
+
     pub fn save_tree(tree: &mut RootTreeObject) -> RootTreeHashPointer {
         tree.sort_children();
         Self::_own(&save_entity::<RootTreeObject>(tree, &root_trees_fold()))
