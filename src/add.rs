@@ -1,13 +1,12 @@
 use std::collections::HashSet;
-use std::io;
 use std::path::{Path, PathBuf};
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use crate::config::{get_config, get_project_dir, vcs_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
 use crate::blob_hash_pointer::BlobHashPointer;
 use crate::custom_error::ChakError;
-use crate::tree_hash_pointer::{ TreeHashPointer};
-use crate::tree_object::TreeObject;
+use crate::root_tree_hash_pointer::{ RootTreeHashPointer};
+use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 use crate::util::read_directory_entries;
 use crate::version_head::VersionHeadHashPointer;
 use crate::versioning::VersionHead;
@@ -16,22 +15,22 @@ pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     //all in one ignore vec that handles multiple ignore file present in nested folder
     let mut main_ignore_builder = GitignoreBuilder::new(get_project_dir());
     let ignore_file = get_project_dir().join(VCS_IGNORE_FILE);
-    main_ignore_builder.add(ignore_file);
+    main_ignore_builder.add(ignore_file); // there is no need to ignore ingorefile
     main_ignore_builder.add(VCS_FOLDER); //i want to ignore chak folder at start or top ".chak/"
 
     //implement the tree pointer with traversing fold/file and checking hash from tree pointer and so on .. TODO
     //get latest tree pointer from history_log
-    let mut tree_object = TreeObject::get_top_most_tree_object().unwrap_or(TreeObject::new());
+    let mut root_tree = RootTreeObject::get_root_object().unwrap_or(RootTreeObject::new());
 
     //here we start taking new updated snapshot of our directory from project root dir, and it gives as the latest updated tree pointer
     dir_snapshot(
         vcs_config,
         get_project_dir(),
         &mut main_ignore_builder,
-        &mut tree_object,
+        &mut root_tree.as_nested_tree(),
     );
 
-    let new_root_tree_pointer = TreeHashPointer::save_tree(&mut tree_object);
+    let new_root_tree_pointer = RootTreeHashPointer::save_tree(&mut root_tree);
     //attaching the updated new tree pointer to stage temporarily because tree pointer can be changed util its commited
     new_root_tree_pointer.attach_tree_to_stage();
     Ok(())
@@ -57,7 +56,7 @@ pub fn dir_snapshot(
     vcs_config: &Config,
     dir_path: &Path,
     main_ignore_builder: &mut GitignoreBuilder,
-    tree_ref: &mut TreeObject,
+    tree_ref: &mut NestedTreeObject,
 ) {
     assert!(dir_path.is_dir(), "Path is not a directory");
 
@@ -82,10 +81,10 @@ pub fn dir_snapshot(
             .to_string();
 
         if entry.is_file() {
-            process_file_entry(&entry, &entry_name, tree_ref);
+            tree_ref.add_file_child(&entry, &entry_name);
         } else {
             if ! tree_ref.dir_children.contains_key(&entry_name) {
-                tree_ref.add_dir_child(entry_name.clone(), &mut TreeObject::new());
+                tree_ref.add_dir_child(entry_name.clone(), &mut NestedTreeObject::new());
             }
             if let Some( existing_child_tree) =tree_ref.dir_children.get_mut(&entry_name) {
                 dir_snapshot(
@@ -99,20 +98,6 @@ pub fn dir_snapshot(
     }
 }
 
-fn process_file_entry(file_entry: &Path, entry_name: &str, tree_ref: &mut TreeObject) {
-    let blob_hash_pointer = BlobHashPointer::save_blob_from_file(&file_entry);
-    //create list to add this tempo
-    if let Some(existing_version) = tree_ref.file_children.get(&entry_name.to_string()) {
-        let mut version_head = existing_version.load_version_head();
-        let updated_version_head_hash_pointer =
-            version_head.create_version(blob_hash_pointer.clone());
-        tree_ref.add_file_child(entry_name.to_string(), updated_version_head_hash_pointer);
-    } else {
-        let new_version_head_hash_pointer =
-            VersionHeadHashPointer::save_version_head(&VersionHead::new(blob_hash_pointer, None));
-        tree_ref.add_file_child(entry_name.to_string(), new_version_head_hash_pointer);
-    }
-}
 pub fn parse_ignore(
     dir_path: &Path,
     ignore_builder: &mut GitignoreBuilder,

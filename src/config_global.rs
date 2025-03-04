@@ -36,7 +36,8 @@ impl GlobalConfig {
 
 
 pub fn get_global_config_path() -> PathBuf {
-    PathBuf::from("/.config/chak_vcs/config.toml")
+   // PathBuf::from("/.config/chak_vcs/config.toml")
+    PathBuf::from("example_global_config.toml")
 } // for testing purpose create manually this file
 pub fn  get_global_config() -> GlobalConfig {
     let g_config = deserialize_file_content::<GlobalConfig>(&get_global_config_path()).expect("Could not read config");

@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use serde::de::DeserializeOwned;
-use crate::config::trees_fold;
 use crate::custom_error::ChakError;
 pub trait HashPointerOwn {
     type Output: HashPointerTraits; // Ensures the returned type implements the trait

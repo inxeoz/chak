@@ -4,31 +4,32 @@ use std::default::Default;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use indexmap::IndexMap;
-use crate::config::trees_fold;
+use crate::config::root_trees_fold;
 use crate::custom_error::ChakError;
-use crate::tree_hash_pointer::TreeHashPointer;
+use crate::root_tree_hash_pointer::RootTreeHashPointer;
 use crate::version_head::VersionHeadHashPointer;
 use crate::hash_pointer::HashPointerTraits;
 use crate::nested_tree_hash_pointer::NestedTreeHashPointer;
+pub(crate) use crate::nested_tree_object::NestedTreeObject;
 use crate::util::{deserialize_file_content, save_or_create_file};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TreeObject {
+pub struct RootTreeObject {
     pub file_children: IndexMap<String, VersionHeadHashPointer>,
     pub dir_children: IndexMap<String, NestedTreeHashPointer>,
 }
 // TreeObject methods
-impl TreeObject {
-    pub fn new() -> TreeObject {
-        TreeObject {
+impl RootTreeObject {
+    pub fn new() -> RootTreeObject {
+        RootTreeObject {
             file_children: IndexMap::new(),
             dir_children: IndexMap::new(),
             // file_children: Default::default(),
             // dir_children: Default::default(),
         }
     }
-    pub fn add_dir_child(&mut self, dir_name: String, dir_object: &mut TreeObject) {
-        self.dir_children.insert(dir_name, NestedTreeHashPointer::save_tree(dir_object));
+    pub fn add_dir_child(&mut self, dir_name: String, nested_dir: &mut NestedTreeHashPointer) {
+        self.dir_children.insert(dir_name, nested_dir.clone());
     }
     pub fn add_file_child(&mut self, key: String, value: VersionHeadHashPointer) {
         self.file_children.insert(key, value);
@@ -38,13 +39,22 @@ impl TreeObject {
         self.dir_children.sort_keys();
     }
 
-    pub fn get_top_most_tree_object() -> Result<TreeObject, ChakError> {
+    pub fn as_nested_tree(&self) -> NestedTreeObject {
+        NestedTreeObject {
+            file_children: self.file_children.clone(),
+            dir_children: self.dir_children.clone(),
+        }
+    }
+
+    //root hash pointer writting root tree object
+
+    pub fn get_root_object() -> Result<RootTreeObject, ChakError> {
         // from commit ,getting pointer to previous tree structure that represent the file/folder hierarchy
-        match TreeHashPointer::get_latest_pointer_from_commit_log() {
+        match RootTreeHashPointer::get_latest_pointer_from_commit_log() {
             Ok(latest_tree_pointer) => {
 
                 //fetching latest tree from trees fold and converting it to TreeObject so that we can use in our program
-                match deserialize_file_content::<TreeObject>(&trees_fold().join(latest_tree_pointer.get_path())) {
+                match deserialize_file_content::<RootTreeObject>(&root_trees_fold().join(latest_tree_pointer.get_path())) {
                     Ok(tree_object_s) => {
                         Ok(tree_object_s)
                     }
@@ -60,36 +70,36 @@ impl TreeObject {
     }
 
     //TODO how to remove create file and hierarchy before commit
-    pub fn sub(&self, other: &TreeObject) {
-
-        let base_file_children = self.file_children.clone();
-        let base_dir_children = self.dir_children.clone();
-
-        let other_file_children = other.file_children.clone();
-        let other_dir_children = other.dir_children.clone();
-
-        let mut isolated_file_children = IndexMap::new();
-        let mut isolated_dir_children = IndexMap::new();
-
-        for base_file_name in base_file_children.keys() {
-            if ! other_file_children.contains_key(base_file_name) {
-                if let Some(base_file) = base_file_children.get(base_file_name) {
-                    isolated_file_children.insert(base_file.to_string(), base_file);
-                }
-            }
-        }
-
-        for base_dir_name in base_dir_children.keys() {
-            if ! other_dir_children.contains_key(base_dir_name) {
-                if let Some(base_file) = base_dir_children.get(base_dir_name) {
-                    isolated_dir_children.insert(base_file.to_string(), base_file);
-                }
-            }
-        }
-
-
-
-    }
+    // pub fn sub(&self, other: &TreeObject) {
+    //
+    //     let base_file_children = self.file_children.clone();
+    //     let base_dir_children = self.dir_children.clone();
+    //
+    //     let other_file_children = other.file_children.clone();
+    //     let other_dir_children = other.dir_children.clone();
+    //
+    //     let mut isolated_file_children = IndexMap::new();
+    //     let mut isolated_dir_children = IndexMap::new();
+    //
+    //     for base_file_name in base_file_children.keys() {
+    //         if ! other_file_children.contains_key(base_file_name) {
+    //             if let Some(base_file) = base_file_children.get(base_file_name) {
+    //                 isolated_file_children.insert(base_file.to_string(), base_file);
+    //             }
+    //         }
+    //     }
+    //
+    //     for base_dir_name in base_dir_children.keys() {
+    //         if ! other_dir_children.contains_key(base_dir_name) {
+    //             if let Some(base_file) = base_dir_children.get(base_dir_name) {
+    //                 isolated_dir_children.insert(base_file.to_string(), base_file);
+    //             }
+    //         }
+    //     }
+    //
+    //
+    //
+    // }
 
     // pub fn remove_self_from_hierarchy(&self) {
     //

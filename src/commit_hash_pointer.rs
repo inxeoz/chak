@@ -1,8 +1,8 @@
 use std::fs::File;
 use serde::{Deserialize, Serialize};
-use crate::config::{commit_log_file_path, commits_fold, get_commit_log_file, stage_file_path, trees_fold};
+use crate::config::{commit_log_file_path, commits_fold, get_commit_log_file, stage_file_path};
 use crate::common::{load_entity, save_entity};
-use crate::tree_hash_pointer::{ TreeHashPointer};
+use crate::root_tree_hash_pointer::{ RootTreeHashPointer};
 use crate::impl_hash_pointer_common_traits;
 use crate::util::{save_or_create_file};
 use std::path::PathBuf;
@@ -14,7 +14,7 @@ use crate::hash_pointer::{HashPointer, HashPointerOwn, HashPointerTraits};
 pub struct Commit {
     pub author: String,
     pub message: String,
-    pub root_tree_pointer: TreeHashPointer,
+    pub root_tree_pointer: RootTreeHashPointer,
 }
 //these custom hash pointer would have other field in future
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
@@ -59,7 +59,7 @@ impl CommitHashPointer {
 pub fn create_commit(
     msg: String,
     author: Option<String>,
-    root_tree_pointer: TreeHashPointer,
+    root_tree_pointer: RootTreeHashPointer,
 ) -> Commit {
     Commit {
         message: msg,
@@ -77,7 +77,7 @@ pub fn append_commit_hash_pointer_to_commit_log_file(commit_hash_pointer: Commit
 
 pub fn command_commit(m:String) {
 
-    if let Ok(all_tree_pointers) = TreeHashPointer::get_pointers_from_stage(){
+    if let Ok(all_tree_pointers) = RootTreeHashPointer::get_pointers_from_stage(){
 
         for (index, tree_pointer) in all_tree_pointers.iter().rev().enumerate(){
             if index == 0 {

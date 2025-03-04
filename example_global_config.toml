@@ -1,0 +1,4 @@
+global_vcs_ignore_file = ""
+global_vcs_work_with_nested_ignore_file = false
+
+[global_vcs_alias]

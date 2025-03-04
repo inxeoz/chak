@@ -4,10 +4,10 @@ use std::fs::create_dir_all;
 use std::io;
 use std::path::PathBuf;
 use crate::custom_error::ChakError;
-use crate::tree_hash_pointer::TreeHashPointer;
-use crate::tree_object::TreeObject;
+use crate::root_tree_hash_pointer::RootTreeHashPointer;
+use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 
-fn start_restoring(tree_object: TreeObject, dir_path: &PathBuf) -> Result<(), ChakError> {
+fn start_restoring(tree_object: NestedTreeObject, dir_path: &PathBuf) -> Result<(), ChakError> {
     for (child_name, version_head_pointer) in tree_object.file_children {
         let actual_child_file_path = dir_path.join(PathBuf::from(child_name)); //in working folder
 
@@ -33,9 +33,9 @@ fn start_restoring(tree_object: TreeObject, dir_path: &PathBuf) -> Result<(), Ch
 
 pub fn command_restore(files: Vec<String>) {
     if files.contains(&".".to_string()) {
-        match TreeHashPointer::get_latest_pointer_from_stage() {
+        match RootTreeHashPointer::get_latest_pointer_from_stage() {
             Ok(latest_tree_pointer) => {
-                start_restoring(latest_tree_pointer.load_tree(), get_project_dir())
+                start_restoring(latest_tree_pointer.load_tree().as_nested_tree(), get_project_dir())
                     .expect("Failed to start restoring.");
             }
             Err(e) => {

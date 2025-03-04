@@ -5,9 +5,10 @@ use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{self, BufRead, BufReader, ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
+use clap::builder::Str;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use crate::config::VCS_FOLDER;
+use crate::config::{ENTRY_LIST_FILE, VCS_FOLDER};
 use crate::custom_error::ChakError;
 
 pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
@@ -125,7 +126,6 @@ pub fn string_content_to_string_vec(content: &str) -> Vec<String> {
         .map(|s| s.trim().to_string())
         .collect()
 }
-
 
 #[cfg(test)]
 pub mod tests {

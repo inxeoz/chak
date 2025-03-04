@@ -5,13 +5,13 @@ mod custom_error;
 mod hashed_algo;
 mod hash_pointer_algo;
 mod init;
-mod tree_object;
+mod root_tree_object;
 mod util;
 mod restore;
 mod config_global;
 mod status;
 mod remote;
-mod tree_hash_pointer;
+mod root_tree_hash_pointer;
 mod blob_hash_pointer;
 mod version_hashed;
 mod commit_hash_pointer;
@@ -22,6 +22,7 @@ mod hash_pointer;
 mod renaming;
 mod trait_extension;
 mod nested_tree_hash_pointer;
+mod nested_tree_object;
 //test
 
 

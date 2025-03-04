@@ -16,6 +16,7 @@ pub static CURRENT_DIR: OnceCell<PathBuf> = OnceCell::new();
 pub static VCS_FOLDER: &str = ".chak/";
 pub static VCS_CONFIG: &str = "config.toml";
 pub static VCS_IGNORE_FILE: &str = ".ignore";
+pub static ENTRY_LIST_FILE: &str = "entries.txt";
 pub fn get_project_dir() -> &'static PathBuf {
     CURRENT_DIR.get_or_init(|| {
         env::current_dir()
@@ -68,8 +69,8 @@ pub fn blob_fold() -> PathBuf {
 pub fn versions_fold() -> PathBuf {
     vcs_fold().join("versions")
 }
-pub fn trees_fold() -> PathBuf {
-    vcs_fold().join("trees")
+pub fn root_trees_fold() -> PathBuf {
+    vcs_fold().join("root_trees")
 }
 
 pub fn commits_fold() -> PathBuf {
@@ -89,7 +90,7 @@ pub fn essentials_folds_to_create() -> Vec<PathBuf> {
         vcs_fold(),
         blob_fold(),
         versions_fold(),
-        trees_fold(),
+        root_trees_fold(),
         commits_fold(),
         nested_trees_fold()
     ]

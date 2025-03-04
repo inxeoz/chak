@@ -1,7 +1,4 @@
-use crate::config::{
-    commit_log_file_path, commits_fold, get_commit_log_file, get_project_dir, get_stage_file,
-    stage_file_path, trees_fold, versions_fold,
-};
+use crate::config::{commit_log_file_path, commits_fold, get_commit_log_file, get_project_dir, get_stage_file, root_trees_fold, stage_file_path, versions_fold};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
@@ -13,7 +10,7 @@ use crate::hash_pointer::{HashPointer, HashPointerOwn, HashPointerTraits};
 
 use crate::custom_error::ChakError;
 use crate::impl_hash_pointer_common_traits;
-use crate::tree_object::TreeObject;
+use crate::root_tree_object::{RootTreeObject};
 use crate::util::{deserialize_file_content, file_to_lines, save_or_create_file, serialize_struct};
 use clap::error::ErrorKind;
 use std::cmp::Ordering;
@@ -21,17 +18,17 @@ use std::io;
 use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
-pub struct TreeHashPointer {
+pub struct RootTreeHashPointer {
     fold_name: String,
     file_name: String,
 }
-impl_hash_pointer_common_traits!(TreeHashPointer);
+impl_hash_pointer_common_traits!(RootTreeHashPointer);
 
-impl HashPointerOwn for TreeHashPointer {
-    type Output = TreeHashPointer;
+impl HashPointerOwn for RootTreeHashPointer {
+    type Output = RootTreeHashPointer;
     fn own<T: HashPointerTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError> {
-        if trees_fold().join(hash_pointer.get_path()).exists() {
-            Ok(TreeHashPointer::_own(hash_pointer))
+        if root_trees_fold().join(hash_pointer.get_path()).exists() {
+            Ok(RootTreeHashPointer::_own(hash_pointer))
         } else {
             Err(ChakError::CustomError(format!(
                 "{}",
@@ -40,13 +37,13 @@ impl HashPointerOwn for TreeHashPointer {
         }
     }
 }
-impl TreeHashPointer {
-    pub fn save_tree(tree: &mut TreeObject) -> TreeHashPointer {
+impl RootTreeHashPointer {
+    pub fn save_tree(tree: &mut RootTreeObject) -> RootTreeHashPointer {
         tree.sort_children();
-        Self::_own(&save_entity::<TreeObject>(tree, &trees_fold()))
+        Self::_own(&save_entity::<RootTreeObject>(tree, &root_trees_fold()))
     }
-    pub fn load_tree(&self) -> TreeObject {
-        load_entity::<Self, TreeObject>(self, &trees_fold())
+    pub fn load_tree(&self) -> RootTreeObject {
+        load_entity::<Self, RootTreeObject>(self, &root_trees_fold())
     }
 
     pub fn attach_tree_to_stage(&self) {
@@ -54,7 +51,7 @@ impl TreeHashPointer {
             .expect("failed to attach root pointer to stage");
     }
 
-    pub fn get_latest_pointer_from_commit_log() -> Result<TreeHashPointer, ChakError> {
+    pub fn get_latest_pointer_from_commit_log() -> Result<RootTreeHashPointer, ChakError> {
         if commit_log_file_path().exists() {
             Ok(CommitHashPointer::get_latest_commit_hash_pointer()?
                 .load_commit()
@@ -66,7 +63,7 @@ impl TreeHashPointer {
         }
     }
 
-    pub fn get_pointers_from_commit_log() -> Result<Vec<TreeHashPointer>, ChakError> {
+    pub fn get_pointers_from_commit_log() -> Result<Vec<RootTreeHashPointer>, ChakError> {
         if commit_log_file_path().exists() {
             Ok(HashPointer::get_pointer_lines_from_file(
                 &get_commit_log_file()?,
@@ -78,10 +75,10 @@ impl TreeHashPointer {
         }
     }
 
-    pub fn get_latest_pointer_from_stage() -> Result<TreeHashPointer, ChakError> {
+    pub fn get_latest_pointer_from_stage() -> Result<RootTreeHashPointer, ChakError> {
         if stage_file_path().exists() {
             Ok(HashPointer::get_latest_pointer_line_from_file::<
-                TreeHashPointer,
+                RootTreeHashPointer,
             >(&get_stage_file()?, true)?)
         } else {
             Err(ChakError::CustomError(
@@ -90,7 +87,7 @@ impl TreeHashPointer {
         }
     }
 
-    pub fn get_pointers_from_stage() -> Result<Vec<TreeHashPointer>, ChakError> {
+    pub fn get_pointers_from_stage() -> Result<Vec<RootTreeHashPointer>, ChakError> {
         if stage_file_path().exists() {
             Ok(HashPointer::get_pointer_lines_from_file(
                 &get_stage_file()?,
