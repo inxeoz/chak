@@ -16,7 +16,7 @@ pub static CURRENT_DIR: OnceCell<PathBuf> = OnceCell::new();
 pub static VCS_FOLDER: &str = ".chak/";
 pub static VCS_CONFIG: &str = "config.toml";
 pub static VCS_IGNORE_FILE: &str = ".ignore";
-pub static ENTRY_LIST_FILE: &str = "entries.txt";
+pub static REGISTER: &str = "entries.txt";
 pub fn get_project_dir() -> &'static PathBuf {
     CURRENT_DIR.get_or_init(|| {
         env::current_dir()

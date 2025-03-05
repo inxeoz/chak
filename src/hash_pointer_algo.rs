@@ -1,12 +1,10 @@
 use crate::config_global::MIN_HASH_LENGTH;
 use crate::custom_error::ChakError;
-use crate::hash_pointer::{HashPointer, HashPointerOwn, HashPointerTraits};
+use crate::hash_pointer::{HashPointer, HashPointerCommonTraits, HashPointerCoreTraits};
 use crate::util::file_to_lines;
-use crate::util::{
-    deserialize_file_content, file_to_string, save_or_create_file, serialize_struct,
+use crate::util::{ file_to_string, save_or_create_file,
 };
-use serde::de::DeserializeOwned;
-use serde::Serialize;
+
 use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io;
@@ -62,7 +60,7 @@ impl HashPointer {
         Ok(hash_pointer)
     }
 
-    pub fn from_pointers<T: HashPointerTraits>(pointers: Vec<T>) -> Result<Self, ChakError> {
+    pub fn from_pointers<T: HashPointerCommonTraits>(pointers: Vec<T>) -> Result<Self, ChakError> {
         if pointers.is_empty() {
             return Err(ChakError::CustomError(
                 "Empty hash pointer vector".to_string(),
@@ -91,7 +89,7 @@ impl HashPointer {
         Self::_from_hash_string(format!("{:x}", hasher.finalize()))
     }
 
-    pub fn get_latest_pointer_line_from_file<T: HashPointerTraits + HashPointerOwn<Output=T> + Clone>(
+    pub fn get_latest_pointer_line_from_file<T: HashPointerCommonTraits + HashPointerCoreTraits<Output=T> + Clone>(
         file: &File,
         from_bottom: bool,
     ) -> Result<T, ChakError> {
@@ -118,13 +116,13 @@ impl HashPointer {
         }
     }
 
-    pub fn get_pointer_lines_from_file<T: HashPointerTraits + HashPointerOwn<Output = T> >(file: &File) -> Result<Vec<T>, ChakError> {
+    pub fn get_pointer_lines_from_file<T: HashPointerCommonTraits + HashPointerCoreTraits<Output = T> >(file: &File) -> Result<Vec<T>, ChakError> {
         let lines = file_to_lines(file);
         let mut pointers = Vec::<T>::new();
 
         for line in lines {
             if let Ok(pointer_line) = Self::from_hash_pointer_string(line) {
-                pointers.push(T::own(&pointer_line)?);
+                pointers.push(T::verify_and_own(&pointer_line)?);
             }
         }
         Ok(pointers)

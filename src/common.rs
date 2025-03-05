@@ -1,12 +1,12 @@
-use crate::hash_pointer::{HashPointer, HashPointerTraits};
+use crate::hash_pointer::{HashPointer, HashPointerCommonTraits};
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fs::create_dir_all;
 use std::path::Path;
-use crate::config::ENTRY_LIST_FILE;
+use crate::config::REGISTER;
 
-pub fn load_entity<T: HashPointerTraits, S: DeserializeOwned>(
+pub fn load_entity<T: HashPointerCommonTraits, S: DeserializeOwned>(
     entity: &T,
     parent_dir_of_entity: &Path,
 ) -> S {
@@ -28,7 +28,7 @@ pub fn save_entity<G: Serialize>(entity: &G, dir_to_save: &Path) -> HashPointer 
 
     //register the new creation of file
     save_or_create_file(
-        &dir_to_save.join(ENTRY_LIST_FILE),
+        &dir_to_save.join(REGISTER),
         Some(&entity_hash.get_one_hash()),
         true,
         Some("\n"),

@@ -4,14 +4,8 @@ use std::default::Default;
 use std::path::Path;
 use indexmap::IndexMap;
 use crate::blob_hash_pointer::BlobHashPointer;
-use crate::common::save_entity;
-use crate::config::{root_trees_fold, version_head_fold};
-use crate::custom_error::ChakError;
-use crate::root_tree_hash_pointer::RootTreeHashPointer;
 use crate::version_head::VersionHeadHashPointer;
-use crate::hash_pointer::HashPointerTraits;
 use crate::nested_tree_hash_pointer::NestedTreeHashPointer;
-use crate::util::{deserialize_file_content};
 use crate::versioning::VersionHead;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -48,16 +42,22 @@ impl NestedTreeObject {
     // version_head.create_version(blob_hash_pointer.clone());
 
     pub fn add_file_child(&mut self, file_entry: &Path, entry_name: &str) {
-        let blob_hash_pointer = BlobHashPointer::save_blob_from_file(&file_entry);
+
+        let new_blob_hash_pointer = BlobHashPointer::save_blob_from_file(&file_entry);
         if let Some(mut existing_version) = self.file_children.get_mut(&entry_name.to_string()) {
+
             let mut version_head = existing_version.load_version_head();
             let updated_version_head_hash_pointer =
-                version_head.create_version(blob_hash_pointer.clone());
+                version_head.create_version(new_blob_hash_pointer.clone());
             self.file_children.insert(entry_name.to_string(), updated_version_head_hash_pointer);
+
+           // if was_it_registered(existing_version.clone(), &version_head_fold()) {
+           //
+           // }
 
         } else {
             let new_version_head_hash_pointer =
-                VersionHeadHashPointer::save_version_head(&VersionHead::new(blob_hash_pointer, None));
+                VersionHeadHashPointer::save_version_head(&VersionHead::new(new_blob_hash_pointer, None));
             self.file_children.insert(entry_name.to_string(), new_version_head_hash_pointer);
         }
     }

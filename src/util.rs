@@ -5,11 +5,11 @@ use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{self, BufRead, BufReader, ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
-use clap::builder::Str;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use crate::config::{ENTRY_LIST_FILE, VCS_FOLDER};
+use crate::config::{ REGISTER, VCS_FOLDER};
 use crate::custom_error::ChakError;
+use crate::hash_pointer::HashPointerCommonTraits;
 
 pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
     let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
@@ -127,6 +127,17 @@ pub fn string_content_to_string_vec(content: &str) -> Vec<String> {
         .collect()
 }
 
+
+
+pub fn was_it_registered<T : HashPointerCommonTraits> (pointer: T, dir:&Path) -> bool {
+
+    if let Ok(register )= File::open(dir.join(REGISTER)) {
+        for line in file_to_lines(&register) {
+           return line.trim() == pointer.get_one_hash()
+        }
+    }
+    false
+}
 #[cfg(test)]
 pub mod tests {
     use crate::config::get_project_dir;

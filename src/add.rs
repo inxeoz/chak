@@ -3,13 +3,10 @@ use std::path::{Path, PathBuf};
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use crate::config::{get_config, get_project_dir, vcs_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
-use crate::blob_hash_pointer::BlobHashPointer;
 use crate::custom_error::ChakError;
 use crate::root_tree_hash_pointer::{ RootTreeHashPointer};
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 use crate::util::read_directory_entries;
-use crate::version_head::VersionHeadHashPointer;
-use crate::versioning::VersionHead;
 
 pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     //all in one ignore vec that handles multiple ignore file present in nested folder
@@ -84,7 +81,6 @@ pub fn dir_snapshot(
         if entry.is_file() {
             tree_ref.add_file_child(&entry, &entry_name);
         } else {
-
             //making sure that nested tree object so that we can procede with nested dir
             if ! tree_ref.dir_children.contains_key(&entry_name) {
                 tree_ref.add_dir_child(entry_name.clone(), &mut NestedTreeObject::new());

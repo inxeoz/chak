@@ -8,7 +8,7 @@ use crate::util::{save_or_create_file};
 use std::path::PathBuf;
 use std::cmp::Ordering;
 use crate::custom_error::ChakError;
-use crate::hash_pointer::{HashPointer, HashPointerOwn, HashPointerTraits};
+use crate::hash_pointer::{HashPointer, HashPointerCommonTraits, HashPointerCoreTraits};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Commit {
@@ -25,12 +25,12 @@ pub struct CommitHashPointer {
 
 impl_hash_pointer_common_traits!(CommitHashPointer);
 
-impl HashPointerOwn for CommitHashPointer {
+impl HashPointerCoreTraits for CommitHashPointer {
     type Output = CommitHashPointer;
 
-    fn own<T: HashPointerTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError> {
+    fn verify_and_own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError> {
         if commits_fold().join(hash_pointer.get_path()).exists() {
-            Ok(CommitHashPointer::_own(hash_pointer))
+            Ok(CommitHashPointer::___own(hash_pointer))
         } else {
             Err(ChakError::CustomError(format!(
                 "{}",
@@ -42,9 +42,7 @@ impl HashPointerOwn for CommitHashPointer {
 impl CommitHashPointer {
 
     pub fn save_commit(commit: &Commit) -> Self {
-
-
-        Self::_own(&save_entity::<Commit>(commit, &commits_fold()))
+        Self::___own(&save_entity::<Commit>(commit, &commits_fold()))
     }
 
     pub fn load_commit(&self) -> Commit {

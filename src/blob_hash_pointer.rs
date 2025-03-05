@@ -1,4 +1,4 @@
-use crate::hash_pointer::HashPointer;
+use crate::hash_pointer::{HashPointer, HashPointerCommonTraits};
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::config::{blob_fold};
@@ -6,10 +6,7 @@ use crate::common::{load_entity, save_entity};
 use crate::impl_hash_pointer_common_traits;
 use std::path::PathBuf;
 use std::cmp::Ordering;
-use std::collections::HashMap;
 use indexmap::{IndexMap, IndexSet};
-
-use crate::hash_pointer::HashPointerTraits;
 pub struct CompareOrderStructure {
     pub previous_content: HashedContent,
     pub new_content: HashedContent,

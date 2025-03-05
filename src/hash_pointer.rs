@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use serde::de::DeserializeOwned;
 use crate::custom_error::ChakError;
-pub trait HashPointerOwn {
-    type Output: HashPointerTraits; // Ensures the returned type implements the trait
-    fn own<T: HashPointerTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError>;
+pub trait HashPointerCoreTraits {
+    type Output: HashPointerCommonTraits; // Ensures the returned type implements the trait
+    fn verify_and_own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError>;
 }
-pub trait HashPointerTraits {
+pub trait HashPointerCommonTraits {
     fn replace(&mut self, pointer: &Self);
     // fn update_hash(&mut self, content: String);
     fn get_fold_name(&self) -> String;
@@ -22,7 +22,7 @@ pub trait HashPointerTraits {
 #[macro_export] macro_rules! impl_hash_pointer_common_traits {
     ($t:ty) => {
         impl $t {
-             fn _own<T: HashPointerTraits>(hash_pointer: &T) -> Self {
+             fn ___own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Self {
                 Self {
                         fold_name: hash_pointer.get_fold_name(),
                         file_name: hash_pointer.get_file_name(),
@@ -51,7 +51,7 @@ pub trait HashPointerTraits {
             }
         }
 
-        impl HashPointerTraits for $t {
+        impl HashPointerCommonTraits for $t {
 
 
             fn replace(&mut self, pointer: &Self) {

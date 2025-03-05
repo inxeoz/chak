@@ -4,8 +4,8 @@ use crate::common::{load_entity, save_entity};
 use crate::impl_hash_pointer_common_traits;
 use std::path::PathBuf;
 use std::cmp::Ordering;
-use crate::blob_hash_pointer::{BlobHashPointer, HashedContent};
-use crate::hash_pointer::{HashPointer, HashPointerTraits};
+use crate::blob_hash_pointer::{ HashedContent};
+use crate::hash_pointer::{HashPointer, HashPointerCommonTraits};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct VersionHashedContent {

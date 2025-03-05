@@ -1,16 +1,8 @@
-use std::fs;
-use crate::config::{blob_fold};
+
 use crate::blob_hash_pointer::{BlobHashPointer, CompareOrderStructure, HashedContent};
 use crate::version_hashed::{VersionHashPointer, VersionHashedContent};
 use serde::{Deserialize, Serialize};
 use crate::version_head::VersionHeadHashPointer;
-use crate::hash_pointer::HashPointerTraits;
-
-// enum BlobType {
-//     ReadableBlob(BlobHashPointer),
-//     UnreadableBlob()
-// }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VersionHead {
@@ -56,7 +48,7 @@ impl VersionHead {
         self.change_version(latest_version_hash_pointer);
         self.change_blob(new_blob_hash);
 
+        //creating new version head
         VersionHeadHashPointer::save_version_head(self)
-
     }
 }

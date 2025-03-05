@@ -5,7 +5,7 @@ use crate::versioning::VersionHead;
 use std::path::PathBuf;
 use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
-use crate::hash_pointer::{HashPointer, HashPointerTraits};
+use crate::hash_pointer::{HashPointer, HashPointerCommonTraits};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct VersionHeadHashPointer {
