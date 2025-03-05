@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use indexmap::IndexMap;
 use crate::blob_pointer::BlobObjectPointer;
 use crate::config::nested_trees_fold;
+use crate::custom_error::ChakError;
 use crate::nested_tree_pointer::NestedTreeHashPointer;
 use crate::object::ObjectTraits;
 use crate::version_head_object::VersionHeadObject;
@@ -31,8 +32,9 @@ impl NestedTreeObject {
             // dir_children: Default::default(),
         }
     }
-    pub fn add_dir_child(&mut self, dir_name: String, dir_object: &mut NestedTreeObject) {
-        self.dir_children.insert(dir_name, NestedTreeHashPointer::save_tree(dir_object));
+    pub fn add_dir_child(&mut self, dir_name: String, dir_object: &mut NestedTreeObject) -> Result<(), ChakError> {
+        self.dir_children.insert(dir_name, NestedTreeHashPointer::save_tree(dir_object)?);
+        Ok(())
     }
 
 

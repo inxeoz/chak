@@ -28,7 +28,7 @@ pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
         &mut as_nested_tree, // this as nested creating new clone of root disconnected one
     );
 
-    let new_root_tree_pointer = RootTreeHashPointer::save_tree(&mut RootTreeObject::from(as_nested_tree));
+    let new_root_tree_pointer = RootTreeHashPointer::save_tree(&mut RootTreeObject::from(as_nested_tree))?;
     //attaching the updated new tree pointer to stage temporarily because tree pointer can be changed util its commited
     new_root_tree_pointer.attach_tree_to_stage();
     Ok(())

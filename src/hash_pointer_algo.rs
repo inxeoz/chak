@@ -122,7 +122,7 @@ impl HashPointer {
 
         for line in lines {
             if let Ok(pointer_line) = Self::from_hash_pointer_string(line) {
-                pointers.push(T::verify_and_own(&pointer_line)?);
+                pointers.push(T::own(&pointer_line)?);
             }
         }
         Ok(pointers)

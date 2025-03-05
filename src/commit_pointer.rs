@@ -1,6 +1,6 @@
 use std::fs::File;
 use serde::{Deserialize, Serialize};
-use crate::config::{commit_log_file_path, commits_fold, get_commit_log_file, stage_file_path};
+use crate::config::{commit_log_file_path, commits_fold, get_commit_log_file, root_trees_fold, stage_file_path};
 use crate::common::{load_entity, save_entity};
 use crate::root_tree_pointer::{ RootTreeHashPointer};
 use crate::impl_hash_pointer_common_traits;
@@ -24,9 +24,12 @@ impl_hash_pointer_common_traits!(CommitHashPointer);
 impl HashPointerCoreTraits for CommitHashPointer {
     type Output = CommitHashPointer;
 
-    fn verify_and_own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError> {
-        if commits_fold().join(hash_pointer.get_path()).exists() {
-            Ok(CommitHashPointer::___own(hash_pointer))
+    fn own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError> {
+        if Self::verify_existing(hash_pointer) {
+            Ok(CommitHashPointer {
+                file_name: hash_pointer.get_file_name(),
+                fold_name: hash_pointer.get_fold_name(),
+            })
         } else {
             Err(ChakError::CustomError(format!(
                 "{}",
@@ -34,11 +37,16 @@ impl HashPointerCoreTraits for CommitHashPointer {
             )))
         }
     }
+
+    fn verify_existing<T: HashPointerCommonTraits>(hash_pointer: &T) -> bool {
+        commits_fold().join(hash_pointer.get_path()).exists()
+    }
+
 }
 impl CommitHashPointer {
 
-    pub fn save_commit(commit: &Commit) -> Self {
-        Self::___own(&save_entity(commit))
+    pub fn save_commit(commit: &Commit) -> Result<CommitHashPointer, ChakError> {
+        Self::own(&save_entity(commit))
     }
 
     pub fn load_commit(&self) -> Commit {
@@ -71,7 +79,7 @@ pub fn append_commit_hash_pointer_to_commit_log_file(commit_hash_pointer: Commit
     ).expect("cant save commit to commit log");
 }
 
-pub fn command_commit(m:String) {
+pub fn command_commit(m:String) -> Result<(), ChakError> {
 
     if let Ok(all_tree_pointers) = RootTreeHashPointer::get_pointers_from_stage(){
 
@@ -81,17 +89,16 @@ pub fn command_commit(m:String) {
                     m.clone(),
                     Some("inxeoz".to_string()),
                     tree_pointer.to_owned(),
-                ));
+                ))?;
 
                 append_commit_hash_pointer_to_commit_log_file(commit_pointer);
-            }else {
-                //
-
+                return Ok(());
             }
-
         }
-        std::fs::write(stage_file_path(), "").expect("Couldn't write to stage file");
+        std::fs::write(stage_file_path(), "").map_err(
+            |_| ChakError::CustomError("Failed to save commit to commit log".to_string())
+        )
     } else {
-        println!("No commit configured");
+        Err(ChakError::CustomError("No stage file".to_string()))
     }
 }

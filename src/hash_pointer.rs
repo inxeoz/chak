@@ -5,7 +5,9 @@ use serde::de::DeserializeOwned;
 use crate::custom_error::ChakError;
 pub trait HashPointerCoreTraits {
     type Output: HashPointerCommonTraits; // Ensures the returned type implements the trait
-    fn verify_and_own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError>;
+    // fn verify_and_own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError>;
+    fn own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError>;
+    fn verify_existing<T: HashPointerCommonTraits>(hash_pointer: &T) -> bool;
 }
 pub trait HashPointerCommonTraits {
     fn replace(&mut self, pointer: &Self);
@@ -21,15 +23,15 @@ pub trait HashPointerCommonTraits {
 
 #[macro_export] macro_rules! impl_hash_pointer_common_traits {
     ($t:ty) => {
-        impl $t {
-             fn ___own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Self {
-                Self {
-                        fold_name: hash_pointer.get_fold_name(),
-                        file_name: hash_pointer.get_file_name(),
-                     }
-            }
-
-        }
+        // impl $t {
+        //      fn ___own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Self {
+        //         Self {
+        //                 fold_name: hash_pointer.get_fold_name(),
+        //                 file_name: hash_pointer.get_file_name(),
+        //              }
+        //     }
+        //
+        // }
 
         impl PartialEq for $t {
             fn eq(&self, other: &Self) -> bool {

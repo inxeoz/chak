@@ -1,4 +1,4 @@
-use crate::config::{ nested_trees_fold};
+use crate::config::{commits_fold, nested_trees_fold};
 
 use crate::common::{load_entity, save_entity};
 
@@ -9,6 +9,7 @@ use std::cmp::Ordering;
 use std::io;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+use crate::commit_pointer::CommitHashPointer;
 use crate::hash_pointer::{HashPointerCommonTraits, HashPointerCoreTraits};
 use crate::nested_tree_object::NestedTreeObject;
 
@@ -21,9 +22,14 @@ impl_hash_pointer_common_traits!(NestedTreeHashPointer);
 
 impl HashPointerCoreTraits for NestedTreeHashPointer {
     type Output = NestedTreeHashPointer;
-    fn verify_and_own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError> {
-        if nested_trees_fold().join(hash_pointer.get_path()).exists() {
-            Ok(NestedTreeHashPointer::___own(hash_pointer))
+
+
+    fn own<T: HashPointerCommonTraits>(hash_pointer: &T) -> Result<Self::Output, ChakError> {
+        if Self::verify_existing(hash_pointer) {
+            Ok(NestedTreeHashPointer {
+                file_name: hash_pointer.get_file_name(),
+                fold_name: hash_pointer.get_fold_name(),
+            })
         } else {
             Err(ChakError::CustomError(format!(
                 "{}",
@@ -31,11 +37,17 @@ impl HashPointerCoreTraits for NestedTreeHashPointer {
             )))
         }
     }
+
+    fn verify_existing<T: HashPointerCommonTraits>(hash_pointer: &T) -> bool {
+        nested_trees_fold().join(hash_pointer.get_path()).exists()
+    }
+
+
 }
 impl NestedTreeHashPointer {
-    pub fn save_tree(tree: &mut NestedTreeObject) -> NestedTreeHashPointer {
+    pub fn save_tree(tree: &mut NestedTreeObject) -> Result<NestedTreeHashPointer, ChakError> {
         tree.sort_children();
-        Self::___own(&save_entity(tree))
+        Self::own(&save_entity(tree))
     }
     pub fn load_tree(&self) -> NestedTreeObject {
         load_entity::<Self, NestedTreeObject>(self, &nested_trees_fold())
