@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::path::Path;
 use indexmap::IndexMap;
-use crate::blob_hash_pointer::BlobHashPointer;
+use crate::blob_pointer::BlobObjectPointer;
 use crate::version_head::VersionHeadHashPointer;
-use crate::nested_tree_hash_pointer::NestedTreeHashPointer;
+use crate::nested_tree_pointer::NestedTreeHashPointer;
 use crate::versioning::VersionHead;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -43,7 +43,7 @@ impl NestedTreeObject {
 
     pub fn add_file_child(&mut self, file_entry: &Path, entry_name: &str) {
 
-        let new_blob_hash_pointer = BlobHashPointer::save_blob_from_file(&file_entry);
+        let new_blob_hash_pointer = BlobObjectPointer::save_blob_from_file(&file_entry);
         if let Some(mut existing_version) = self.file_children.get_mut(&entry_name.to_string()) {
 
             let mut version_head = existing_version.load_version_head();

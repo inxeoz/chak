@@ -2,7 +2,7 @@ use std::fs::File;
 use serde::{Deserialize, Serialize};
 use crate::config::{commit_log_file_path, commits_fold, get_commit_log_file, stage_file_path};
 use crate::common::{load_entity, save_entity};
-use crate::root_tree_hash_pointer::{ RootTreeHashPointer};
+use crate::root_tree_pointer::{ RootTreeHashPointer};
 use crate::impl_hash_pointer_common_traits;
 use crate::util::{save_or_create_file};
 use std::path::PathBuf;

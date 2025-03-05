@@ -11,19 +11,20 @@ mod restore;
 mod config_global;
 mod status;
 mod remote;
-mod root_tree_hash_pointer;
-mod blob_hash_pointer;
+mod root_tree_pointer;
+mod blob_pointer;
 mod version_hashed;
-mod commit_hash_pointer;
+mod commit_pointer;
 mod common;
 mod versioning;
 mod version_head;
 mod hash_pointer;
 mod renaming;
 mod trait_extension;
-mod nested_tree_hash_pointer;
+mod nested_tree_pointer;
 mod nested_tree_object;
 mod exclude;
+mod blob_object;
 //test
 
 

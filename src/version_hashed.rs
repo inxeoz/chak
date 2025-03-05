@@ -4,17 +4,17 @@ use crate::common::{load_entity, save_entity};
 use crate::impl_hash_pointer_common_traits;
 use std::path::PathBuf;
 use std::cmp::Ordering;
-use crate::blob_hash_pointer::{ HashedContent};
+use crate::blob_object::BlobObject;
 use crate::hash_pointer::{HashPointer, HashPointerCommonTraits};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct VersionHashedContent {
     pub pointer_to_previous_version: Option<VersionHashPointer>,
-    pub hashed_content: HashedContent,
+    pub hashed_content: BlobObject,
 }
 impl VersionHashedContent {
     pub fn new(
-        diff_content: HashedContent,
+        diff_content: BlobObject,
         pointer_to_previous_version: Option<VersionHashPointer>,
     ) -> Self {
         Self {

@@ -7,9 +7,9 @@ use indexmap::IndexMap;
 use crate::config::root_trees_fold;
 use crate::custom_error::ChakError;
 use crate::hash_pointer::HashPointerCommonTraits;
-use crate::root_tree_hash_pointer::RootTreeHashPointer;
+use crate::root_tree_pointer::RootTreeHashPointer;
 use crate::version_head::VersionHeadHashPointer;
-use crate::nested_tree_hash_pointer::NestedTreeHashPointer;
+use crate::nested_tree_pointer::NestedTreeHashPointer;
 pub(crate) use crate::nested_tree_object::NestedTreeObject;
 use crate::util::{deserialize_file_content, save_or_create_file};
 

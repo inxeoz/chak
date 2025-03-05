@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 
-use crate::commit_hash_pointer::{Commit, CommitHashPointer};
+use crate::commit_pointer::{Commit, CommitHashPointer};
 use crate::common::{load_entity, save_entity};
 use crate::hash_pointer::{HashPointer, HashPointerCommonTraits, HashPointerCoreTraits};
 

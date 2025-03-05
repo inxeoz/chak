@@ -7,15 +7,15 @@ use std::hash::Hash;
 use std::io::BufRead;
 use std::ops::Sub;
 use std::path::Path;
-use crate::blob_hash_pointer::{CompareOrderStructure, HashedContent};
+use crate::blob_object::{BlobObject, CompareOrderStructure};
 use crate::hash_pointer::{HashPointer, HashPointerCommonTraits};
 use crate::util::file_to_lines;
 
-impl HashedContent {
+impl BlobObject {
 
-    fn new(hash_lines: &IndexSet<String>, hash_to_content: &mut IndexMap<String, String>) -> HashedContent {
+    fn new(hash_lines: &IndexSet<String>, hash_to_content: &mut IndexMap<String, String>) -> BlobObject {
         hash_to_content.sort_keys();
-        HashedContent {
+        BlobObject {
             hash_lines: hash_lines.to_owned(),
             hash_to_content: hash_to_content.to_owned(),
         }
@@ -33,7 +33,7 @@ impl HashedContent {
     //it is important as it tell the ordering of paramter like which hashedContent is previos content or new content
     pub fn compare_hashed_content_biased_previous(
         compare_order_structure: &CompareOrderStructure,
-    ) -> HashedContent {
+    ) -> BlobObject {
         let CompareOrderStructure {
             previous_content,
             new_content,
@@ -54,10 +54,10 @@ impl HashedContent {
             }
         }
 
-        HashedContent::new(&prev_hash_lines, &mut unique_line_contents)
+        BlobObject::new(&prev_hash_lines, &mut unique_line_contents)
     }
 
-    pub fn from_string_lines(lines: Vec<String>) -> HashedContent {
+    pub fn from_string_lines(lines: Vec<String>) -> BlobObject {
         let mut hash_lines = IndexSet::<String>::new();
         let mut hash_to_content = IndexMap::<String, String>::new();
         for line in lines {
@@ -66,13 +66,13 @@ impl HashedContent {
             hash_to_content.insert(hash_line, line);
         }
 
-        HashedContent::new(&hash_lines, &mut hash_to_content)
+        BlobObject::new(&hash_lines, &mut hash_to_content)
     }
 
-    pub fn from_file(file: &File) -> HashedContent {
-        HashedContent::from_string_lines(file_to_lines(file))
+    pub fn from_file(file: &File) -> BlobObject {
+        BlobObject::from_string_lines(file_to_lines(file))
     }
-    pub fn get_diff(prev_file: &File, new_file: &File) -> HashedContent {
+    pub fn get_diff(prev_file: &File, new_file: &File) -> BlobObject {
         let first = Self::from_file(&prev_file);
         let second = Self::from_file(&new_file);
         let diff = Self::compare_hashed_content_biased_previous(&CompareOrderStructure {
@@ -82,7 +82,7 @@ impl HashedContent {
         diff
     }
 
-    pub fn hashed_content_from_path(path: &Path) -> HashedContent {
+    pub fn hashed_content_from_path(path: &Path) -> BlobObject {
         let file = File::open(&path).expect("Failed to open file");
         Self::from_file(&file)
     }

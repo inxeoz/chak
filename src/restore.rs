@@ -4,7 +4,7 @@ use std::fs::create_dir_all;
 use std::io;
 use std::path::PathBuf;
 use crate::custom_error::ChakError;
-use crate::root_tree_hash_pointer::RootTreeHashPointer;
+use crate::root_tree_pointer::RootTreeHashPointer;
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 
 fn start_restoring(tree_object: NestedTreeObject, dir_path: &PathBuf) -> Result<(), ChakError> {

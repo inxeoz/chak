@@ -4,7 +4,7 @@ use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use crate::config::{get_config, get_project_dir, vcs_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
 use crate::custom_error::ChakError;
-use crate::root_tree_hash_pointer::{ RootTreeHashPointer};
+use crate::root_tree_pointer::{ RootTreeHashPointer};
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 use crate::util::read_directory_entries;
 
