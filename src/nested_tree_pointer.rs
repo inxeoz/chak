@@ -35,7 +35,7 @@ impl HashPointerCoreTraits for NestedTreeHashPointer {
 impl NestedTreeHashPointer {
     pub fn save_tree(tree: &mut NestedTreeObject) -> NestedTreeHashPointer {
         tree.sort_children();
-        Self::___own(&save_entity::<NestedTreeObject>(tree, &nested_trees_fold()))
+        Self::___own(&save_entity(tree))
     }
     pub fn load_tree(&self) -> NestedTreeObject {
         load_entity::<Self, NestedTreeObject>(self, &nested_trees_fold())

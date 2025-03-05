@@ -25,7 +25,7 @@ impl VersionPointer {
 
 
     pub fn save_version(hashed_version: &VersionObject ) -> Self {
-        Self::own(&save_entity(hashed_version, &versions_fold()))
+        Self::own(&save_entity(hashed_version))
     }
 
     pub fn load_version(&self) -> VersionObject {

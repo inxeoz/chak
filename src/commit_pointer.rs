@@ -7,15 +7,11 @@ use crate::impl_hash_pointer_common_traits;
 use crate::util::{save_or_create_file};
 use std::path::PathBuf;
 use std::cmp::Ordering;
+use crate::commit_object::Commit;
 use crate::custom_error::ChakError;
 use crate::hash_pointer::{HashPointer, HashPointerCommonTraits, HashPointerCoreTraits};
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Commit {
-    pub author: String,
-    pub message: String,
-    pub root_tree_pointer: RootTreeHashPointer,
-}
+
 //these custom hash pointer would have other field in future
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct CommitHashPointer {
@@ -42,7 +38,7 @@ impl HashPointerCoreTraits for CommitHashPointer {
 impl CommitHashPointer {
 
     pub fn save_commit(commit: &Commit) -> Self {
-        Self::___own(&save_entity::<Commit>(commit, &commits_fold()))
+        Self::___own(&save_entity(commit))
     }
 
     pub fn load_commit(&self) -> Commit {

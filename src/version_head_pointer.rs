@@ -23,7 +23,7 @@ impl VersionHeadPointer {
     }
 
     pub fn save_version_head(version_head: &VersionHeadObject) -> VersionHeadPointer {
-        Self::own(&save_entity(&version_head, &version_head_fold()))
+        Self::own(&save_entity(version_head))
     }
     pub fn load_version_head(&self) -> VersionHeadObject {
         load_entity::<Self, VersionHeadObject>(self, &version_head_fold())

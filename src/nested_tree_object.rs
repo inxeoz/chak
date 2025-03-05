@@ -1,10 +1,12 @@
 
 use serde::{Deserialize, Serialize};
 use std::default::Default;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use indexmap::IndexMap;
 use crate::blob_pointer::BlobObjectPointer;
+use crate::config::nested_trees_fold;
 use crate::nested_tree_pointer::NestedTreeHashPointer;
+use crate::object::ObjectTraits;
 use crate::version_head_object::VersionHeadObject;
 use crate::version_head_pointer::VersionHeadPointer;
 
@@ -12,6 +14,12 @@ use crate::version_head_pointer::VersionHeadPointer;
 pub struct NestedTreeObject {
     pub file_children: IndexMap<String, VersionHeadPointer>,
     pub dir_children: IndexMap<String, NestedTreeHashPointer>,
+}
+
+impl ObjectTraits for NestedTreeObject {
+    fn containing_folder(&self) -> PathBuf {
+        nested_trees_fold()
+    }
 }
 // TreeObject methods
 impl NestedTreeObject {

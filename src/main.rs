@@ -26,6 +26,8 @@ mod nested_tree_object;
 mod exclude;
 mod blob_object;
 mod version_pointer;
+mod object;
+mod commit_object;
 //test
 
 

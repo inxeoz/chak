@@ -10,6 +10,7 @@ use crate::hash_pointer::HashPointerCommonTraits;
 use crate::root_tree_pointer::RootTreeHashPointer;
 use crate::nested_tree_pointer::NestedTreeHashPointer;
 pub(crate) use crate::nested_tree_object::NestedTreeObject;
+use crate::object::ObjectTraits;
 use crate::util::{deserialize_file_content, save_or_create_file};
 use crate::version_head_pointer::VersionHeadPointer;
 
@@ -17,6 +18,12 @@ use crate::version_head_pointer::VersionHeadPointer;
 pub struct RootTreeObject {
     pub file_children: IndexMap<String, VersionHeadPointer>,
     pub dir_children: IndexMap<String, NestedTreeHashPointer>,
+}
+
+impl ObjectTraits for RootTreeObject {
+    fn containing_folder(&self) -> PathBuf {
+        root_trees_fold()
+    }
 }
 // TreeObject methods
 impl RootTreeObject {

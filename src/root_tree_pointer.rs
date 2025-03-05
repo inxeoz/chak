@@ -4,18 +4,17 @@ use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 
-use crate::commit_pointer::{Commit, CommitHashPointer};
+
 use crate::common::{load_entity, save_entity};
 use crate::hash_pointer::{HashPointer, HashPointerCommonTraits, HashPointerCoreTraits};
 
 use crate::custom_error::ChakError;
 use crate::impl_hash_pointer_common_traits;
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
-use crate::util::{deserialize_file_content, file_to_lines, save_or_create_file, serialize_struct};
-use clap::error::ErrorKind;
+use crate::util::{save_or_create_file,};
 use std::cmp::Ordering;
-use std::io;
 use std::path::PathBuf;
+use crate::commit_pointer::CommitHashPointer;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct RootTreeHashPointer {
@@ -41,7 +40,7 @@ impl RootTreeHashPointer {
 
     pub fn save_tree(tree: &mut RootTreeObject) -> RootTreeHashPointer {
         tree.sort_children();
-        Self::___own(&save_entity::<RootTreeObject>(tree, &root_trees_fold()))
+        Self::___own(&save_entity(tree))
     }
     pub fn load_tree(&self) -> RootTreeObject {
         load_entity::<Self, RootTreeObject>(self, &root_trees_fold())

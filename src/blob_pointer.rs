@@ -34,7 +34,7 @@ impl BlobObjectPointer {
         }
     }
     pub fn save_blob(hashed_content: BlobObject) -> BlobObjectPointer {
-        Self::own(&save_entity::< BlobObject>(&hashed_content, &blob_fold()))
+        Self::own(&save_entity::< BlobObject>(&hashed_content))
     }
 
     pub fn save_blob_from_file(path_to_file: &Path) -> BlobObjectPointer {

@@ -2,9 +2,9 @@ use crate::hash_pointer::{HashPointer, HashPointerCommonTraits};
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use std::fs::create_dir_all;
 use std::path::Path;
 use crate::config::REGISTER;
+use crate::object::ObjectTraits;
 
 pub fn load_entity<T: HashPointerCommonTraits, S: DeserializeOwned>(
     entity: &T,
@@ -15,11 +15,11 @@ pub fn load_entity<T: HashPointerCommonTraits, S: DeserializeOwned>(
             .expect("Failed to load file");
     deserialized_content
 }
-pub fn save_entity<G: Serialize>(entity: &G, dir_to_save: &Path) -> HashPointer {
+pub fn save_entity<G: Serialize + ObjectTraits>(entity: &G) -> HashPointer {
     let serialized_content = serialize_struct(&entity);
     let entity_hash = HashPointer::from_string(&serialized_content);
 
-    let new_entity_path = dir_to_save.join(entity_hash.get_path()); //error ?
+    let new_entity_path = entity.containing_folder().join(entity_hash.get_path()); //error ?
 
     if !new_entity_path.exists() {
         save_or_create_file(&new_entity_path, Some(&serialized_content), false, None)
@@ -28,12 +28,12 @@ pub fn save_entity<G: Serialize>(entity: &G, dir_to_save: &Path) -> HashPointer 
 
     //register the new creation of file
     save_or_create_file(
-        &dir_to_save.join(REGISTER),
+        &entity.containing_folder().join(REGISTER),
         Some(&entity_hash.get_one_hash()),
         true,
         Some("\n"),
     )
-    .expect(format!("failed to entry in {}", dir_to_save.display()).as_str());
+    .expect(format!("failed to entry in {}", entity.containing_folder().display()).as_str());
 
     entity_hash
 }
