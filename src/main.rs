@@ -13,11 +13,11 @@ mod status;
 mod remote;
 mod root_tree_pointer;
 mod blob_pointer;
-mod version_hashed;
+mod version_object;
 mod commit_pointer;
 mod common;
-mod versioning;
-mod version_head;
+mod version_head_object;
+mod version_head_pointer;
 mod hash_pointer;
 mod renaming;
 mod trait_extension;
@@ -25,6 +25,7 @@ mod nested_tree_pointer;
 mod nested_tree_object;
 mod exclude;
 mod blob_object;
+mod version_pointer;
 //test
 
 

@@ -8,14 +8,14 @@ use crate::config::root_trees_fold;
 use crate::custom_error::ChakError;
 use crate::hash_pointer::HashPointerCommonTraits;
 use crate::root_tree_pointer::RootTreeHashPointer;
-use crate::version_head::VersionHeadHashPointer;
 use crate::nested_tree_pointer::NestedTreeHashPointer;
 pub(crate) use crate::nested_tree_object::NestedTreeObject;
 use crate::util::{deserialize_file_content, save_or_create_file};
+use crate::version_head_pointer::VersionHeadPointer;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RootTreeObject {
-    pub file_children: IndexMap<String, VersionHeadHashPointer>,
+    pub file_children: IndexMap<String, VersionHeadPointer>,
     pub dir_children: IndexMap<String, NestedTreeHashPointer>,
 }
 // TreeObject methods
@@ -37,7 +37,7 @@ impl RootTreeObject {
     pub fn add_dir_child(&mut self, dir_name: String, nested_dir: &mut NestedTreeHashPointer) {
         self.dir_children.insert(dir_name, nested_dir.clone());
     }
-    pub fn add_file_child(&mut self, key: String, value: VersionHeadHashPointer) {
+    pub fn add_file_child(&mut self, key: String, value: VersionHeadPointer) {
         self.file_children.insert(key, value);
     }
     pub fn sort_children(&mut self) {

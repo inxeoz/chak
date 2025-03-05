@@ -4,13 +4,13 @@ use std::default::Default;
 use std::path::Path;
 use indexmap::IndexMap;
 use crate::blob_pointer::BlobObjectPointer;
-use crate::version_head::VersionHeadHashPointer;
 use crate::nested_tree_pointer::NestedTreeHashPointer;
-use crate::versioning::VersionHead;
+use crate::version_head_object::VersionHeadObject;
+use crate::version_head_pointer::VersionHeadPointer;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NestedTreeObject {
-    pub file_children: IndexMap<String, VersionHeadHashPointer>,
+    pub file_children: IndexMap<String, VersionHeadPointer>,
     pub dir_children: IndexMap<String, NestedTreeHashPointer>,
 }
 // TreeObject methods
@@ -57,7 +57,7 @@ impl NestedTreeObject {
 
         } else {
             let new_version_head_hash_pointer =
-                VersionHeadHashPointer::save_version_head(&VersionHead::new(new_blob_hash_pointer, None));
+                VersionHeadPointer::save_version_head(&VersionHeadObject::new(new_blob_hash_pointer, None));
             self.file_children.insert(entry_name.to_string(), new_version_head_hash_pointer);
         }
     }
