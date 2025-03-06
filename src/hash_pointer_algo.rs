@@ -1,6 +1,6 @@
 use crate::config_global::MIN_HASH_LENGTH;
 use crate::custom_error::ChakError;
-use crate::hash_pointer::{HashPointer, HashPointerCommonTraits, HashPointerCoreTraits};
+use crate::hash_pointer::{HashPointer};
 use crate::util::file_to_lines;
 use crate::util::{ file_to_string, save_or_create_file,
 };
@@ -10,6 +10,7 @@ use std::fs::File;
 use std::io;
 use std::io::{BufRead, BufReader, ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
+use crate::chak_traits::{ChakPointerTraits, HashPointerTraits};
 
 impl HashPointer {
     fn _from_hash_string(hash: String) -> Self {
@@ -60,7 +61,7 @@ impl HashPointer {
         Ok(hash_pointer)
     }
 
-    pub fn from_pointers<T: HashPointerCommonTraits>(pointers: Vec<T>) -> Result<Self, ChakError> {
+    pub fn from_pointers<T: ChakPointerTraits + HashPointerTraits>(pointers: Vec<T>) -> Result<Self, ChakError> {
         if pointers.is_empty() {
             return Err(ChakError::CustomError(
                 "Empty hash pointer vector".to_string(),
@@ -89,7 +90,7 @@ impl HashPointer {
         Self::_from_hash_string(format!("{:x}", hasher.finalize()))
     }
 
-    pub fn get_latest_pointer_line_from_file<T: HashPointerCommonTraits + HashPointerCoreTraits<Output=T> + Clone>(
+    pub fn get_latest_pointer_line_from_file<T: HashPointerTraits + ChakPointerTraits + Clone>(
         file: &File,
         from_bottom: bool,
     ) -> Result<T, ChakError> {
@@ -116,7 +117,7 @@ impl HashPointer {
         }
     }
 
-    pub fn get_pointer_lines_from_file<T: HashPointerCommonTraits + HashPointerCoreTraits<Output = T> >(file: &File) -> Result<Vec<T>, ChakError> {
+    pub fn get_pointer_lines_from_file<T: HashPointerTraits + ChakPointerTraits >(file: &File) -> Result<Vec<T>, ChakError> {
         let lines = file_to_lines(file);
         let mut pointers = Vec::<T>::new();
 

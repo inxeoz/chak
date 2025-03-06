@@ -8,7 +8,8 @@ use std::io::BufRead;
 use std::ops::Sub;
 use std::path::Path;
 use crate::blob_object::{BlobObject, CompareOrderStructure};
-use crate::hash_pointer::{HashPointer, HashPointerCommonTraits};
+use crate::chak_traits::HashPointerTraits;
+use crate::hash_pointer::{HashPointer};
 use crate::util::file_to_lines;
 
 impl BlobObject {

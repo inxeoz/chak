@@ -28,6 +28,9 @@ mod blob_object;
 mod version_pointer;
 mod object;
 mod commit_object;
+mod chak_traits;
+mod trait_macros;
+mod restricted;
 //test
 
 

@@ -16,7 +16,7 @@ pub struct BlobObject {
 }
 
 impl ObjectTraits for BlobObject {
-    fn containing_folder(&self) -> PathBuf {
+    fn containing_folder() -> PathBuf {
         blob_fold()
     }
 }

@@ -92,7 +92,7 @@ pub fn parse_commandline() {
             command_add(files);
         }
         Some(Commands::Commit { m }) => {
-            command_commit(m);
+            command_commit(m).expect("TODO: panic message");
         }
         Some(Commands::Restore { files }) => {
             command_restore(files)

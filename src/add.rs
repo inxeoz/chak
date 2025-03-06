@@ -4,7 +4,7 @@ use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use crate::config::{get_config, get_project_dir, vcs_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
 use crate::custom_error::ChakError;
-use crate::root_tree_pointer::{ RootTreeHashPointer};
+use crate::root_tree_pointer::RootTreePointer;
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 use crate::util::read_directory_entries;
 
@@ -28,7 +28,7 @@ pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
         &mut as_nested_tree, // this as nested creating new clone of root disconnected one
     );
 
-    let new_root_tree_pointer = RootTreeHashPointer::save_tree(&mut RootTreeObject::from(as_nested_tree))?;
+    let new_root_tree_pointer = RootTreePointer::save_tree(&mut RootTreeObject::from(as_nested_tree))?;
     //attaching the updated new tree pointer to stage temporarily because tree pointer can be changed util its commited
     new_root_tree_pointer.attach_tree_to_stage();
     Ok(())

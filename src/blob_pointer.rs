@@ -1,4 +1,5 @@
-use crate::hash_pointer::{HashPointer, HashPointerCommonTraits};
+use crate::restricted;
+use crate::chak_traits::{ HashPointerTraits};
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::config::{blob_fold};
@@ -8,6 +9,10 @@ use std::path::PathBuf;
 use std::cmp::Ordering;
 use indexmap::{IndexMap, IndexSet};
 use crate::blob_object::BlobObject;
+use crate::chak_traits::ChakPointerTraits;
+use crate::commit_object::CommitObject;
+use crate::commit_pointer::CommitPointer;
+use crate::custom_error::ChakError;
 // pub struct CompareOrderStructure {
 //     pub previous_content: HashedContent,
 //     pub new_content: HashedContent,
@@ -24,20 +29,15 @@ pub struct BlobObjectPointer {
     fold_name: String,
     file_name: String,
 }
-impl_hash_pointer_common_traits!(BlobObjectPointer);
+impl_hash_pointer_common_traits!(BlobObjectPointer, BlobObject);
+
 impl BlobObjectPointer {
 
-    fn own(hash_pointer: &HashPointer) -> BlobObjectPointer {
-        BlobObjectPointer {
-            fold_name: hash_pointer.get_fold_name(),
-            file_name: hash_pointer.get_file_name(),
-        }
-    }
-    pub fn save_blob(hashed_content: BlobObject) -> BlobObjectPointer {
+    pub fn save_blob(hashed_content: BlobObject) -> Result<BlobObjectPointer, ChakError> {
         Self::own(&save_entity::< BlobObject>(&hashed_content))
     }
 
-    pub fn save_blob_from_file(path_to_file: &Path) -> BlobObjectPointer {
+    pub fn save_blob_from_file(path_to_file: &Path) -> Result<BlobObjectPointer, ChakError> {
         let hashed_content = BlobObject::hashed_content_from_path(path_to_file);
         Self::save_blob(hashed_content)
     }

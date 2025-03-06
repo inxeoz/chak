@@ -6,13 +6,13 @@ use std::path::PathBuf;
 use indexmap::IndexMap;
 use crate::config::root_trees_fold;
 use crate::custom_error::ChakError;
-use crate::hash_pointer::HashPointerCommonTraits;
-use crate::root_tree_pointer::RootTreeHashPointer;
+use crate::root_tree_pointer::{ RootTreePointer};
 use crate::nested_tree_pointer::NestedTreeHashPointer;
 pub(crate) use crate::nested_tree_object::NestedTreeObject;
 use crate::object::ObjectTraits;
-use crate::util::{deserialize_file_content, save_or_create_file};
+use crate::util::{deserialize_file_content};
 use crate::version_head_pointer::VersionHeadPointer;
+use crate::chak_traits::HashPointerTraits;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RootTreeObject {
@@ -21,7 +21,7 @@ pub struct RootTreeObject {
 }
 
 impl ObjectTraits for RootTreeObject {
-    fn containing_folder(&self) -> PathBuf {
+    fn containing_folder() -> PathBuf {
         root_trees_fold()
     }
 }
@@ -63,7 +63,7 @@ impl RootTreeObject {
 
     pub fn get_root_object() -> Result<RootTreeObject, ChakError> {
         // from commit ,getting pointer to previous tree structure that represent the file/folder hierarchy
-        match RootTreeHashPointer::get_latest_pointer_from_commit_log() {
+        match RootTreePointer::get_latest_pointer_from_commit_log() {
             Ok(latest_tree_pointer) => {
 
                 //fetching latest tree from trees fold and converting it to TreeObject so that we can use in our program

@@ -18,7 +18,7 @@ pub struct NestedTreeObject {
 }
 
 impl ObjectTraits for NestedTreeObject {
-    fn containing_folder(&self) -> PathBuf {
+    fn containing_folder() -> PathBuf {
         nested_trees_fold()
     }
 }
@@ -51,15 +51,17 @@ impl NestedTreeObject {
     // let updated_version_head_hash_pointer =
     // version_head.create_version(blob_hash_pointer.clone());
 
-    pub fn add_file_child(&mut self, file_entry: &Path, entry_name: &str) {
+    pub fn add_file_child(&mut self, file_entry: &Path, entry_name: &str) -> Result<(), ChakError> {
 
-        let new_blob_hash_pointer = BlobObjectPointer::save_blob_from_file(&file_entry);
+        let new_blob_hash_pointer = BlobObjectPointer::save_blob_from_file(&file_entry)?;
         if let Some(mut existing_version) = self.file_children.get_mut(&entry_name.to_string()) {
 
             let mut version_head = existing_version.load_version_head();
             let updated_version_head_hash_pointer =
-                version_head.create_version(new_blob_hash_pointer.clone());
+                version_head.create_version(new_blob_hash_pointer.clone())?;
             self.file_children.insert(entry_name.to_string(), updated_version_head_hash_pointer);
+
+            Ok(())
 
            // if was_it_registered(existing_version.clone(), &version_head_fold()) {
            //
@@ -67,8 +69,9 @@ impl NestedTreeObject {
 
         } else {
             let new_version_head_hash_pointer =
-                VersionHeadPointer::save_version_head(&VersionHeadObject::new(new_blob_hash_pointer, None));
+                VersionHeadPointer::save_version_head(&VersionHeadObject::new(new_blob_hash_pointer, None))?;
             self.file_children.insert(entry_name.to_string(), new_version_head_hash_pointer);
+            Ok(())
         }
     }
 

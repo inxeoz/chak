@@ -3,6 +3,7 @@ use crate::blob_pointer::{BlobObjectPointer};
 use serde::{Deserialize, Serialize};
 use crate::blob_object::{BlobObject, CompareOrderStructure};
 use crate::config::version_head_fold;
+use crate::custom_error::ChakError;
 use crate::object::ObjectTraits;
 use crate::version_head_pointer::VersionHeadPointer;
 use crate::version_object::VersionObject;
@@ -15,7 +16,7 @@ pub struct VersionHeadObject {
 }
 
 impl ObjectTraits for VersionHeadObject {
-    fn containing_folder(&self) -> PathBuf {
+    fn containing_folder() -> PathBuf {
         version_head_fold()
     }
 }
@@ -45,7 +46,7 @@ impl VersionHeadObject {
         self.pointer_to_version = Some(new_version_hash);
     }
 
-    pub fn create_version(&mut self, new_blob_hash: BlobObjectPointer) -> VersionHeadPointer {
+    pub fn create_version(&mut self, new_blob_hash: BlobObjectPointer) -> Result<VersionHeadPointer, ChakError> {
         let blob_hashed_content = new_blob_hash.load_blob();
         let previous_blob_hashed_content = self.pointer_to_blob.load_blob();
 
@@ -55,7 +56,7 @@ impl VersionHeadObject {
         });
 
         let new_version_hashed = VersionObject::new(diff_biased_previous, self.pointer_to_version.clone());
-        let latest_version_hash_pointer = VersionPointer::save_version(&new_version_hashed);
+        let latest_version_hash_pointer = VersionPointer::save_version(&new_version_hashed)?;
 
         self.change_version(latest_version_hash_pointer);
         self.change_blob(new_blob_hash);

@@ -9,7 +9,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use crate::config::{ REGISTER, VCS_FOLDER};
 use crate::custom_error::ChakError;
-use crate::hash_pointer::HashPointerCommonTraits;
+use crate::chak_traits::{ HashPointerTraits};
 
 pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, io::Error> {
     let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
@@ -129,7 +129,7 @@ pub fn string_content_to_string_vec(content: &str) -> Vec<String> {
 
 
 
-pub fn was_it_registered<T : HashPointerCommonTraits> (pointer: T, dir:&Path) -> bool {
+pub fn was_it_registered<T : HashPointerTraits> (pointer: T, dir:&Path) -> bool {
 
     if let Ok(register )= File::open(dir.join(REGISTER)) {
         for line in file_to_lines(&register) {
