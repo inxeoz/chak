@@ -26,7 +26,7 @@ pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
         get_project_dir(),
         &mut main_ignore_builder,
         &mut as_nested_tree, // this as nested creating new clone of root disconnected one
-    );
+    )?;
 
     let new_root_tree_pointer = RootTreePointer::save_tree(&mut RootTreeObject::from(as_nested_tree))?;
     //attaching the updated new tree pointer to stage temporarily because tree pointer can be changed util its commited
@@ -55,7 +55,7 @@ pub fn dir_snapshot(
     dir_path: &Path,
     main_ignore_builder: &mut GitignoreBuilder,
     tree_ref: &mut NestedTreeObject,
-) {
+)  -> Result<(), ChakError> {
     assert!(dir_path.is_dir(), "Path is not a directory");
 
     if vcs_config.vcs_work_with_nested_ignore_file {
@@ -79,11 +79,11 @@ pub fn dir_snapshot(
             .to_string();
 
         if entry.is_file() {
-            tree_ref.add_file_child(&entry, &entry_name);
+            tree_ref.add_file_child(&entry, &entry_name)?;
         } else {
             //making sure that nested tree object so that we can procede with nested dir
             if ! tree_ref.dir_children.contains_key(&entry_name) {
-                tree_ref.add_dir_child(entry_name.clone(), &mut NestedTreeObject::new());
+                tree_ref.add_dir_child(entry_name.clone(), &mut NestedTreeObject::new())?;
             }
             if let Some( existing_child_tree) =tree_ref.dir_children.get_mut(&entry_name) {
                 dir_snapshot(
@@ -91,10 +91,12 @@ pub fn dir_snapshot(
                     &entry,
                     main_ignore_builder,
                     &mut existing_child_tree.load_tree(),
-                );
+                )?;
             }
         }
     }
+
+    Ok(())
 }
 
 pub fn parse_ignore(
