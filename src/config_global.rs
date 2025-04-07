@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
-use crate::config::{get_project_dir, Config};
+use crate::config::{get_current_dir, Config};
 use crate::util::deserialize_file_content;
 pub static MIN_HASH_LENGTH: usize = 3;
 #[derive(Deserialize, Serialize, Debug, Clone)]

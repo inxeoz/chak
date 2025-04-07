@@ -1,27 +1,26 @@
 use crate::config_global::GlobalConfig;
 use crate::custom_error::ChakError;
 use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};
-use libc::FILE;
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
-use std::ffi::{OsStr, OsString};
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 pub static CURRENT_DIR: OnceCell<PathBuf> = OnceCell::new();
 
-pub static VCS_FOLDER: &str = ".chak/";
+pub static VCS_FOLDER: &str = ".chak";
 pub static VCS_CONFIG: &str = "config.toml";
 pub static VCS_IGNORE_FILE: &str = ".ignore";
 pub static REGISTER: &str = "entries.txt";
-pub fn get_project_dir() -> &'static PathBuf {
+pub static mut WORKING_DIR: Option<PathBuf> = None;
+
+pub fn get_current_dir() -> &'static PathBuf {
     CURRENT_DIR.get_or_init(|| {
         env::current_dir()
             .expect("Could not get current directory")
-            .join("example") // it should be removed while releasing application for deployment or release
+            .join("aworkspace") // it should be removed while releasing application for deployment or release
     })
 }
 
@@ -61,7 +60,7 @@ impl Config {
     }
 }
 pub fn vcs_fold() -> PathBuf {
-    get_project_dir().join(VCS_FOLDER)
+    get_current_dir().join(VCS_FOLDER)
 }
 pub fn blob_fold() -> PathBuf {
     vcs_fold().join("blobs")
@@ -85,16 +84,20 @@ pub fn nested_trees_fold() -> PathBuf {
     vcs_fold().join("nested_trees")
 }
 
-pub fn essentials_folds_to_create() -> Vec<PathBuf> {
+
+
+pub fn essentials_folds_to_create() -> Vec<String> {
     vec![
-        vcs_fold(),
-        blob_fold(),
-        versions_fold(),
-        root_trees_fold(),
-        commits_fold(),
-        nested_trees_fold()
+        VCS_FOLDER.to_string(),
+        "blobs".to_string(),
+        "versions".to_string(),
+        "root_trees".to_string(),
+        "commits".to_string(),
+        "version_heads".to_string(),
     ]
+
 }
+
 
 pub fn commit_log_file_path() -> PathBuf {
     vcs_fold().join("commit.log")
@@ -108,11 +111,11 @@ pub fn config_file_path() -> PathBuf {
     vcs_fold().join(VCS_CONFIG)
 }
 
-pub fn essentials_files_to_create() -> Vec<PathBuf> {
+pub fn essentials_files_to_create() -> Vec<String> {
     vec![
-        stage_file_path(),
-        config_file_path(),
-        commit_log_file_path(),
+        "stage".to_string(),
+        "commit.log".to_string(),
+        VCS_CONFIG.to_string()
     ]
 }
 
@@ -144,8 +147,9 @@ pub fn get_config() -> Config {
         .unwrap_or(Config::new(&GlobalConfig::new()))
 }
 
-pub fn save_config(config: &Config) {
+pub fn save_config(config: &Config, project_folder: &Path) -> Result<(), ChakError> {
     let serialized_config = serialize_struct(config);
-    save_or_create_file(&config_file_path(), Some(&serialized_config), false, None)
+    save_or_create_file(&project_folder.join(VCS_CONFIG), Some(&serialized_config), false, None)
         .expect("Could not save config");
+    Ok(())
 }

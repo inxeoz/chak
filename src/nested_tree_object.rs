@@ -54,7 +54,7 @@ impl NestedTreeObject {
     pub fn add_file_child(&mut self, file_entry: &Path, entry_name: &str) -> Result<(), ChakError> {
 
         let new_blob_hash_pointer = BlobObjectPointer::save_blob_from_file(&file_entry)?;
-        if let Some(mut existing_version) = self.file_children.get_mut(&entry_name.to_string()) {
+        if let Some( existing_version) = self.file_children.get_mut(&entry_name.to_string()) {
 
             let mut version_head = existing_version.load_version_head();
             let updated_version_head_hash_pointer =

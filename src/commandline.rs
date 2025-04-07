@@ -38,7 +38,9 @@ pub enum RemoteCommand {
 #[derive(Debug, Subcommand)]
 enum Commands {
     /// Initializes a new repository
-    Init,
+    Init {
+        project_name: Option<String>,
+    },
     /// Commits changes
     Commit {
         /// Commit message
@@ -79,13 +81,12 @@ enum Commands {
 pub fn parse_commandline() {
     let args = Args::parse();
 
-
-
     // Match against the commands
     match args.command {
-        Some(Commands::Init {}) => {
+        Some(Commands::Init {project_name}) => {
             // Add logic for repository initialization
-            init().expect("cant init the system");
+
+            init(project_name).expect("cant init the system");
         }
 
         Some(Commands::Add { files }) => {

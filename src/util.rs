@@ -140,12 +140,12 @@ pub fn was_it_registered<T : HashPointerTraits> (pointer: T, dir:&Path) -> bool 
 }
 #[cfg(test)]
 pub mod tests {
-    use crate::config::get_project_dir;
+    use crate::config::get_current_dir;
     use crate::util::save_or_create_file;
 
     #[test]
     pub fn test_save_or_create() {
-        save_or_create_file(&get_project_dir().join("test.txt"), Some("i am"), false, None).unwrap();
-        save_or_create_file(&get_project_dir().join("test.txt"), Some("i am"), true, Some("\n")).unwrap();
+        save_or_create_file(&get_current_dir().join("test.txt"), Some("i am"), false, None).unwrap();
+        save_or_create_file(&get_current_dir().join("test.txt"), Some("i am"), true, Some("\n")).unwrap();
     }
 }

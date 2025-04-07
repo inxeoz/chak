@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
-use crate::config::{get_config, get_project_dir, vcs_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
+use crate::config::{get_config, get_current_dir, vcs_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
 use crate::custom_error::ChakError;
 use crate::root_tree_pointer::RootTreePointer;
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
@@ -10,8 +10,8 @@ use crate::util::read_directory_entries;
 
 pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     //all in one ignore vec that handles multiple ignore file present in nested folder
-    let mut main_ignore_builder = GitignoreBuilder::new(get_project_dir());
-    let ignore_file = get_project_dir().join(VCS_IGNORE_FILE);
+    let mut main_ignore_builder = GitignoreBuilder::new(get_current_dir());
+    let ignore_file = get_current_dir().join(VCS_IGNORE_FILE);
     main_ignore_builder.add(ignore_file); // there is no need to ignore ingorefile
     main_ignore_builder.add(VCS_FOLDER); //i want to ignore chak folder at start or top ".chak/"
 
@@ -23,7 +23,7 @@ pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     //here we start taking new updated snapshot of our directory from project root dir, and it gives as the latest updated tree pointer
     dir_snapshot(
         vcs_config,
-        get_project_dir(),
+        get_current_dir(),
         &mut main_ignore_builder,
         &mut as_nested_tree, // this as nested creating new clone of root disconnected one
     )?;
@@ -56,7 +56,7 @@ pub fn dir_snapshot(
     main_ignore_builder: &mut GitignoreBuilder,
     tree_ref: &mut NestedTreeObject,
 )  -> Result<(), ChakError> {
-    assert!(dir_path.is_dir(), "Path is not a directory");
+    assert!(dir_path.is_dir(), "Path is not a directory");//check condition or panic
 
     if vcs_config.vcs_work_with_nested_ignore_file {
         main_ignore_builder.add(dir_path.join(VCS_IGNORE_FILE));
@@ -145,12 +145,17 @@ pub fn parse_ignore_for_entries(
     allowed_entries.into_iter().collect()
 }
 pub fn command_add(files: Vec<String>) {
+
     let config = get_config();
 
     if vcs_fold().exists() && vcs_fold().is_dir() {
         if files.contains(&".".to_string()) {
             //i have to fix this in future check for . in first string
             start_snapshot(&config).expect("cant start the snapshot");
+        }else {
+            for file in files {
+                println!("adding {}", file);
+            }
         }
     } else {
         println!("No vcs_presence configured. could not applied add operations.");

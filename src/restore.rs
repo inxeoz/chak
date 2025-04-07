@@ -1,4 +1,4 @@
-use crate::config::get_project_dir;
+use crate::config::get_current_dir;
 use crate::util::save_or_create_file;
 use std::fs::create_dir_all;
 use std::io;
@@ -35,7 +35,7 @@ pub fn command_restore(files: Vec<String>) {
     if files.contains(&".".to_string()) {
         match RootTreePointer::get_latest_pointer_from_stage() {
             Ok(latest_tree_pointer) => {
-                start_restoring(latest_tree_pointer.load_tree().as_nested_tree(), get_project_dir())
+                start_restoring(latest_tree_pointer.load_tree().as_nested_tree(), get_current_dir())
                     .expect("Failed to start restoring.");
             }
             Err(e) => {

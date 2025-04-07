@@ -95,7 +95,7 @@ impl BlobObject {
 //
 // #[cfg(test)]
 // mod tests {
-//     use crate::config::get_project_dir;
+//     use crate::config::get_current_dir;
 //     use crate::util::{deserialize_file_content, serialize_struct};
 //     use crate::diff_algo::{compare_hashed_content_biased_previous, hashed_content_from_file, HashedContent};
 //     use crate::hashing::{HashPointer, _hash_pointer_from_hash_string};
@@ -117,7 +117,7 @@ impl BlobObject {
 //         let diff_base_1 = compare_hashed_content_biased_previous(&file1_content, &file2_content);
 //         let serialized_1 = serialize_struct(&diff_base_1);
 //         save_or_create_file(
-//             &get_project_dir().join("restore").join("diff1.json"),
+//             &get_current_dir().join("restore").join("diff1.json"),
 //             Some(&serialized_1),
 //             false,
 //             None
@@ -128,7 +128,7 @@ impl BlobObject {
 //         //     Some(_hash_pointer_from_hash_string("restore".to_string()));
 //         let serialized_2 = serialize_struct(&diff_base_2);
 //         save_or_create_file(
-//             &get_project_dir().join("restore").join("diff2.json"),
+//             &get_current_dir().join("restore").join("diff2.json"),
 //             Some(&serialized_2),
 //             false,
 //             None
@@ -144,13 +144,13 @@ impl BlobObject {
 //         //
 //         // // Generate mappings
 //         // let diff2 = deserialize_file_content::<HashedContent>(
-//         //     &get_project_dir().join("restore").join("diff2.json"),
+//         //     &get_current_dir().join("restore").join("diff2.json"),
 //         // )
 //         // .ok()
 //         // .expect("restore failed");
 //         //
 //         // let diff1 = deserialize_file_content::<HashedContent>(
-//         //     &get_project_dir().join("restore").join("diff1.json"),
+//         //     &get_current_dir().join("restore").join("diff1.json"),
 //         // )
 //         // .ok()
 //         // .expect("restore failed");
@@ -161,7 +161,7 @@ impl BlobObject {
 //         //
 //         //     let serialzed = serialize_struct(&file2_content);
 //         //     save_or_create_file(
-//         //         &get_project_dir().join("restore").join("restored2.json"),
+//         //         &get_current_dir().join("restore").join("restored2.json"),
 //         //         Some(&serialzed),
 //         //         false,
 //         //         None
@@ -173,7 +173,7 @@ impl BlobObject {
 //         //
 //         //         let serialzed = serialize_struct(&file1_content);
 //         //         save_or_create_file(
-//         //             &get_project_dir().join("restore").join("restored1.json"),
+//         //             &get_current_dir().join("restore").join("restored1.json"),
 //         //             Some(&serialzed),
 //         //             false,
 //         //             None

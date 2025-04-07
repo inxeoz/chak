@@ -1,7 +1,7 @@
 use crate::restricted;
 use crate::chak_traits::HashPointerTraits;
 use crate::config::{
-    commit_log_file_path, commits_fold, get_commit_log_file, get_project_dir, get_stage_file,
+    commit_log_file_path, commits_fold, get_commit_log_file, get_current_dir, get_stage_file,
     root_trees_fold, stage_file_path, versions_fold,
 };
 use serde::{Deserialize, Serialize};
