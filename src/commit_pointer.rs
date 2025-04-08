@@ -62,8 +62,7 @@ pub fn command_commit(m:String) -> Result<(), ChakError> {
 
     if let Ok(all_tree_pointers) = RootTreePointer::get_pointers_from_stage(){
 
-        for (index, tree_pointer) in all_tree_pointers.iter().rev().enumerate(){
-            if index == 0 {
+        for (index, tree_pointer) in all_tree_pointers.iter().rev().enumerate(){//latest pointer from stage
                 let commit_pointer = CommitPointer::save_commit(&create_commit(
                     m.clone(),
                     Some("inxeoz".to_string()),
@@ -72,10 +71,10 @@ pub fn command_commit(m:String) -> Result<(), ChakError> {
 
                 append_commit_hash_pointer_to_commit_log_file(commit_pointer);
                 return Ok(());
-            }
+
         }
         std::fs::write(stage_file_path(), "").map_err(
-            |_| ChakError::CustomError("Failed to save commit to commit log".to_string())
+            |_| ChakError::CustomError("Failed to clear stage ".to_string())
         )
     } else {
         Err(ChakError::CustomError("No stage file".to_string()))

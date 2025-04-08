@@ -6,6 +6,7 @@ use crate::config::{get_config, get_current_dir, vcs_fold, Config, VCS_FOLDER, V
 use crate::custom_error::ChakError;
 use crate::root_tree_pointer::RootTreePointer;
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
+use crate::takesnapshot::{start_individual_snapshot};
 use crate::util::read_directory_entries;
 
 pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
@@ -149,15 +150,20 @@ pub fn command_add(files: Vec<String>) {
     let config = get_config();
 
     if vcs_fold().exists() && vcs_fold().is_dir() {
+
         if files.contains(&".".to_string()) {
             //i have to fix this in future check for . in first string
             start_snapshot(&config).expect("cant start the snapshot");
         }else {
             for file in files {
                 println!("adding {}", file);
+                start_individual_snapshot(&get_config(), file).expect("TODO: panic message");
             }
         }
     } else {
         println!("No vcs_presence configured. could not applied add operations.");
     }
 }
+
+
+

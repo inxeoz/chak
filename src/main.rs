@@ -31,6 +31,7 @@ mod commit_object;
 mod chak_traits;
 mod trait_macros;
 mod restricted;
+mod takesnapshot;
 //test
 
 

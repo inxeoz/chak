@@ -85,7 +85,6 @@ pub fn parse_commandline() {
     match args.command {
         Some(Commands::Init {project_name}) => {
             // Add logic for repository initialization
-
             init(project_name).expect("cant init the system");
         }
 

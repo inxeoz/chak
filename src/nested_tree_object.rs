@@ -32,6 +32,10 @@ impl NestedTreeObject {
             // dir_children: Default::default(),
         }
     }
+
+    //why we have not configured add_dir_child automatically ???
+    //because this adding directory depeneds on how to define and works the directory
+    //
     pub fn add_dir_child(&mut self, dir_name: String, dir_object: &mut NestedTreeObject) -> Result<(), ChakError> {
         self.dir_children.insert(dir_name, NestedTreeHashPointer::save_tree(dir_object)?);
         Ok(())
@@ -53,7 +57,7 @@ impl NestedTreeObject {
 
     pub fn add_file_child(&mut self, file_entry: &Path, entry_name: &str) -> Result<(), ChakError> {
 
-        let new_blob_hash_pointer = BlobObjectPointer::save_blob_from_file(&file_entry)?;
+        let new_blob_hash_pointer = BlobObjectPointer::save_blob_from_path(&file_entry)?;
         if let Some( existing_version) = self.file_children.get_mut(&entry_name.to_string()) {
 
             let mut version_head = existing_version.load_version_head();
