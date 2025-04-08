@@ -98,7 +98,7 @@ pub fn parse_commandline() {
             command_restore(files)
         } ,
         Some(Commands::Status) => {
-            command_status();
+            command_status().expect("TODO: panic message");
         }
         Some(Commands::Remote {command})  => command_remote(&command),
         Some(Commands::Log) => {

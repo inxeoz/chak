@@ -1,13 +1,11 @@
-use std::collections::HashSet;
-use std::path::{Path, PathBuf};
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use ignore::Match;
-use crate::config::{get_config, get_current_dir, vcs_fold, Config, VCS_FOLDER, VCS_IGNORE_FILE};
+use crate::config::{Config, VCS_FOLDER, VCS_IGNORE_FILE, get_config, get_current_dir, vcs_fold};
 use crate::custom_error::ChakError;
-use crate::root_tree_pointer::RootTreePointer;
+use crate::handle_ignore::{handle_ignore_file, parse_ignore};
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
-use crate::takesnapshot::{start_individual_snapshot};
-use crate::util::read_directory_entries;
+use crate::root_tree_pointer::RootTreePointer;
+use crate::takesnapshot::{start_individual_snapshot, take_snapshot};
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
+use std::path::{Path, PathBuf};
 
 pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     //all in one ignore vec that handles multiple ignore file present in nested folder
@@ -29,26 +27,11 @@ pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
         &mut as_nested_tree, // this as nested creating new clone of root disconnected one
     )?;
 
-    let new_root_tree_pointer = RootTreePointer::save_tree(&mut RootTreeObject::from(as_nested_tree))?;
+    let new_root_tree_pointer =
+        RootTreePointer::save_tree(&mut RootTreeObject::from(as_nested_tree))?;
     //attaching the updated new tree pointer to stage temporarily because tree pointer can be changed util its commited
     new_root_tree_pointer.attach_tree_to_stage();
     Ok(())
-}
-
-/// Handles .ignore file processing and adds it to `ignore_build_vec`
-fn handle_ignore_file(
-    main_ignore_builder: &mut GitignoreBuilder,
-    ignore_these_also: Vec<(Option<PathBuf>, &str)>,
-) {
-    if !ignore_these_also.is_empty() {
-        // Add extra ignore rules. Handle errors gracefully.
-        for (base_dir, ignore_this) in ignore_these_also {
-            if let Err(err) = main_ignore_builder.add_line(base_dir, ignore_this) {
-                eprintln!("Error adding ignore rule '{}': {}", ignore_this, err);
-                // We could choose to continue here even with a bad rule
-            }
-        }
-    }
 }
 
 pub fn dir_snapshot(
@@ -56,8 +39,8 @@ pub fn dir_snapshot(
     dir_path: &Path,
     main_ignore_builder: &mut GitignoreBuilder,
     tree_ref: &mut NestedTreeObject,
-)  -> Result<(), ChakError> {
-    assert!(dir_path.is_dir(), "Path is not a directory");//check condition or panic
+) -> Result<(), ChakError> {
+    assert!(dir_path.is_dir(), "Path is not a directory"); //check condition or panic
 
     if vcs_config.vcs_work_with_nested_ignore_file {
         main_ignore_builder.add(dir_path.join(VCS_IGNORE_FILE));
@@ -68,10 +51,12 @@ pub fn dir_snapshot(
         );
     }
 
-    let allowed_entries = parse_ignore(dir_path, main_ignore_builder).unwrap_or_default();
+    let allowed_entries = parse_ignore(dir_path, main_ignore_builder).map(|(mut v1, v2)| {
+        v1.extend(v2);
+        return v1;
+    })?;
 
-    for entry in allowed_entries
-    {
+    for entry in allowed_entries {
         let entry_name = entry
             .file_name()
             .expect("Could not get file name")
@@ -82,17 +67,25 @@ pub fn dir_snapshot(
         if entry.is_file() {
             tree_ref.add_file_child(&entry, &entry_name)?;
         } else {
-            //making sure that nested tree object so that we can procede with nested dir
-            if ! tree_ref.dir_children.contains_key(&entry_name) {
-                tree_ref.add_dir_child(entry_name.clone(), &mut NestedTreeObject::new())?;
-            }
-            if let Some( existing_child_tree) =tree_ref.dir_children.get_mut(&entry_name) {
+            if let Some(existing_child_tree) = tree_ref.dir_children.get_mut(&entry_name) {
                 dir_snapshot(
                     vcs_config,
                     &entry,
                     main_ignore_builder,
                     &mut existing_child_tree.load_tree(),
                 )?;
+            } else {
+                //making sure that nested tree object so that we can procede with nested dir
+                let mut new_dir_nested_tree_object = NestedTreeObject::new();
+
+                dir_snapshot(
+                    vcs_config,
+                    &entry,
+                    main_ignore_builder,
+                    &mut new_dir_nested_tree_object,
+                )?;
+
+                tree_ref.add_dir_child(entry_name, &mut new_dir_nested_tree_object)?;
             }
         }
     }
@@ -100,61 +93,14 @@ pub fn dir_snapshot(
     Ok(())
 }
 
-pub fn parse_ignore(
-    dir_path: &Path,
-    ignore_builder: &mut GitignoreBuilder,
-) -> Result< Vec<PathBuf>, ChakError > {
-    // Read and filter directory entries
-    let (mut detected_dir_entries, mut detected_file_entries) = read_directory_entries(dir_path)?;
-
-    let mut allowed_dir_entries = Vec::new();
-    let mut allowed_file_entries = Vec::new();
-    if let Ok(build_ignore_rules) = ignore_builder.build() {
-        allowed_dir_entries =
-            parse_ignore_for_entries(&mut detected_dir_entries, &build_ignore_rules);
-        allowed_file_entries =
-            parse_ignore_for_entries(&mut detected_file_entries, &build_ignore_rules);
-    }
-
-    allowed_file_entries.extend(allowed_dir_entries);
-    Ok(allowed_file_entries)
-}
-
-pub fn parse_ignore_for_entries(
-    detected_entries: &mut Vec<PathBuf>,
-    ignore_build: &Gitignore,
-) -> Vec<PathBuf> {
-    let mut allowed_entries = HashSet::new();
-
-    for entry in detected_entries {
-        match ignore_build.matched(entry.to_str().unwrap_or(""), entry.is_dir()) {
-            // can i use "#" for default
-            Match::None => {
-                allowed_entries.insert(entry.clone());
-            }
-            Match::Ignore(_) => {
-                if allowed_entries.contains(entry.as_path()) {
-                    allowed_entries.remove(&entry.clone());
-                }
-                println!("Ignored: {}", entry.display());
-            }
-            Match::Whitelist(_) => {
-                allowed_entries.insert(entry.clone());
-            }
-        }
-    }
-    allowed_entries.into_iter().collect()
-}
 pub fn command_add(files: Vec<String>) {
-
     let config = get_config();
 
     if vcs_fold().exists() && vcs_fold().is_dir() {
-
         if files.contains(&".".to_string()) {
             //i have to fix this in future check for . in first string
             start_snapshot(&config).expect("cant start the snapshot");
-        }else {
+        } else {
             for file in files {
                 println!("adding {}", file);
                 start_individual_snapshot(&get_config(), file).expect("TODO: panic message");
@@ -164,6 +110,3 @@ pub fn command_add(files: Vec<String>) {
         println!("No vcs_presence configured. could not applied add operations.");
     }
 }
-
-
-
