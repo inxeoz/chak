@@ -1,8 +1,7 @@
 use crate::restricted;
 use crate::chak_traits::HashPointerTraits;
-use std::fs::File;
 use serde::{Deserialize, Serialize};
-use crate::config::{commit_log_file_path, commits_fold, get_commit_log_file, root_trees_fold, stage_file_path};
+use crate::config::{get_commit_log_file_path, get_commits_fold_path, get_commit_log_file, get_stage_file_path};
 use crate::common::{load_entity, save_entity};
 
 use crate::impl_hash_pointer_common_traits;
@@ -25,11 +24,11 @@ impl_hash_pointer_common_traits!(CommitPointer, CommitObject);
 impl CommitPointer {
 
     pub fn save_commit(commit: &CommitObject) -> Result<CommitPointer, ChakError> {
-        Self::own(&save_entity(commit))
+        Self::own(&save_entity(commit)?)
     }
 
     pub fn load_commit(&self) -> CommitObject {
-        load_entity::<Self, CommitObject>(self, &commits_fold())
+        load_entity::<Self, CommitObject>(self, &get_commits_fold_path())
     }
 
     pub fn get_latest_commit_hash_pointer() -> Result<CommitPointer, ChakError> {
@@ -51,10 +50,10 @@ pub fn create_commit(
     }
 }
 
-pub fn append_commit_hash_pointer_to_commit_log_file(commit_hash_pointer: CommitPointer ) {
+pub fn append_commit_hash_pointer_to_commit_log_file(commit_hash_pointer: CommitPointer )  {
 
     save_or_create_file(
-        &commit_log_file_path(), Some(&commit_hash_pointer.get_one_hash()), true, Some("\n")
+        &get_commit_log_file_path(), Some(&commit_hash_pointer.get_one_hash()), true, Some("\n")
     ).expect("cant save commit to commit log");
 }
 
@@ -62,7 +61,7 @@ pub fn command_commit(m:String) -> Result<(), ChakError> {
 
     if let Ok(all_tree_pointers) = RootTreePointer::get_pointers_from_stage(){
 
-        for (index, tree_pointer) in all_tree_pointers.iter().rev().enumerate(){//latest pointer from stage
+        for  tree_pointer in all_tree_pointers.iter().rev(){//latest pointer from stage
                 let commit_pointer = CommitPointer::save_commit(&create_commit(
                     m.clone(),
                     Some("inxeoz".to_string()),
@@ -71,9 +70,9 @@ pub fn command_commit(m:String) -> Result<(), ChakError> {
 
                 append_commit_hash_pointer_to_commit_log_file(commit_pointer);
                 return Ok(());
-
         }
-        std::fs::write(stage_file_path(), "").map_err(
+
+        std::fs::write(get_stage_file_path(), "").map_err(
             |_| ChakError::CustomError("Failed to clear stage ".to_string())
         )
     } else {

@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+
 use crate::commandline::RemoteCommand;
 
 pub fn command_remote(remote_command: &RemoteCommand) {

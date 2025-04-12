@@ -10,13 +10,22 @@ use std::path::{Path, PathBuf};
 
 pub static CURRENT_DIR: OnceCell<PathBuf> = OnceCell::new();
 
-pub static VCS_FOLDER: &str = ".chak";
-pub static VCS_CONFIG: &str = "config.toml";
-pub static VCS_IGNORE_FILE: &str = ".ignore";
-pub static REGISTER: &str = "entries.txt";
+pub static APPLICATION_NAME: &str = "chakvcs";
+pub static CHAK_FOLDER_NAME: &str = ".chak/"; //i think if its a folder then it should be suffix with '/'
+pub static VCS_CONFIG_NAME: &str = "config.toml";
+pub static VCS_IGNORE_FILE_NAME: &str = ".ignore";
+pub static REGISTER_NAME: &str = "entries.toml";
 pub static mut WORKING_DIR: Option<PathBuf> = None;
+pub static BLOBS_DIR_NAME: &str = "blobs";
+pub static VERSIONS_DIR_NAME: &str = "versions";
+pub static ROOT_TREES_DIR_NAME: &str = "root_trees";
+pub static COMMITS_DIR_NAME: &str = "commits";
+pub static NESTED_TREES_DIR_NAME: &str = "nested_trees";
+pub static VERSION_HEADS_DIR_NAME: &str = "version_heads";
+pub static COMMIT_LOG_FILE_NAME: &str = "commit.log";
+pub static STAGE_FILE_NAME: &str = "stage.toml";
 
-pub fn get_current_dir() -> &'static PathBuf {
+pub fn get_current_dir_path() -> &'static PathBuf {
     CURRENT_DIR.get_or_init(|| {
         env::current_dir()
             .expect("Could not get current directory")
@@ -59,70 +68,70 @@ impl Config {
         self.vcs_work_with_nested_ignore_file = value;
     }
 }
-pub fn vcs_fold() -> PathBuf {
-    get_current_dir().join(VCS_FOLDER)
+pub fn get_chak_fold_path() -> PathBuf {
+    get_current_dir_path().join(CHAK_FOLDER_NAME)
 }
-pub fn blob_fold() -> PathBuf {
-    vcs_fold().join("blobs")
+pub fn get_blob_fold_path() -> PathBuf {
+    get_chak_fold_path().join(BLOBS_DIR_NAME)
 }
-pub fn versions_fold() -> PathBuf {
-    vcs_fold().join("versions")
+pub fn get_versions_fold_path() -> PathBuf {
+    get_chak_fold_path().join(VERSIONS_DIR_NAME)
 }
-pub fn root_trees_fold() -> PathBuf {
-    vcs_fold().join("root_trees")
-}
-
-pub fn commits_fold() -> PathBuf {
-    vcs_fold().join("commits")
+pub fn get_root_trees_fold_path() -> PathBuf {
+    get_chak_fold_path().join(ROOT_TREES_DIR_NAME)
 }
 
-pub fn version_head_fold() -> PathBuf {
-    vcs_fold().join("version_heads")
+pub fn get_commits_fold_path() -> PathBuf {
+    get_chak_fold_path().join(COMMITS_DIR_NAME)
 }
 
-pub fn nested_trees_fold() -> PathBuf {
-    vcs_fold().join("nested_trees")
+pub fn get_version_head_fold_path() -> PathBuf {
+    get_chak_fold_path().join(VERSION_HEADS_DIR_NAME)
+}
+
+pub fn get_nested_trees_fold_path() -> PathBuf {
+    get_chak_fold_path().join(NESTED_TREES_DIR_NAME)
 }
 
 
 
 pub fn essentials_folds_to_create() -> Vec<String> {
     vec![
-        VCS_FOLDER.to_string(),
-        "blobs".to_string(),
-        "versions".to_string(),
-        "root_trees".to_string(),
-        "commits".to_string(),
-        "version_heads".to_string(),
+        BLOBS_DIR_NAME.to_string(),
+        VERSIONS_DIR_NAME.to_string(),
+        ROOT_TREES_DIR_NAME.to_string(),
+        COMMITS_DIR_NAME.to_string(),
+        NESTED_TREES_DIR_NAME.to_string(),
+        COMMITS_DIR_NAME.to_string(),
     ]
 
 }
 
 
-pub fn commit_log_file_path() -> PathBuf {
-    vcs_fold().join("commit.log")
+pub fn get_commit_log_file_path() -> PathBuf {
+    get_chak_fold_path().join(COMMIT_LOG_FILE_NAME)
 }
 
-pub fn stage_file_path() -> PathBuf {
-    vcs_fold().join("stage")
+pub fn get_stage_file_path() -> PathBuf {
+    get_chak_fold_path().join(STAGE_FILE_NAME)
 }
 
-pub fn config_file_path() -> PathBuf {
-    vcs_fold().join(VCS_CONFIG)
+pub fn get_config_file_path() -> PathBuf {
+    get_chak_fold_path().join(VCS_CONFIG_NAME)
 }
 
 pub fn essentials_files_to_create() -> Vec<String> {
     vec![
-        "stage".to_string(),
-        "commit.log".to_string(),
-        VCS_CONFIG.to_string()
+        STAGE_FILE_NAME.to_string(),
+        COMMIT_LOG_FILE_NAME.to_string(),
+        VCS_CONFIG_NAME.to_string()
     ]
 }
 
 fn _get_file(file_path: &Path) -> Result<File, ChakError> {
     match File::open(file_path) {
         Ok(file) => Ok(file),
-        Err(e) => Err(ChakError::CustomError(format!(
+        Err(_e) => Err(ChakError::CustomError(format!(
             "Could not open file {}",
             file_path.file_name().unwrap().to_string_lossy()
         ))),
@@ -131,25 +140,25 @@ fn _get_file(file_path: &Path) -> Result<File, ChakError> {
 
 //get FILE
 pub fn get_commit_log_file() -> Result<File, ChakError> {
-    _get_file(&commit_log_file_path())
+    _get_file(&get_commit_log_file_path())
 }
 
 pub fn get_stage_file() -> Result<File, ChakError> {
-    _get_file(&stage_file_path())
+    _get_file(&get_stage_file_path())
 }
 
 pub fn get_config_file() -> Result<File, ChakError> {
-    _get_file(&config_file_path())
+    _get_file(&get_config_file_path())
 }
 
 pub fn get_config() -> Config {
-    deserialize_file_content::<Config>(&config_file_path())
+    deserialize_file_content::<Config>(&get_config_file_path())
         .unwrap_or(Config::new(&GlobalConfig::new()))
 }
 
 pub fn save_config(config: &Config, project_folder: &Path) -> Result<(), ChakError> {
-    let serialized_config = serialize_struct(config);
-    save_or_create_file(&project_folder.join(VCS_CONFIG), Some(&serialized_config), false, None)
+    let serialized_config = serialize_struct(config)?;
+    save_or_create_file(&project_folder.join(VCS_CONFIG_NAME), Some(&serialized_config), false, None)
         .expect("Could not save config");
     Ok(())
 }

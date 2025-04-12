@@ -2,7 +2,7 @@ use crate::restricted;
 use crate::chak_traits::HashPointerTraits;
 use serde::{Deserialize, Serialize};
 use crate::common::{load_entity, save_entity};
-use crate::config::versions_fold;
+use crate::config::get_versions_fold_path;
 use crate::impl_hash_pointer_common_traits;
 use crate::version_object::{ VersionObject};
 use std::cmp::Ordering;
@@ -19,10 +19,10 @@ impl_hash_pointer_common_traits!(VersionPointer, VersionObject);
 impl VersionPointer {
 
     pub fn save_version(hashed_version: &VersionObject ) -> Result<VersionPointer, ChakError> {
-        Self::own(&save_entity(hashed_version))
+        Self::own(&save_entity(hashed_version)?)
     }
 
     pub fn load_version(&self) -> VersionObject {
-        load_entity::<Self, VersionObject>(self, &versions_fold())
+        load_entity::<Self, VersionObject>(self, &get_versions_fold_path())
     }
 }

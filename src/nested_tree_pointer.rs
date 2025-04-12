@@ -1,5 +1,5 @@
 use crate::restricted;
-use crate::config::{commits_fold, nested_trees_fold};
+use crate::config::{get_nested_trees_fold_path};
 use crate::common::{load_entity, save_entity};
 use crate::custom_error::ChakError;
 use crate::impl_hash_pointer_common_traits;
@@ -18,10 +18,10 @@ impl_hash_pointer_common_traits!(NestedTreeHashPointer, NestedTreeObject);
 impl NestedTreeHashPointer {
     pub fn save_tree(tree: &mut NestedTreeObject) -> Result<NestedTreeHashPointer, ChakError> {
         tree.sort_children();
-        Self::own(&save_entity(tree))
+        Self::own(&save_entity(tree)?)
     }
     pub fn load_tree(&self) -> NestedTreeObject {
-        load_entity::<Self, NestedTreeObject>(self, &nested_trees_fold())
+        load_entity::<Self, NestedTreeObject>(self, &get_nested_trees_fold_path())
     }
 
 }

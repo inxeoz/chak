@@ -1,10 +1,9 @@
 
 use serde::{Deserialize, Serialize};
 use std::default::Default;
-use std::fs::create_dir_all;
 use std::path::PathBuf;
 use indexmap::IndexMap;
-use crate::config::root_trees_fold;
+use crate::config::get_root_trees_fold_path;
 use crate::custom_error::ChakError;
 use crate::root_tree_pointer::{ RootTreePointer};
 use crate::nested_tree_pointer::NestedTreeHashPointer;
@@ -22,7 +21,7 @@ pub struct RootTreeObject {
 
 impl ObjectTraits for RootTreeObject {
     fn containing_folder() -> PathBuf {
-        root_trees_fold()
+        get_root_trees_fold_path()
     }
 }
 // TreeObject methods
@@ -67,7 +66,7 @@ impl RootTreeObject {
             Ok(latest_tree_pointer) => {
 
                 //fetching latest tree from trees fold and converting it to TreeObject so that we can use in our program
-                match deserialize_file_content::<RootTreeObject>(&root_trees_fold().join(latest_tree_pointer.get_path())) {
+                match deserialize_file_content::<RootTreeObject>(&get_root_trees_fold_path().join(latest_tree_pointer.get_path())) {
                     Ok(tree_object_s) => {
                         Ok(tree_object_s)
                     }

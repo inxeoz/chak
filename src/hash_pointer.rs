@@ -1,8 +1,6 @@
-use crate::commit_object::CommitObject;
-use crate::commit_pointer::CommitPointer;
+
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::path::{Path, PathBuf};
 use crate::chak_traits::HashPointerTraits;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]

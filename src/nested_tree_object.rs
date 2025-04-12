@@ -4,7 +4,7 @@ use std::default::Default;
 use std::path::{Path, PathBuf};
 use indexmap::IndexMap;
 use crate::blob_pointer::BlobObjectPointer;
-use crate::config::nested_trees_fold;
+use crate::config::get_nested_trees_fold_path;
 use crate::custom_error::ChakError;
 use crate::nested_tree_pointer::NestedTreeHashPointer;
 use crate::object::ObjectTraits;
@@ -19,7 +19,7 @@ pub struct NestedTreeObject {
 
 impl ObjectTraits for NestedTreeObject {
     fn containing_folder() -> PathBuf {
-        nested_trees_fold()
+        get_nested_trees_fold_path()
     }
 }
 // TreeObject methods

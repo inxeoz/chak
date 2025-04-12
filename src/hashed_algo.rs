@@ -1,10 +1,10 @@
 
 use indexmap::{IndexMap, IndexSet};
 use itertools::{ Itertools};
-use std::collections::HashMap;
+
 use std::fs::File;
 use std::hash::Hash;
-use std::io::BufRead;
+
 use std::ops::Sub;
 use std::path::Path;
 use crate::blob_object::{BlobObject, CompareOrderStructure};

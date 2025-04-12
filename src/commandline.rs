@@ -3,6 +3,7 @@ use crate::init::init;
 use crate::status::command_status;
 use clap::{Parser, Subcommand};
 use crate::commit_pointer::command_commit;
+use crate::custom_error::ChakError;
 use crate::remote::{command_remote};
 use crate::restore::command_restore;
 
@@ -78,7 +79,7 @@ enum Commands {
     // alias: String,
 }
 
-pub fn parse_commandline() {
+pub fn parse_commandline() -> Result<(), ChakError> {
     let args = Args::parse();
 
     // Match against the commands
@@ -89,7 +90,7 @@ pub fn parse_commandline() {
         }
 
         Some(Commands::Add { files }) => {
-            command_add(files);
+            command_add(files)?;
         }
         Some(Commands::Commit { m }) => {
             command_commit(m).expect("TODO: panic message");
@@ -123,4 +124,6 @@ pub fn parse_commandline() {
             println!("No command provided. Use --help for available commands.");
         }
     }
+
+    Ok(())
 }

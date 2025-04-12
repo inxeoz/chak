@@ -1,18 +1,28 @@
-use crate::config::{Config, VCS_FOLDER, VCS_IGNORE_FILE, get_config, get_current_dir, vcs_fold};
+use crate::config::{
+    CHAK_FOLDER_NAME, Config, VCS_IGNORE_FILE_NAME, get_chak_fold_path, get_config,
+    get_current_dir_path,
+};
 use crate::custom_error::ChakError;
 use crate::handle_ignore::{handle_ignore_file, parse_ignore};
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 use crate::root_tree_pointer::RootTreePointer;
-use crate::takesnapshot::{start_individual_snapshot, take_snapshot};
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use std::path::{Path, PathBuf};
+use crate::takesnapshot::start_individual_snapshot;
+use ignore::gitignore::GitignoreBuilder;
+use std::io;
+use std::path::Path;
 
 pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     //all in one ignore vec that handles multiple ignore file present in nested folder
-    let mut main_ignore_builder = GitignoreBuilder::new(get_current_dir());
-    let ignore_file = get_current_dir().join(VCS_IGNORE_FILE);
+    let mut main_ignore_builder = GitignoreBuilder::new(get_current_dir_path());
+    let ignore_file = get_current_dir_path().join(VCS_IGNORE_FILE_NAME);
     main_ignore_builder.add(ignore_file); // there is no need to ignore ingorefile
-    main_ignore_builder.add(VCS_FOLDER); //i want to ignore chak folder at start or top ".chak/"
+
+    handle_ignore_file(
+        &mut main_ignore_builder,
+        vec![(None, CHAK_FOLDER_NAME)],
+    );
+
+    main_ignore_builder.add(get_chak_fold_path()); //i want to ignore chak folder at start or top ".chak/"
 
     //implement the tree pointer with traversing fold/file and checking hash from tree pointer and so on .. TODO
     //get latest tree pointer from history_log
@@ -22,7 +32,7 @@ pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     //here we start taking new updated snapshot of our directory from project root dir, and it gives as the latest updated tree pointer
     dir_snapshot(
         vcs_config,
-        get_current_dir(),
+        get_current_dir_path(),
         &mut main_ignore_builder,
         &mut as_nested_tree, // this as nested creating new clone of root disconnected one
     )?;
@@ -40,14 +50,18 @@ pub fn dir_snapshot(
     main_ignore_builder: &mut GitignoreBuilder,
     tree_ref: &mut NestedTreeObject,
 ) -> Result<(), ChakError> {
-    assert!(dir_path.is_dir(), "Path is not a directory"); //check condition or panic
+    if !dir_path.is_dir() {
+        return Err(ChakError::CustomError(
+            io::ErrorKind::NotADirectory.to_string(),
+        ));
+    }
 
     if vcs_config.vcs_work_with_nested_ignore_file {
-        main_ignore_builder.add(dir_path.join(VCS_IGNORE_FILE));
+        main_ignore_builder.add(dir_path.join(VCS_IGNORE_FILE_NAME));
     } else {
         handle_ignore_file(
             main_ignore_builder,
-            vec![(Some(dir_path.to_path_buf()), VCS_IGNORE_FILE)],
+            vec![(Some(dir_path.to_path_buf()), VCS_IGNORE_FILE_NAME)],
         );
     }
 
@@ -93,20 +107,22 @@ pub fn dir_snapshot(
     Ok(())
 }
 
-pub fn command_add(files: Vec<String>) {
+pub fn command_add(files: Vec<String>) -> Result<(), ChakError> {
     let config = get_config();
 
-    if vcs_fold().exists() && vcs_fold().is_dir() {
+    if get_chak_fold_path().exists() && get_chak_fold_path().is_dir() {
         if files.contains(&".".to_string()) {
             //i have to fix this in future check for . in first string
-            start_snapshot(&config).expect("cant start the snapshot");
+            start_snapshot(&config)?;
         } else {
             for file in files {
                 println!("adding {}", file);
-                start_individual_snapshot(&get_config(), file).expect("TODO: panic message");
+                start_individual_snapshot(file)?;
             }
         }
     } else {
-        println!("No vcs_presence configured. could not applied add operations.");
+        return Err(ChakError::RepoNotInitialized);
     }
+
+    Ok(())
 }

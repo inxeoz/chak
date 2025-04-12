@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use crate::blob_object::BlobObject;
-use crate::config::{ versions_fold};
+use crate::config::{get_versions_fold_path};
 use crate::object::ObjectTraits;
 use crate::version_pointer::VersionPointer;
 
@@ -13,7 +13,7 @@ pub struct VersionObject {
 
 impl ObjectTraits for VersionObject {
     fn containing_folder() -> PathBuf {
-        versions_fold()
+        get_versions_fold_path()
     }
 }
 

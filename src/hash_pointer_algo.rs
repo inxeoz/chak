@@ -1,16 +1,15 @@
 use crate::config_global::MIN_HASH_LENGTH;
 use crate::custom_error::ChakError;
-use crate::hash_pointer::{HashPointer};
+use crate::hash_pointer::HashPointer;
 use crate::util::file_to_lines;
-use crate::util::{ file_to_string, save_or_create_file,
-};
+use crate::util::{file_to_string, save_or_create_file};
 
+use crate::chak_traits::{ChakPointerTraits, HashPointerTraits};
 use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io;
-use std::io::{BufRead, BufReader, ErrorKind, Read, Write};
-use std::path::{Path, PathBuf};
-use crate::chak_traits::{ChakPointerTraits, HashPointerTraits};
+use std::io::{ BufReader, ErrorKind, Read};
+use std::path::{Path };
 
 impl HashPointer {
     fn _from_hash_string(hash: String) -> Self {
@@ -19,9 +18,11 @@ impl HashPointer {
 
     pub fn from_hash_pointer_string(hash: String) -> Result<Self, ChakError> {
         if hash.len() < MIN_HASH_LENGTH {
-            return Err(ChakError::StdIoError(io::Error::new(
-                ErrorKind::InvalidInput,
-                "Invalid hash string length".to_string(),
+            return Err(ChakError::InvalidHashLength(format!(
+                "{} Hash length {} is too short, length at least {}",
+                hash,
+                hash.len(),
+                MIN_HASH_LENGTH
             )));
         }
         Ok(Self::_from_hash_string(hash))
@@ -61,7 +62,9 @@ impl HashPointer {
         Ok(hash_pointer)
     }
 
-    pub fn from_pointers<T: ChakPointerTraits + HashPointerTraits>(pointers: Vec<T>) -> Result<Self, ChakError> {
+    pub fn from_pointers<T: ChakPointerTraits + HashPointerTraits>(
+        pointers: Vec<T>,
+    ) -> Result<Self, ChakError> {
         if pointers.is_empty() {
             return Err(ChakError::CustomError(
                 "Empty hash pointer vector".to_string(),
@@ -117,7 +120,9 @@ impl HashPointer {
         }
     }
 
-    pub fn get_pointer_lines_from_file<T: HashPointerTraits + ChakPointerTraits >(file: &File) -> Result<Vec<T>, ChakError> {
+    pub fn get_pointer_lines_from_file<T: HashPointerTraits + ChakPointerTraits>(
+        file: &File,
+    ) -> Result<Vec<T>, ChakError> {
         let lines = file_to_lines(file);
         let mut pointers = Vec::<T>::new();
 

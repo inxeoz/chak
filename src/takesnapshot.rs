@@ -1,16 +1,14 @@
-use crate::config::{Config, VCS_FOLDER, VCS_IGNORE_FILE, get_config, get_current_dir, vcs_fold};
+use crate::config::{VCS_IGNORE_FILE_NAME, get_current_dir_path};
 use crate::custom_error::ChakError;
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 use crate::root_tree_pointer::RootTreePointer;
-use crate::util::read_directory_entries;
+
 use ignore::Match;
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use ignore::gitignore::{ GitignoreBuilder};
+use std::path::{ PathBuf};
 
 
 pub fn start_individual_snapshot(
-    vcs_config: &Config,
     entry_string: String,
 ) -> Result<(), ChakError> {
     let mut index = 0usize;
@@ -23,8 +21,8 @@ pub fn start_individual_snapshot(
         .map(|comp| comp.as_os_str().to_string_lossy().into_owned())
         .collect();
 
-    let mut ignore_builder = GitignoreBuilder::new(get_current_dir());
-    let mut path = get_current_dir().to_owned();
+    let mut ignore_builder = GitignoreBuilder::new(get_current_dir_path());
+    let mut path = get_current_dir_path().to_owned();
 
     //get latest tree pointer from history_log
     let mut root_tree = RootTreeObject::get_root_object()
@@ -52,7 +50,7 @@ pub fn take_snapshot(
         return Ok(())
     }
 
-    ignore_builder.add(path.join(VCS_IGNORE_FILE));
+    ignore_builder.add(path.join(VCS_IGNORE_FILE_NAME));
 
     if let Ok(ignore_build) = ignore_builder.build() {
         match ignore_build.matched(
@@ -119,6 +117,6 @@ pub fn take_snapshot(
         }
     }
 
-return Ok(());
+ Ok(())
 }
 

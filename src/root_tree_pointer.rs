@@ -1,8 +1,8 @@
 use crate::restricted;
 use crate::chak_traits::HashPointerTraits;
 use crate::config::{
-    commit_log_file_path, commits_fold, get_commit_log_file, get_current_dir, get_stage_file,
-    root_trees_fold, stage_file_path, versions_fold,
+    get_commit_log_file_path, get_commit_log_file, get_stage_file,
+    get_root_trees_fold_path, get_stage_file_path,
 };
 use serde::{Deserialize, Serialize};
 use crate::common::{load_entity, save_entity};
@@ -26,15 +26,15 @@ impl_hash_pointer_common_traits!(RootTreePointer, RootTreeObject);
 impl RootTreePointer {
     pub fn save_tree(tree: &mut RootTreeObject) -> Result<RootTreePointer, ChakError> {
         tree.sort_children();
-        Self::own(&save_entity(tree))
+        Self::own(&save_entity(tree)?)
     }
     pub fn load_tree(&self) -> RootTreeObject {
-        load_entity::<Self, RootTreeObject>(self, &root_trees_fold())
+        load_entity::<Self, RootTreeObject>(self, &get_root_trees_fold_path())
     }
 
     pub fn attach_tree_to_stage(&self) {
         save_or_create_file(
-            &stage_file_path(),
+            &get_stage_file_path(),
             Some(&self.get_one_hash()),
             true,
             Some("\n"),
@@ -43,7 +43,7 @@ impl RootTreePointer {
     }
 
     pub fn get_latest_pointer_from_commit_log() -> Result<RootTreePointer, ChakError> {
-        if commit_log_file_path().exists() {
+        if get_commit_log_file_path().exists() {
             Ok(CommitPointer::get_latest_commit_hash_pointer()?
                 .load_commit()
                 .root_tree_pointer)
@@ -55,7 +55,7 @@ impl RootTreePointer {
     }
 
     pub fn get_pointers_from_commit_log() -> Result<Vec<RootTreePointer>, ChakError> {
-        if commit_log_file_path().exists() {
+        if get_commit_log_file_path().exists() {
             Ok(HashPointer::get_pointer_lines_from_file(
                 &get_commit_log_file()?,
             )?)
@@ -67,7 +67,7 @@ impl RootTreePointer {
     }
 
     pub fn get_latest_pointer_from_stage() -> Result<RootTreePointer, ChakError> {
-        if stage_file_path().exists() {
+        if get_stage_file_path().exists() {
             Ok(HashPointer::get_latest_pointer_line_from_file::<
                 RootTreePointer,
             >(&get_stage_file()?, true)?)
@@ -79,7 +79,7 @@ impl RootTreePointer {
     }
 
     pub fn get_pointers_from_stage() -> Result<Vec<RootTreePointer>, ChakError> {
-        if stage_file_path().exists() {
+        if get_stage_file_path().exists() {
             Ok(HashPointer::get_pointer_lines_from_file(&get_stage_file()?)?)
         } else {
             Err(ChakError::CustomError(

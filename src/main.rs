@@ -33,6 +33,7 @@ mod trait_macros;
 mod restricted;
 mod takesnapshot;
 mod handle_ignore;
+mod stage;
 //test
 
 
@@ -40,5 +41,5 @@ use clap::{Parser, Subcommand};
 use crate::commandline::parse_commandline;
 
 fn main() {
-    parse_commandline();
+    parse_commandline().expect("TODO: panic message");
 }

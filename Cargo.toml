@@ -16,3 +16,4 @@ indexmap = { version = "2.7.0", features = ["serde"] }
 toml = "0.8.20"
 libc = "0.2.169"
 hex = "0.4.3"
+dirs = "6.0.0"

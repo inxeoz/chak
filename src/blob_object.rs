@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 use indexmap::{IndexMap, IndexSet};
-use crate::config::blob_fold;
+use crate::config::get_blob_fold_path;
 use crate::object::ObjectTraits;
 
 pub struct CompareOrderStructure {
@@ -17,7 +17,7 @@ pub struct BlobObject {
 
 impl ObjectTraits for BlobObject {
     fn containing_folder() -> PathBuf {
-        blob_fold()
+        get_blob_fold_path()
     }
 }
 
