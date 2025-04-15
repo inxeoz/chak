@@ -4,10 +4,10 @@ use std::default::Default;
 use std::path::{Path, PathBuf};
 use indexmap::IndexMap;
 use crate::blob_pointer::BlobObjectPointer;
+use crate::chak_traits::{ChakPointerTraits, HashPointerTraits, ObjectCommonTraits};
 use crate::config::get_nested_trees_fold_path;
 use crate::custom_error::ChakError;
 use crate::nested_tree_pointer::NestedTreeHashPointer;
-use crate::object::ObjectTraits;
 use crate::version_head_object::VersionHeadObject;
 use crate::version_head_pointer::VersionHeadPointer;
 
@@ -17,13 +17,25 @@ pub struct NestedTreeObject {
     pub dir_children: IndexMap<String, NestedTreeHashPointer>,
 }
 
-impl ObjectTraits for NestedTreeObject {
+impl ObjectCommonTraits for NestedTreeObject {
     fn containing_folder() -> PathBuf {
         get_nested_trees_fold_path()
     }
 }
 // TreeObject methods
 impl NestedTreeObject {
+
+    // pub fn from<T:HashPointerTraits + ChakPointerTraits >(pointer:T) -> Result<NestedTreeObject, ChakError> {
+    //     let pointer_folder_opt =T::verified_path(&pointer);
+    //     if let Some(pointer_folder_path) = pointer_folder_opt {
+    //
+    //         if Self::containing_folder() == pointer_folder_opt {
+    //
+    //         }
+    //     }
+    //
+    //
+    // }
     pub fn new() -> NestedTreeObject {
         NestedTreeObject {
             file_children: IndexMap::new(),
@@ -33,6 +45,10 @@ impl NestedTreeObject {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.file_children.is_empty() && self.dir_children.is_empty()
+    }
+
     //why we have not configured add_dir_child automatically ???
     //because this adding directory depeneds on how to define and works the directory
     //
@@ -40,6 +56,8 @@ impl NestedTreeObject {
         self.dir_children.insert(dir_name, NestedTreeHashPointer::save_tree(dir_object)?);
         Ok(())
     }
+
+
 
 
     // pub fn save_version_head(version_head: &VersionHead) -> VersionHeadHashPointer {
@@ -66,10 +84,6 @@ impl NestedTreeObject {
             self.file_children.insert(entry_name.to_string(), updated_version_head_hash_pointer);
 
             Ok(())
-
-           // if was_it_registered(existing_version.clone(), &version_head_fold()) {
-           //
-           // }
 
         } else {
             let new_version_head_hash_pointer =
