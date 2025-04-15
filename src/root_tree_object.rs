@@ -8,10 +8,9 @@ use crate::custom_error::ChakError;
 use crate::root_tree_pointer::{ RootTreePointer};
 use crate::nested_tree_pointer::NestedTreeHashPointer;
 pub(crate) use crate::nested_tree_object::NestedTreeObject;
-use crate::object::ObjectTraits;
 use crate::util::{deserialize_file_content};
 use crate::version_head_pointer::VersionHeadPointer;
-use crate::chak_traits::HashPointerTraits;
+use crate::chak_traits::{HashPointerTraits, ObjectCommonTraits};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RootTreeObject {
@@ -19,7 +18,7 @@ pub struct RootTreeObject {
     pub dir_children: IndexMap<String, NestedTreeHashPointer>,
 }
 
-impl ObjectTraits for RootTreeObject {
+impl ObjectCommonTraits for RootTreeObject {
     fn containing_folder() -> PathBuf {
         get_root_trees_fold_path()
     }

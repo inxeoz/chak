@@ -1,3 +1,4 @@
+use crate::hash_pointer::HashPointer;
 
 
 #[macro_export] macro_rules! impl_hash_pointer_common_traits {
@@ -34,6 +35,15 @@
                     self.file_name.clone()
 
                     }
+
+            // fn projection_to_hash_pointer(&self) -> HashPointer {
+            //
+            //          HashPointer {
+            //             fold_name: self.get_fold_name(),
+            //             file_name: self.get_file_name(),
+            //             }
+            //     }
+
         }
 
         impl ChakPointerTraits for $t {

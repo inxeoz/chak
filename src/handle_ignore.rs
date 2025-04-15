@@ -1,9 +1,9 @@
-use std::collections::HashSet;
-use std::path::{Path, PathBuf};
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use ignore::Match;
 use crate::custom_error::ChakError;
 use crate::util::read_directory_entries;
+use ignore::Match;
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
 
 /// Handles .ignore file processing and adds it to `ignore_build_vec`
 pub fn handle_ignore_file(
@@ -24,7 +24,7 @@ pub fn handle_ignore_file(
 pub fn parse_ignore(
     dir_path: &Path,
     ignore_builder: &mut GitignoreBuilder,
-) -> Result< ( Vec<PathBuf>, Vec<PathBuf>), ChakError> {
+) -> Result<(Vec<PathBuf>, Vec<PathBuf>), ChakError> {
     // Read and filter directory entries
     let (mut detected_dir_entries, mut detected_file_entries) = read_directory_entries(dir_path)?;
 
@@ -37,9 +37,20 @@ pub fn parse_ignore(
             parse_ignore_for_entries(&mut detected_file_entries, &build_ignore_rules);
     }
 
-    Ok( (allowed_file_entries, allowed_dir_entries) )
+    Ok((allowed_file_entries, allowed_dir_entries))
 }
 
+pub fn parse_ignore_combined_files_dirs(
+    dir_path: &Path,
+    ignore_builder: &mut GitignoreBuilder,
+) -> Result<Vec<PathBuf>, ChakError> {
+
+    let allowed_entries = parse_ignore(dir_path, ignore_builder).map(|(mut v1, v2)| {
+        v1.extend(v2);
+        return v1;
+    })?;
+    Ok(allowed_entries)
+}
 
 pub fn parse_ignore_for_entries(
     detected_entries: &mut Vec<PathBuf>,

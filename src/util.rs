@@ -4,12 +4,37 @@ use std::fs::read_dir;
 use crate::chak_traits::HashPointerTraits;
 use crate::config::{CHAK_FOLDER_NAME, REGISTER_NAME};
 use crate::custom_error::ChakError;
+use crate::hash_pointer::HashPointer;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{self, BufRead, BufReader, ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
+
+pub fn path_buf_to_name(path: &Path) -> Result<String, ChakError> {
+    Ok(path
+        .file_name()
+        .ok_or(ChakError::CustomError(
+            "Could not get file name".to_string(),
+        ))?
+        .to_str()
+        .ok_or(ChakError::CustomError(
+            "Could not convert to str".to_string(),
+        ))?
+        .to_string())
+}
+
+pub fn path_buf_to_parent_and_name(path: &Path) -> Result<(PathBuf, String), ChakError> {
+    Ok((
+        path.parent()
+            .ok_or(ChakError::CustomError(
+                "Parent of entry not found".to_string(),
+            ))?
+            .to_path_buf(),
+        path_buf_to_name(path)?,
+    ))
+}
 
 pub fn deserialize_file_content<T: DeserializeOwned>(path: &Path) -> Result<T, ChakError> {
     let content_string = fs::read_to_string(path)?; // Reads file, propagates error if any
@@ -30,8 +55,7 @@ pub fn serialize_struct<T: Serialize>(data: &T) -> Result<String, ChakError> {
             format!("serialization failed for {}", type_name::<T>()).to_string(),
         )
     })?;
-    // let serialized = serde_json::to_string_pretty(&data).expect("Failed to serialize");
-    println!("{}", serialized);
+
     Ok(serialized)
 }
 

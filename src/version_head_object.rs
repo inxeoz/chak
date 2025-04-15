@@ -2,9 +2,9 @@ use std::path::PathBuf;
 use crate::blob_pointer::{BlobObjectPointer};
 use serde::{Deserialize, Serialize};
 use crate::blob_object::{BlobObject, CompareOrderStructure};
+use crate::chak_traits::ObjectCommonTraits;
 use crate::config::get_version_head_fold_path;
 use crate::custom_error::ChakError;
-use crate::object::ObjectTraits;
 use crate::version_head_pointer::VersionHeadPointer;
 use crate::version_object::VersionObject;
 use crate::version_pointer::VersionPointer;
@@ -15,7 +15,7 @@ pub struct VersionHeadObject {
     pointer_to_version: Option<VersionPointer>,
 }
 
-impl ObjectTraits for VersionHeadObject {
+impl ObjectCommonTraits for VersionHeadObject {
     fn containing_folder() -> PathBuf {
         get_version_head_fold_path()
     }

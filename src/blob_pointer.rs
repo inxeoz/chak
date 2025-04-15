@@ -34,7 +34,7 @@ impl BlobObjectPointer {
     }
 
     pub fn save_blob_from_path(path_to_file: &Path) -> Result<BlobObjectPointer, ChakError> {
-        let hashed_content = BlobObject::hashed_content_from_path(path_to_file);
+        let hashed_content = BlobObject::from_file_path(path_to_file);
         Self::save_blob(hashed_content)
     }
     pub fn load_blob(&self) -> BlobObject {

@@ -1,9 +1,8 @@
-use crate::chak_traits::HashPointerTraits;
+use crate::chak_traits::{HashPointerTraits, ObjectCommonTraits};
 use crate::config::REGISTER_NAME;
 use crate::custom_error::ChakError;
 use crate::hash_pointer::HashPointer;
-use crate::object::ObjectTraits;
-use crate::util::{deserialize_file_content, save_or_create_file, serialize_struct};
+use crate::util::{deserialize_file_content, save_or_create_file};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::path::Path;
@@ -17,11 +16,10 @@ pub fn load_entity<T: HashPointerTraits, S: DeserializeOwned>(
             .expect("Failed to load file");
     deserialized_content
 }
-pub fn save_entity<G: Serialize + ObjectTraits>(entity: &G) -> Result<HashPointer, ChakError> {
-    let serialized_content = serialize_struct(&entity)?;
-    let entity_hash = HashPointer::from_string(&serialized_content);
-
-    // let m_path = entity
+pub fn save_entity<G: Serialize + ObjectCommonTraits>(entity: &G) -> Result<HashPointer, ChakError> {
+    // let serialized_content = serialize_struct(&entity)?;
+    // let entity_hash = HashPointer::from_string(&serialized_content);
+    let (serialized_content, entity_hash) = entity.serialized_and_hash()?;
 
     let new_entity_path = G::containing_folder().join(entity_hash.get_path()); //error ?
 

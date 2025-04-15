@@ -3,7 +3,7 @@ use crate::config::{
     get_current_dir_path,
 };
 use crate::custom_error::ChakError;
-use crate::handle_ignore::{handle_ignore_file, parse_ignore};
+use crate::handle_ignore::{handle_ignore_file, parse_ignore, parse_ignore_combined_files_dirs};
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 use crate::root_tree_pointer::RootTreePointer;
 use crate::takesnapshot::start_individual_snapshot;
@@ -65,10 +65,7 @@ pub fn dir_snapshot(
         );
     }
 
-    let allowed_entries = parse_ignore(dir_path, main_ignore_builder).map(|(mut v1, v2)| {
-        v1.extend(v2);
-        return v1;
-    })?;
+    let allowed_entries = parse_ignore_combined_files_dirs(dir_path, main_ignore_builder)?;
 
     for entry in allowed_entries {
         let entry_name = entry
