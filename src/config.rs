@@ -12,9 +12,9 @@ pub static CURRENT_DIR: OnceCell<PathBuf> = OnceCell::new();
 
 pub static APPLICATION_NAME: &str = "chakvcs";
 pub static CHAK_FOLDER_NAME: &str = ".chak/"; //i think if its a folder then it should be suffix with '/'
-pub static VCS_CONFIG_NAME: &str = "config.toml";
+pub static VCS_CONFIG_NAME: &str = "config";
 pub static VCS_IGNORE_FILE_NAME: &str = ".ignore";
-pub static REGISTER_NAME: &str = "entries.toml";
+pub static REGISTER_NAME: &str = "entries";
 pub static mut WORKING_DIR: Option<PathBuf> = None;
 pub static BLOBS_DIR_NAME: &str = "blobs";
 pub static VERSIONS_DIR_NAME: &str = "versions";
@@ -23,7 +23,7 @@ pub static COMMITS_DIR_NAME: &str = "commits";
 pub static NESTED_TREES_DIR_NAME: &str = "nested_trees";
 pub static VERSION_HEADS_DIR_NAME: &str = "version_heads";
 pub static COMMIT_LOG_FILE_NAME: &str = "commit.log";
-pub static STAGE_FILE_NAME: &str = "stage.toml";
+pub static STAGE_FILE_NAME: &str = "stage";
 
 pub fn get_current_dir_path() -> &'static PathBuf {
     CURRENT_DIR.get_or_init(|| {
