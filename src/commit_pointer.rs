@@ -1,4 +1,4 @@
-use crate::{impl_pointer_common_traits_ref_object, restricted};
+use crate::{bind_ref_object_with_pointer, restricted};
 use crate::chak_traits::HashPointerTraits;
 use serde::{Deserialize, Serialize};
 use crate::config::{get_commit_log_file_path, get_commits_fold_path, get_commit_log_file, get_stage_file_path};
@@ -20,7 +20,7 @@ pub struct CommitPointer {
     file_name: String,
 }
 
-impl_pointer_common_traits_ref_object!(CommitPointer, CommitObject);
+bind_ref_object_with_pointer!(CommitPointer, CommitObject);
 impl_pointer_common_traits!(CommitPointer);
 impl CommitPointer {
 

@@ -1,4 +1,4 @@
-use crate::{impl_pointer_common_traits_ref_object, restricted};
+use crate::{bind_ref_object_with_pointer, restricted};
 use crate::config::{get_nested_trees_fold_path};
 use crate::common::{load_entity, save_entity};
 use crate::custom_error::ChakError;
@@ -14,7 +14,7 @@ pub struct NestedTreeHashPointer {
     fold_name: String,
     file_name: String,
 }
-impl_pointer_common_traits_ref_object!(NestedTreeHashPointer, NestedTreeObject);
+bind_ref_object_with_pointer!(NestedTreeHashPointer, NestedTreeObject);
 impl_pointer_common_traits!(NestedTreeHashPointer);
 impl NestedTreeHashPointer {
     pub fn save_tree(tree: &mut NestedTreeObject) -> Result<NestedTreeHashPointer, ChakError> {

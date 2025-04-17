@@ -1,4 +1,4 @@
-use crate::{impl_pointer_common_traits_ref_object, restricted};
+use crate::{bind_ref_object_with_pointer, restricted};
 use crate::chak_traits::HashPointerTraits;
 use crate::config::{
     get_commit_log_file_path, get_commit_log_file, get_stage_file,
@@ -21,7 +21,7 @@ pub struct RootTreePointer {
     fold_name: String,
     file_name: String,
 }
-impl_pointer_common_traits_ref_object!(RootTreePointer, RootTreeObject);
+bind_ref_object_with_pointer!(RootTreePointer, RootTreeObject);
 impl_pointer_common_traits!(RootTreePointer);
 impl RootTreePointer {
     pub fn save_tree(tree: &mut RootTreeObject) -> Result<RootTreePointer, ChakError> {

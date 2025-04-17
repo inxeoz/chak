@@ -1,4 +1,4 @@
-use crate::{impl_pointer_common_traits_ref_object, restricted};
+use crate::{bind_ref_object_with_pointer, restricted};
 use crate::chak_traits::{ HashPointerTraits};
 use std::path::Path;
 use serde::{Deserialize, Serialize};
@@ -25,7 +25,7 @@ pub struct BlobObjectPointer {
     fold_name: String,
     file_name: String,
 }
-impl_pointer_common_traits_ref_object!(BlobObjectPointer, BlobObject);
+bind_ref_object_with_pointer!(BlobObjectPointer, BlobObject);
 impl_pointer_common_traits!(BlobObjectPointer); //for get_path ?
 
 impl BlobObjectPointer {

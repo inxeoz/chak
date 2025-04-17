@@ -48,7 +48,7 @@ use crate::hash_pointer::HashPointer;
 }
 
 
-#[macro_export] macro_rules! impl_pointer_common_traits_ref_object {
+#[macro_export] macro_rules! bind_ref_object_with_pointer {
     ($t:ty, $CorrespondenceObjectType:ty) => {
         impl ChakPointerTraits for $t {
                 type CorrespondenceObject = $CorrespondenceObjectType;

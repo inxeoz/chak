@@ -1,4 +1,4 @@
-use crate::{impl_pointer_common_traits_ref_object, restricted};
+use crate::{bind_ref_object_with_pointer, restricted};
 use crate::chak_traits::HashPointerTraits;
 use crate::config::get_version_head_fold_path;
 use crate::common::{load_entity, save_entity};
@@ -15,7 +15,7 @@ pub struct VersionHeadPointer {
     fold_name: String,
     file_name: String,
 }
-impl_pointer_common_traits_ref_object!(VersionHeadPointer, VersionHeadObject);
+bind_ref_object_with_pointer!(VersionHeadPointer, VersionHeadObject);
 impl_pointer_common_traits!(VersionHeadPointer);
 impl VersionHeadPointer {
 

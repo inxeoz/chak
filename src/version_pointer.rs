@@ -1,4 +1,4 @@
-use crate::{impl_pointer_common_traits_ref_object, restricted};
+use crate::{bind_ref_object_with_pointer, restricted};
 use crate::chak_traits::HashPointerTraits;
 use serde::{Deserialize, Serialize};
 use crate::common::{load_entity, save_entity};
@@ -14,7 +14,7 @@ pub struct VersionPointer {
     fold_name: String,
     file_name: String,
 }
-impl_pointer_common_traits_ref_object!(VersionPointer, VersionObject);
+bind_ref_object_with_pointer!(VersionPointer, VersionObject);
 impl_pointer_common_traits!(VersionPointer);
 
 impl VersionPointer {
