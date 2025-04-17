@@ -68,8 +68,6 @@ use crate::hash_pointer::HashPointer;
                 }
             }
         }
-
+    }
 
 }
-
-    }
