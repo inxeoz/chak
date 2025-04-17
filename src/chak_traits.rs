@@ -50,12 +50,6 @@ pub trait ChakPointerTraits: restricted::RestrictedNew {
 }
 
 pub trait HashPointerTraits {
-    fn new(fold_name: String, file_name: String) -> HashPointer {
-        HashPointer {
-            fold_name,
-            file_name,
-        }
-    }
     fn get_one_hash(&self) -> String {
         self.get_fold_name() + &self.get_file_name()
     }

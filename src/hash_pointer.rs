@@ -23,6 +23,12 @@ pub struct HashPointer {
 impl_pointer_common_traits!(HashPointer);
 
 impl HashPointer {
+    fn new(fold_name: String, file_name: String) -> Self {
+        Self {
+            fold_name,
+            file_name,
+        }
+    }
     fn _from_hash_string(hash: String) -> Self {
         Self::new(hash[..2].to_string(), hash[2..].to_string())
     }
