@@ -3,7 +3,7 @@ use crate::config::{
     get_current_dir_path,
 };
 use crate::custom_error::ChakError;
-use crate::handle_ignore::{handle_ignore_file, parse_ignore, parse_ignore_combined_files_dirs};
+use crate::handle_ignore::{handle_ignore_file, parse_ignore_combined_files_dirs};
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 use crate::root_tree_pointer::RootTreePointer;
 use crate::takesnapshot::start_individual_snapshot;

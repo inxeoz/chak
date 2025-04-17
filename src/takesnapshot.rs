@@ -3,15 +3,13 @@ use crate::custom_error::ChakError;
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 use crate::root_tree_pointer::RootTreePointer;
 
+use crate::util::path_buf_to_name;
 use ignore::Match;
-use ignore::gitignore::{ GitignoreBuilder};
-use std::path::{ PathBuf};
+use ignore::gitignore::GitignoreBuilder;
+use std::path::PathBuf;
 
-
-pub fn start_individual_snapshot(
-    entry_string: String,
-) -> Result<(), ChakError> {
-    let mut index = 0usize;
+pub fn start_individual_snapshot(entry_string: String) -> Result<(), ChakError> {
+    let  index = 0usize;
 
     let entry = PathBuf::from(entry_string);
 
@@ -43,11 +41,10 @@ pub fn take_snapshot(
     path: &mut PathBuf,
     parts: Vec<String>,
     index: usize,
-    tree: &mut NestedTreeObject
+    tree: &mut NestedTreeObject,
 ) -> Result<(), ChakError> {
-
-    if ! ( index < parts.len()  ){
-        return Ok(())
+    if !(index < parts.len()) {
+        return Ok(());
     }
 
     ignore_builder.add(path.join(VCS_IGNORE_FILE_NAME));
@@ -58,50 +55,7 @@ pub fn take_snapshot(
             path.join(&parts[index]).is_dir(),
         ) {
             // can i use "#" for default
-            Match::None => {
-                path.push(&parts[index]);
-
-                if ! path.exists() {
-                    println!("{:?} does not exist", path);
-                    return Ok(());
-                }
-                println!("starting adding {} ", &parts[index]);
-
-                let path_name = path
-                    .file_name()
-                    .expect("Could not get file name")
-                    .to_str()
-                    .expect("Could not convert to str")
-                    .to_string();
-
-                if path.is_file() {
-                        &tree.add_file_child(&path, path_name.as_str())?;
-                } else {
-
-                    if let Some(existing_child_tree) = tree.dir_children.get_mut(&path_name) {
-                            take_snapshot(
-                                ignore_builder,
-                                path,
-                                parts,
-                                index + 1,
-                                &mut existing_child_tree.load_tree(),
-                            )?;
-                    }else {
-
-                        let mut new_dir_nested_tree_object = NestedTreeObject::new();
-
-                        take_snapshot(
-                            ignore_builder,
-                            path,
-                            parts,
-                            index + 1,
-                            &mut new_dir_nested_tree_object,
-                        )?;
-                        tree.add_dir_child(path_name, &mut new_dir_nested_tree_object)?;
-
-                    }
-                }
-            }
+            Match::None => handle_matched_none(ignore_builder, path, parts, index, tree)?,
 
             Match::Ignore(matched_rule) => {
                 println!("Ignored: {}", path.display());
@@ -117,6 +71,50 @@ pub fn take_snapshot(
         }
     }
 
- Ok(())
+    Ok(())
 }
 
+fn handle_matched_none(
+    ignore_builder: GitignoreBuilder,
+    path: &mut PathBuf,
+    parts: Vec<String>,
+    index: usize,
+    tree: &mut NestedTreeObject,
+) -> Result<(), ChakError> {
+    path.push(&parts[index]);
+
+    if !path.exists() {
+        println!("{:?} does not exist", path);
+        return Ok(());
+    }
+    println!("starting adding {} ", &parts[index]);
+
+    let path_name = path_buf_to_name(&path)?;
+
+    if path.is_file() {
+        &tree.add_file_child(&path, path_name.as_str())?;
+    } else {
+        if let Some(existing_child_tree) = tree.dir_children.get_mut(&path_name) {
+            take_snapshot(
+                ignore_builder,
+                path,
+                parts,
+                index + 1,
+                &mut existing_child_tree.load_tree(),
+            )?;
+        } else {
+            let mut new_dir_nested_tree_object = NestedTreeObject::new();
+
+            take_snapshot(
+                ignore_builder,
+                path,
+                parts,
+                index + 1,
+                &mut new_dir_nested_tree_object,
+            )?;
+            tree.add_dir_child(path_name, &mut new_dir_nested_tree_object)?;
+        }
+    }
+
+    Ok(())
+}
