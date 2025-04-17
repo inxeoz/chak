@@ -127,7 +127,7 @@ pub fn recursive_status(
 
     if let Some(tree_pointer) = tree_hash_pointer_opt {
 
-        let nested_tree = NestedTreeObject::from(tree_pointer).ok();
+        let nested_tree = NestedTreeObject::from(&tree_pointer).ok();
 
         for entry in allowed_entries {
             let (parent_of_entry, entry_name) = path_buf_to_parent_and_name(&entry)?;
@@ -210,7 +210,7 @@ pub fn get_entry_hash_from_tree(
     if let Some(nested_tree) = nested_tree_opt {
 
         let entry_hash_from_tree = if entry.is_file() {
-            nested_tree.file_children.get(&entry_name).map(|v| {
+            nested_tree.file_children.get(entry_name.as_str()).map(|v| {
                 v.load_version_head()
                     .get_pointer_to_blob()
                     .projection_to_hash_pointer()
@@ -218,7 +218,7 @@ pub fn get_entry_hash_from_tree(
         } else {
             nested_tree
                 .dir_children
-                .get(&entry_name)
+                .get(entry_name.as_str())
                 .map(|d| d.projection_to_hash_pointer())
         };
 

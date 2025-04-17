@@ -77,17 +77,17 @@ pub trait HashPointerTraits {
 
 pub trait ObjectCommonTraits: Serialize {
 
-    fn serialize_self(&self) -> Result<String, ChakError> {
+    fn serialize_self(&self) -> Result<String, ChakError> where Self: Sized {
         serialize_struct(self)
     }
 
-    fn accumulated_hash_pointer(&self) -> Result<HashPointer, ChakError> {
+    fn accumulated_hash_pointer(&self) -> Result<HashPointer, ChakError> where Self: Sized {
         let serialized_content = self.serialize_self()?;
         let hash_pointer = HashPointer::from_string(&serialized_content);
         Ok(hash_pointer)
     }
 
-    fn serialized_and_hash(&self) -> Result<(String, HashPointer), ChakError> {
+    fn serialized_and_hash(&self) -> Result<(String, HashPointer), ChakError> where Self: Sized {
         Ok((self.serialize_self()?, self.accumulated_hash_pointer()?))
     }
     fn containing_folder() -> PathBuf;

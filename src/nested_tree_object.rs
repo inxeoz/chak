@@ -22,7 +22,7 @@ impl ObjectCommonTraits for NestedTreeObject {
 }
 // TreeObject methods
 impl NestedTreeObject {
-    pub fn from<T: HashPointerTraits>(pointer: T) -> Result<NestedTreeObject, ChakError> {
+    pub fn from<T: HashPointerTraits>(pointer: &T) -> Result<NestedTreeObject, ChakError> {
         let nested_pointer = NestedTreeHashPointer::own(pointer).map(|v| v.load_tree());
         nested_pointer
     }

@@ -8,6 +8,7 @@ use crate::util::file_to_lines;
 use crate::util::{file_to_string, save_or_create_file};
 use sha2::{Digest, Sha256};
 use std::fs::File;
+use std::hash::{Hash, Hasher};
 use std::io;
 use std::io::{ BufReader, ErrorKind, Read};
 use std::path::{Path };
@@ -16,6 +17,13 @@ use std::path::{Path };
 pub struct HashPointer {
     pub(crate) fold_name: String,
     pub(crate) file_name: String,
+}
+
+impl Hash for HashPointer {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.fold_name.hash(state);
+        self.file_name.hash(state);
+    }
 }
 
 impl PartialEq for HashPointer {
