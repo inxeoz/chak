@@ -1,8 +1,8 @@
-use crate::restricted;
+use crate::{impl_pointer_common_traits_ref_object, restricted};
 use crate::config::{get_nested_trees_fold_path};
 use crate::common::{load_entity, save_entity};
 use crate::custom_error::ChakError;
-use crate::impl_hash_pointer_common_traits;
+use crate::impl_pointer_common_traits;
 use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 use crate::chak_traits::ChakPointerTraits;
@@ -14,7 +14,8 @@ pub struct NestedTreeHashPointer {
     fold_name: String,
     file_name: String,
 }
-impl_hash_pointer_common_traits!(NestedTreeHashPointer, NestedTreeObject);
+impl_pointer_common_traits_ref_object!(NestedTreeHashPointer, NestedTreeObject);
+impl_pointer_common_traits!(NestedTreeHashPointer);
 impl NestedTreeHashPointer {
     pub fn save_tree(tree: &mut NestedTreeObject) -> Result<NestedTreeHashPointer, ChakError> {
         tree.sort_children();

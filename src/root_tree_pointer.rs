@@ -1,4 +1,4 @@
-use crate::restricted;
+use crate::{impl_pointer_common_traits_ref_object, restricted};
 use crate::chak_traits::HashPointerTraits;
 use crate::config::{
     get_commit_log_file_path, get_commit_log_file, get_stage_file,
@@ -9,7 +9,7 @@ use crate::common::{load_entity, save_entity};
 use crate::hash_pointer::{HashPointer};
 
 use crate::custom_error::ChakError;
-use crate::impl_hash_pointer_common_traits;
+use crate::impl_pointer_common_traits;
 use crate::root_tree_object::{ RootTreeObject};
 use crate::util::save_or_create_file;
 use std::cmp::Ordering;
@@ -21,8 +21,8 @@ pub struct RootTreePointer {
     fold_name: String,
     file_name: String,
 }
-impl_hash_pointer_common_traits!(RootTreePointer, RootTreeObject);
-
+impl_pointer_common_traits_ref_object!(RootTreePointer, RootTreeObject);
+impl_pointer_common_traits!(RootTreePointer);
 impl RootTreePointer {
     pub fn save_tree(tree: &mut RootTreeObject) -> Result<RootTreePointer, ChakError> {
         tree.sort_children();

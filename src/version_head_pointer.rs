@@ -1,8 +1,8 @@
-use crate::restricted;
+use crate::{impl_pointer_common_traits_ref_object, restricted};
 use crate::chak_traits::HashPointerTraits;
 use crate::config::get_version_head_fold_path;
 use crate::common::{load_entity, save_entity};
-use crate::impl_hash_pointer_common_traits;
+use crate::impl_pointer_common_traits;
 use crate::version_head_object::{ VersionHeadObject};
 use std::path::PathBuf;
 use std::cmp::Ordering;
@@ -15,7 +15,8 @@ pub struct VersionHeadPointer {
     fold_name: String,
     file_name: String,
 }
-impl_hash_pointer_common_traits!(VersionHeadPointer, VersionHeadObject);
+impl_pointer_common_traits_ref_object!(VersionHeadPointer, VersionHeadObject);
+impl_pointer_common_traits!(VersionHeadPointer);
 impl VersionHeadPointer {
 
     pub fn save_version_head(version_head: &VersionHeadObject) -> Result<VersionHeadPointer, ChakError> {

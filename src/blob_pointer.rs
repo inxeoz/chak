@@ -1,10 +1,10 @@
-use crate::restricted;
+use crate::{impl_pointer_common_traits_ref_object, restricted};
 use crate::chak_traits::{ HashPointerTraits};
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::config::{get_blob_fold_path};
 use crate::common::{load_entity, save_entity};
-use crate::impl_hash_pointer_common_traits;
+use crate::impl_pointer_common_traits;
 use std::cmp::Ordering;
 use crate::blob_object::BlobObject;
 use crate::chak_traits::ChakPointerTraits;
@@ -25,7 +25,8 @@ pub struct BlobObjectPointer {
     fold_name: String,
     file_name: String,
 }
-impl_hash_pointer_common_traits!(BlobObjectPointer, BlobObject);
+impl_pointer_common_traits_ref_object!(BlobObjectPointer, BlobObject);
+impl_pointer_common_traits!(BlobObjectPointer); //for get_path ?
 
 impl BlobObjectPointer {
 

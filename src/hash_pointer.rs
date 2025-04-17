@@ -12,6 +12,7 @@ use std::hash::{Hash, Hasher};
 use std::io;
 use std::io::{ BufReader, ErrorKind, Read};
 use std::path::{Path };
+use crate::impl_pointer_common_traits;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub struct HashPointer {
@@ -19,42 +20,7 @@ pub struct HashPointer {
     pub(crate) file_name: String,
 }
 
-impl Hash for HashPointer {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.fold_name.hash(state);
-        self.file_name.hash(state);
-    }
-}
-
-impl PartialEq for HashPointer {
-    fn eq(&self, other: &Self) -> bool {
-        self.get_one_hash() == other.get_one_hash()
-    }
-}
-
-impl PartialOrd for HashPointer {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for HashPointer {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.get_fold_name()
-            .cmp(&other.get_fold_name())
-            .then_with(|| self.get_file_name().cmp(&other.get_file_name()))
-    }
-}
-
-impl HashPointerTraits for HashPointer {
-    fn get_fold_name(&self) -> String {
-        self.fold_name.clone()
-    }
-
-    fn get_file_name(&self) -> String {
-        self.file_name.clone()
-    }
-}
+impl_pointer_common_traits!(HashPointer);
 
 impl HashPointer {
     fn _from_hash_string(hash: String) -> Self {

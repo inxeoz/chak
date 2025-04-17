@@ -1,10 +1,10 @@
-use crate::restricted;
+use crate::{impl_pointer_common_traits_ref_object, restricted};
 use crate::chak_traits::HashPointerTraits;
 use serde::{Deserialize, Serialize};
 use crate::config::{get_commit_log_file_path, get_commits_fold_path, get_commit_log_file, get_stage_file_path};
 use crate::common::{load_entity, save_entity};
 
-use crate::impl_hash_pointer_common_traits;
+use crate::impl_pointer_common_traits;
 use crate::util::{save_or_create_file};
 use std::cmp::Ordering;
 use crate::chak_traits::ChakPointerTraits;
@@ -20,7 +20,8 @@ pub struct CommitPointer {
     file_name: String,
 }
 
-impl_hash_pointer_common_traits!(CommitPointer, CommitObject);
+impl_pointer_common_traits_ref_object!(CommitPointer, CommitObject);
+impl_pointer_common_traits!(CommitPointer);
 impl CommitPointer {
 
     pub fn save_commit(commit: &CommitObject) -> Result<CommitPointer, ChakError> {

@@ -1,10 +1,16 @@
 use crate::hash_pointer::HashPointer;
 
 
-#[macro_export] macro_rules! impl_hash_pointer_common_traits {
-    ($t:ty, $CorrespondenceObjectType:ty) => {
+#[macro_export] macro_rules! impl_pointer_common_traits {
+    ($t:ty) => {
 
-    //    use crate::hash_pointer::HashPointerTraits;
+
+        impl std::hash::Hash for $t {
+            fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                self.fold_name.hash(state);
+                self.file_name.hash(state);
+            }
+        }
 
         impl PartialEq for $t {
             fn eq(&self, other: &Self) -> bool {
@@ -29,29 +35,26 @@ use crate::hash_pointer::HashPointer;
         impl HashPointerTraits for $t {
             fn get_fold_name(&self) -> String {
                      self.fold_name.clone()
-                    }
+            }
 
             fn get_file_name(&self) -> String {
                     self.file_name.clone()
-
-                    }
-
-            // fn projection_to_hash_pointer(&self) -> HashPointer {
-            //
-            //          HashPointer {
-            //             fold_name: self.get_fold_name(),
-            //             file_name: self.get_file_name(),
-            //             }
-            //     }
+            }
 
         }
 
+    }
+
+}
+
+
+#[macro_export] macro_rules! impl_pointer_common_traits_ref_object {
+    ($t:ty, $CorrespondenceObjectType:ty) => {
         impl ChakPointerTraits for $t {
                 type CorrespondenceObject = $CorrespondenceObjectType;
-              //  type Output = $t;
         }
 
-        impl restricted::RestrictedNew for $t {
+         impl restricted::RestrictedNew for $t {
             /// Enforces new(), but calls an internal private method
             fn new(fold_name: String, file_name: String) -> Self {
                 Self::create(fold_name, file_name)
@@ -69,5 +72,4 @@ use crate::hash_pointer::HashPointer;
             }
         }
     }
-
 }
