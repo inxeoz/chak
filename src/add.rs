@@ -7,10 +7,10 @@ use crate::handle_ignore::{handle_ignore_file, parse_ignore_combined_files_dirs}
 use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
 use crate::root_tree_pointer::RootTreePointer;
 use crate::takesnapshot::start_individual_snapshot;
+use crate::util::path_buf_to_name;
 use ignore::gitignore::GitignoreBuilder;
 use std::io;
 use std::path::Path;
-use crate::util::path_buf_to_name;
 
 pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     //all in one ignore vec that handles multiple ignore file present in nested folder
@@ -18,10 +18,7 @@ pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     let ignore_file = get_current_dir_path().join(VCS_IGNORE_FILE_NAME);
     main_ignore_builder.add(ignore_file); // there is no need to ignore ingorefile
 
-    handle_ignore_file(
-        &mut main_ignore_builder,
-        vec![(None, CHAK_FOLDER_NAME)],
-    );
+    handle_ignore_file(&mut main_ignore_builder, vec![(None, CHAK_FOLDER_NAME)]);
 
     main_ignore_builder.add(get_chak_fold_path()); //i want to ignore chak folder at start or top ".chak/"
 
@@ -71,30 +68,22 @@ pub fn dir_snapshot(
     for entry in allowed_entries {
         let entry_name = path_buf_to_name(&entry)?;
 
-
         if entry.is_file() {
             tree_ref.add_file_child(&entry, &entry_name)?;
         } else {
-            if let Some(existing_child_tree) = tree_ref.dir_children.get_mut(&entry_name) {
-                dir_snapshot(
-                    vcs_config,
-                    &entry,
-                    main_ignore_builder,
-                    &mut existing_child_tree.load_tree(),
-                )?;
-            } else {
-                //making sure that nested tree object so that we can procede with nested dir
-                let mut new_dir_nested_tree_object = NestedTreeObject::new();
 
-                dir_snapshot(
-                    vcs_config,
-                    &entry,
-                    main_ignore_builder,
-                    &mut new_dir_nested_tree_object,
-                )?;
+            let existing_child_tree = tree_ref.dir_children.get_mut(&entry_name);
+            let mut dir_nested_tree_object =
+                existing_child_tree.map_or_else(|| NestedTreeObject::new(), |v| v.load_tree());
 
-                tree_ref.add_dir_child(entry_name, &mut new_dir_nested_tree_object)?;
-            }
+            dir_snapshot(
+                vcs_config,
+                &entry,
+                main_ignore_builder,
+                &mut dir_nested_tree_object,
+            )?;
+
+            tree_ref.add_dir_child(entry_name, &mut dir_nested_tree_object)?;
         }
     }
 
