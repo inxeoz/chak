@@ -92,7 +92,7 @@ fn handle_matched_none(
     let path_name = path_buf_to_name(&path)?;
 
     if path.is_file() {
-        &tree.add_file_child(&path, path_name.as_str())?;
+        tree.add_file_child(&path, path_name.as_str())?;
     } else {
         if let Some(existing_child_tree) = tree.dir_children.get_mut(&path_name) {
             take_snapshot(

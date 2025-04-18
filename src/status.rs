@@ -13,6 +13,7 @@ use crate::util::{ path_buf_to_parent_and_name};
 use ignore::gitignore::GitignoreBuilder;
 use indexmap::IndexMap;
 use std::path::{Path, PathBuf};
+use colored::Colorize;
 
 pub enum EntryType {
     FILE,
@@ -60,16 +61,16 @@ pub fn command_status() -> Result<(), ChakError> {
 
         start_status(&mut list_of_change)?;
 
-        list_of_change.removed_entry.iter().for_each( |(h, r)|
+        list_of_change.removed_entry.iter().for_each( |(_h, r)|
             println!("removed {} from {:?} ", r.entry_name, r.removed_from)
         );
 
-        list_of_change.changed_entry.iter().for_each( | (h, v )|
-            println!("changed {} ", v.entry_name)
+        list_of_change.changed_entry.iter().for_each( | (_h, v )|
+            println!("changed {} {}", v.parent_dir_path.display().to_string().yellow(), v.entry_name.red())
         );
 
-        list_of_change.new_entry.iter().for_each( |(h, v) |
-        println!("new {}", v.new_entry_name)
+        list_of_change.new_entry.iter().for_each( |(_h, v) |
+        println!("new {} {}",v.parent_dir_path.display().to_string().yellow(), v.new_entry_name.red())
         );
 
 

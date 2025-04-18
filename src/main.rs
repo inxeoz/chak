@@ -30,10 +30,7 @@ mod restricted;
 mod takesnapshot;
 mod handle_ignore;
 mod stage;
-//test
 
-
-use clap::{Parser, Subcommand};
 use crate::commandline::parse_commandline;
 
 fn main() {

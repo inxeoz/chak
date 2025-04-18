@@ -1,5 +1,3 @@
-use crate::hash_pointer::HashPointer;
-
 
 #[macro_export] macro_rules! impl_pointer_common_traits {
     ($t:ty) => {

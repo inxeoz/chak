@@ -8,7 +8,6 @@ use crate::util::file_to_lines;
 use crate::util::{file_to_string, save_or_create_file};
 use sha2::{Digest, Sha256};
 use std::fs::File;
-use std::hash::{Hash, Hasher};
 use std::io;
 use std::io::{ BufReader, ErrorKind, Read};
 use std::path::{Path };

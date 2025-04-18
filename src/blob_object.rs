@@ -3,9 +3,7 @@ use serde::{Deserialize, Serialize};
 use indexmap::{IndexMap, IndexSet};
 use crate::chak_traits::ObjectCommonTraits;
 use crate::config::get_blob_fold_path;
-use itertools::{ Itertools};
 use std::fs::File;
-use std::hash::Hash;
 use std::ops::Sub;
 use std::path::Path;
 use crate::chak_traits::HashPointerTraits;
@@ -43,8 +41,8 @@ impl BlobObject {
     //need to test this method
     pub fn to_string_content(&self) -> String {
         let mut string_lines = Vec::<String>::new();
-        for Hash_line in &self.hash_lines {
-            string_lines.push(self.hash_to_content.get(Hash_line).unwrap_or(&"".to_string()).to_string());
+        for hash_line in &self.hash_lines {
+            string_lines.push(self.hash_to_content.get(hash_line).unwrap_or(&"".to_string()).to_string());
         }
         string_lines.join("\n")
     }

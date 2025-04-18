@@ -1,4 +1,4 @@
-use crate::config::{essentials_files_to_create, essentials_folds_to_create, get_current_dir_path, save_config, get_chak_fold_path, Config, CURRENT_DIR, CHAK_FOLDER_NAME};
+use crate::config::{essentials_files_to_create, essentials_folds_to_create, get_current_dir_path, save_config, get_chak_fold_path, Config, CHAK_FOLDER_NAME};
 use crate::util::{input_from_commandline, save_or_create_file};
 use std::fs::create_dir_all;
 use std::{fs};

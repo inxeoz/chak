@@ -1,6 +1,5 @@
 
 use serde::{Deserialize, Serialize};
-use std::default::Default;
 use std::path::PathBuf;
 use indexmap::IndexMap;
 use crate::config::get_root_trees_fold_path;

@@ -1,10 +1,9 @@
-use std::any::{Any, type_name};
+use std::any::{ type_name};
 use std::fs::read_dir;
 
 use crate::chak_traits::HashPointerTraits;
 use crate::config::{CHAK_FOLDER_NAME, REGISTER_NAME};
 use crate::custom_error::ChakError;
-use crate::hash_pointer::HashPointer;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::fs;
