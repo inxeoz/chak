@@ -10,6 +10,7 @@ use crate::takesnapshot::start_individual_snapshot;
 use ignore::gitignore::GitignoreBuilder;
 use std::io;
 use std::path::Path;
+use crate::util::path_buf_to_name;
 
 pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     //all in one ignore vec that handles multiple ignore file present in nested folder
@@ -68,12 +69,8 @@ pub fn dir_snapshot(
     let allowed_entries = parse_ignore_combined_files_dirs(dir_path, main_ignore_builder)?;
 
     for entry in allowed_entries {
-        let entry_name = entry
-            .file_name()
-            .expect("Could not get file name")
-            .to_str()
-            .expect("Could not convert to str")
-            .to_string();
+        let entry_name = path_buf_to_name(&entry)?;
+
 
         if entry.is_file() {
             tree_ref.add_file_child(&entry, &entry_name)?;

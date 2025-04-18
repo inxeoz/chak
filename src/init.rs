@@ -6,6 +6,7 @@ use std::{fs};
 use std::path::Path;
 use crate::config_global::{get_global_config, GlobalConfig};
 use std::string::String;
+use colored::Colorize;
 use crate::custom_error::ChakError;
 
 pub fn init(project_name: Option<String>) -> Result<(), ChakError> {
@@ -17,11 +18,11 @@ pub fn init(project_name: Option<String>) -> Result<(), ChakError> {
             let project_folder = &get_current_dir_path().join( &project_name);
 
             if project_folder.exists() {
-                println!("can't intialize there exist {} dir prviously exist ", &project_name);
+                println!("can't intialize there exist {} dir prviously exist ", &project_name.yellow());
                 return Err(ChakError::RepoAlreadyExists)
             }else {
                 create_dir_all( project_folder)?;
-                println!("start hacking\ncd {}\nchak status", &project_name);
+                println!("start hacking\ncd {}\nchak status", &project_name.green());
             }
 
            project_folder.to_owned()
@@ -56,13 +57,12 @@ pub fn init(project_name: Option<String>) -> Result<(), ChakError> {
 
     //this is an entry point for intialization of version control system chak
     initialize_vcs(&project_folder.join(CHAK_FOLDER_NAME))?;
-    println!("done! .chak/ exist now");
+    println!("{}", "done! .chak/ exist now".green());
 
     Ok(())
 }
 
 pub fn initialize_vcs(project_folder: &Path) -> Result<(), ChakError> {
-    println!("--> project folder {}", project_folder.display());
 
     for essentials_fold in essentials_folds_to_create() {
 
