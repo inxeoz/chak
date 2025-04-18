@@ -83,10 +83,7 @@ pub fn command_status() -> Result<(), ChakError> {
     } else {
         return Err(ChakError::RepoNotInitialized);
     }
-    //show_status(&CURRENT_PATH);
-    // Add logic to display repository status
 
-    println!("status");
     Ok(())
 }
 
@@ -125,9 +122,7 @@ pub fn recursive_status(
     let allowed_entries = parse_ignore_combined_files_dirs(dir, ignore_builder)?;
 
 
-    if let Some(tree_pointer) = tree_hash_pointer_opt {
-
-        let nested_tree = NestedTreeObject::from(&tree_pointer).ok();
+        let nested_tree  = tree_hash_pointer_opt.and_then(|v| NestedTreeObject::from(&v).ok() );
 
         for entry in allowed_entries {
             let (parent_of_entry, entry_name) = path_buf_to_parent_and_name(&entry)?;
@@ -151,7 +146,7 @@ pub fn recursive_status(
                 )?
             }
         }
-    }
+
 
     Ok(())
 }
