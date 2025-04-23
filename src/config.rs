@@ -9,6 +9,7 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 
 pub static CURRENT_DIR: OnceCell<PathBuf> = OnceCell::new();
+pub static CHAK_PATH: OnceCell<PathBuf> = OnceCell::new();
 
 pub static APPLICATION_NAME: &str = "chakvcs";
 pub static CHAK_FOLDER_NAME: &str = ".chak/"; //i think if its a folder then it should be suffix with '/'
@@ -30,6 +31,12 @@ pub fn get_current_dir_path() -> &'static PathBuf {
         env::current_dir()
             .expect("Could not get current directory")
             .join("aworkspace") // it should be removed while releasing application for deployment or release
+    })
+}
+
+pub fn get_current_chak_path() -> &'static PathBuf {
+    CHAK_PATH.get_or_init(|| {
+        get_current_dir_path().join(CHAK_FOLDER_NAME)
     })
 }
 
