@@ -1,11 +1,11 @@
-use crate::add::{command_add};
-use crate::init::init;
-use crate::status::command_status;
+use crate::add::{handle_command_add};
+use crate::init::handle_command_init;
+use crate::status::handle_command_status;
 use clap::{Parser, Subcommand};
-use crate::commit_pointer::command_commit;
+use crate::commit_pointer::handle_command_commit;
 use crate::custom_error::ChakError;
 use crate::remote::{command_remote};
-use crate::restore::command_restore;
+use crate::restore::handle_command_restore;
 
 /// A simple version control system built with Rust
 #[derive(Parser)]
@@ -86,20 +86,20 @@ pub fn parse_commandline() -> Result<(), ChakError> {
     match args.command {
         Some(Commands::Init {project_name}) => {
             // Add logic for repository initialization
-            init(project_name).expect("cant init the system");
+            handle_command_init(project_name).expect("cant handle_command_init the system");
         }
 
         Some(Commands::Add { files }) => {
-            command_add(files)?;
+            handle_command_add(files)?;
         }
         Some(Commands::Commit { m }) => {
-            command_commit(m).expect("TODO: panic message");
+            handle_command_commit(m).expect("TODO: panic message");
         }
         Some(Commands::Restore { files }) => {
-            command_restore(files)
+            handle_command_restore(files)
         } ,
         Some(Commands::Status) => {
-            command_status().expect("TODO: panic message");
+            handle_command_status().expect("TODO: panic message");
         }
         Some(Commands::Remote {command})  => command_remote(&command),
         Some(Commands::Log) => {

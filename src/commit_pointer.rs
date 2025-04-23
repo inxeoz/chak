@@ -58,7 +58,7 @@ pub fn append_commit_hash_pointer_to_commit_log_file(commit_hash_pointer: Commit
     ).expect("cant save commit to commit log");
 }
 
-pub fn command_commit(m:String) -> Result<(), ChakError> {
+pub fn handle_command_commit(m:String) -> Result<(), ChakError> {
 
     if let Ok(all_tree_pointers) = RootTreePointer::get_pointers_from_stage(){
 

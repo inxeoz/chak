@@ -30,7 +30,7 @@ fn start_restoring(tree_object: NestedTreeObject, dir_path: &PathBuf) -> Result<
     Ok(())
 }
 
-pub fn command_restore(files: Vec<String>) {
+pub fn handle_command_restore(files: Vec<String>) {
     if files.contains(&".".to_string()) {
         match RootTreePointer::get_latest_pointer_from_stage() {
             Ok(latest_tree_pointer) => {

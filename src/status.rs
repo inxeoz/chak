@@ -51,7 +51,7 @@ pub struct StatusDataStructure {
     pub removed_entry: IndexMap<HashPointer, OperationRemoved>,
 }
 
-pub fn command_status() -> Result<(), ChakError> {
+pub fn handle_command_status() -> Result<(), ChakError> {
     if get_chak_fold_path().exists() {
         
         let mut list_of_change = StatusDataStructure {

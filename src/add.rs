@@ -91,7 +91,7 @@ pub fn dir_snapshot(
     Ok(())
 }
 
-pub fn command_add(files: Vec<String>) -> Result<(), ChakError> {
+pub fn handle_command_add(files: Vec<String>) -> Result<(), ChakError> {
     let config = get_config();
 
     if get_chak_fold_path().exists() && get_chak_fold_path().is_dir() {

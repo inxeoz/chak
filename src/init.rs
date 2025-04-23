@@ -9,7 +9,7 @@ use std::string::String;
 use colored::Colorize;
 use crate::custom_error::ChakError;
 
-pub fn init(project_name: Option<String>) -> Result<(), ChakError> {
+pub fn handle_command_init(project_name: Option<String>) -> Result<(), ChakError> {
 
     let project_folder = {
         if let Some( project_name) = project_name {
