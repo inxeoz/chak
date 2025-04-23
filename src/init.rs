@@ -19,9 +19,10 @@ pub fn handle_command_init(project_name_opt: Option<String>) -> Result<(), ChakE
                 .join(&project_name)
                 .join(CHAK_FOLDER_NAME)
         } else {
-            get_current_chak_path().to_path_buf()
+            get_current_dir_path().join(CHAK_FOLDER_NAME)
         }
     };
+   
 
     if chak_folder.exists() {
         println!(
