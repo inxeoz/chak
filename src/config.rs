@@ -26,6 +26,7 @@ pub static VERSION_HEADS_DIR_NAME: &str = "version_heads";
 pub static COMMIT_LOG_FILE_NAME: &str = "commit.log";
 pub static STAGE_FILE_NAME: &str = "stage";
 
+///remove .join("aworkspace") before production
 pub fn get_current_dir_path() -> &'static PathBuf {
     CURRENT_DIR.get_or_init(|| {
         env::current_dir()
@@ -34,6 +35,7 @@ pub fn get_current_dir_path() -> &'static PathBuf {
     })
 }
 
+///this function only be used when you are inside project !!!!
 pub fn get_current_chak_path() -> &'static PathBuf {
     CHAK_PATH.get_or_init(|| {
         get_current_dir_path().join(CHAK_FOLDER_NAME)

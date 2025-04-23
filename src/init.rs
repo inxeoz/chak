@@ -34,7 +34,7 @@ pub fn handle_command_init(project_name_opt: Option<String>) -> Result<(), ChakE
             .to_lowercase();
 
         if choice == "y" {
-            fs::remove_dir_all(get_chak_fold_path())?;
+            fs::remove_dir_all(&chak_folder)?;
         } else {
             return Err(ChakError::RepoAlreadyExists);
         }
