@@ -1,15 +1,16 @@
 use crate::config::{VCS_IGNORE_FILE_NAME, get_current_dir_path};
 use crate::custom_error::ChakError;
-use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
+use crate::root_tree_object::{ RootTreeObject};
 use crate::root_tree_pointer::RootTreePointer;
 
 use crate::util::path_buf_to_name;
 use ignore::Match;
 use ignore::gitignore::GitignoreBuilder;
 use std::path::PathBuf;
+use crate::nested_tree_object::NestedTreeObject;
 
 pub fn start_individual_snapshot(entry_string: String) -> Result<(), ChakError> {
-    let  index = 0usize;
+    let index = 0usize;
 
     let entry = PathBuf::from(entry_string);
 
@@ -19,7 +20,7 @@ pub fn start_individual_snapshot(entry_string: String) -> Result<(), ChakError> 
         .map(|comp| comp.as_os_str().to_string_lossy().into_owned())
         .collect();
 
-    let mut ignore_builder = GitignoreBuilder::new(get_current_dir_path());
+    let ignore_builder = GitignoreBuilder::new(get_current_dir_path());
     let mut path = get_current_dir_path().to_owned();
 
     //get latest tree pointer from history_log
@@ -94,26 +95,19 @@ fn handle_matched_none(
     if path.is_file() {
         tree.add_file_child(&path, path_name.as_str())?;
     } else {
-        if let Some(existing_child_tree) = tree.dir_children.get_mut(&path_name) {
-            take_snapshot(
-                ignore_builder,
-                path,
-                parts,
-                index + 1,
-                &mut existing_child_tree.load_tree(),
-            )?;
-        } else {
-            let mut new_dir_nested_tree_object = NestedTreeObject::new();
+        
+        let existing_child_tree = tree.dir_children.get_mut(&path_name);
+        let mut dir_nested_tree_object =
+            existing_child_tree.map_or_else(|| NestedTreeObject::new(), |v| v.load_tree());
 
-            take_snapshot(
-                ignore_builder,
-                path,
-                parts,
-                index + 1,
-                &mut new_dir_nested_tree_object,
-            )?;
-            tree.add_dir_child(path_name, &mut new_dir_nested_tree_object)?;
-        }
+        take_snapshot(
+            ignore_builder,
+            path,
+            parts,
+            index + 1,
+            &mut dir_nested_tree_object,
+        )?;
+        tree.add_dir_child(path_name, &mut dir_nested_tree_object)?;
     }
 
     Ok(())

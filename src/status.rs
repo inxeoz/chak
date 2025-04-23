@@ -7,13 +7,14 @@ use crate::config::{
 use crate::custom_error::ChakError;
 use crate::handle_ignore::{handle_ignore_file, parse_ignore_combined_files_dirs};
 use crate::hash_pointer::HashPointer;
-use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
+use crate::root_tree_object::{ RootTreeObject};
 use crate::stage::Stage;
 use crate::util::{ path_buf_to_parent_and_name};
 use ignore::gitignore::GitignoreBuilder;
 use indexmap::IndexMap;
 use std::path::{Path, PathBuf};
 use colored::Colorize;
+use crate::nested_tree_object::NestedTreeObject;
 
 pub enum EntryType {
     FILE,

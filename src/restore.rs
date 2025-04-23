@@ -3,8 +3,8 @@ use crate::util::save_or_create_file;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use crate::custom_error::ChakError;
+use crate::nested_tree_object::NestedTreeObject;
 use crate::root_tree_pointer::RootTreePointer;
-use crate::root_tree_object::{NestedTreeObject};
 
 fn start_restoring(tree_object: NestedTreeObject, dir_path: &PathBuf) -> Result<(), ChakError> {
     for (child_name, version_head_pointer) in tree_object.file_children {

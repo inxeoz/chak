@@ -6,10 +6,10 @@ use crate::config::get_root_trees_fold_path;
 use crate::custom_error::ChakError;
 use crate::root_tree_pointer::{ RootTreePointer};
 use crate::nested_tree_pointer::NestedTreeHashPointer;
-pub(crate) use crate::nested_tree_object::NestedTreeObject;
 use crate::util::{deserialize_file_content};
 use crate::version_head_pointer::VersionHeadPointer;
 use crate::chak_traits::{HashPointerTraits, ObjectCommonTraits};
+use crate::nested_tree_object::NestedTreeObject;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RootTreeObject {
