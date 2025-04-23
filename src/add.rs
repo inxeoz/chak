@@ -4,13 +4,14 @@ use crate::config::{
 };
 use crate::custom_error::ChakError;
 use crate::handle_ignore::{handle_ignore_file, parse_ignore_combined_files_dirs};
-use crate::root_tree_object::{NestedTreeObject, RootTreeObject};
+use crate::root_tree_object::{ RootTreeObject};
 use crate::root_tree_pointer::RootTreePointer;
 use crate::takesnapshot::start_individual_snapshot;
 use crate::util::path_buf_to_name;
 use ignore::gitignore::GitignoreBuilder;
 use std::io;
 use std::path::Path;
+use crate::nested_tree_object::NestedTreeObject;
 
 pub fn start_snapshot(vcs_config: &Config) -> Result<(), ChakError> {
     //all in one ignore vec that handles multiple ignore file present in nested folder
